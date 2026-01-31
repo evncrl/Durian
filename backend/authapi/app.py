@@ -54,7 +54,7 @@ def health():
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
@@ -309,7 +309,7 @@ def update_profile(user_id):
 # ---------------------------
 # Home/Test endpoint
 # ---------------------------
-@app.route("/status", methods=["GET"])
+@app.route("/status", methods=["GET", "OPTIONS"])
 def status():
     return jsonify({
         "message": "Auth API is running!",
@@ -326,3 +326,46 @@ def status():
 # ---------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8000)
+
+    # ---------------------------
+# ADMIN ENDPOINTS
+# ---------------------------
+
+@app.route("/admin/users", methods=["GET", "OPTIONS"])
+def get_all_users():
+    if request.method == "OPTIONS":
+        return '', 200
+        
+    try:
+        # Kunin lahat ng users pero huwag isama ang password field
+        users = list(users_collection.find({}, {"password": 0}))
+        
+        # Gawing string ang ObjectId para mabasa ng JSON
+        for user in users:
+            user["_id"] = str(user["_id"])
+            
+        return jsonify({
+            "success": True,
+            "total_users": len(users),
+            "users": users
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@app.route("/admin/users", methods=["GET", "OPTIONS"])
+def get_all_users():
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        # Kunin lahat ng users pero huwag isama ang password
+        users = list(users_collection.find({}, {"password": 0}))
+        # Gawing string ang ObjectId para mabasa ng frontend
+        for user in users:
+            user["_id"] = str(user["_id"])
+            
+        return jsonify({
+            "success": True,
+            "users": users
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

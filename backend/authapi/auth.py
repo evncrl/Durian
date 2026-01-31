@@ -79,6 +79,8 @@ def signup_user(name: str, email: str, password: str, confirm_password: str):
         "email": email,
 
         "password": hashed,
+        
+        "role": "user",
 
         "isLoggedIn": False,
 
@@ -141,6 +143,8 @@ def login_user(email: str, password: str):
             "name": user["name"],
 
             "email": user["email"],
+            
+            "role": user.get("role", "user"),
 
             "photoProfile": user.get("photoProfile", "https://via.placeholder.com/120")
 
@@ -181,6 +185,8 @@ def signup_user_with_pfp(name, email, password, confirm_password, photo_file=Non
         "email": email,
 
         "password": hashed,
+        
+        "role": "user",
 
         "isLoggedIn": True,
 

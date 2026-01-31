@@ -163,206 +163,124 @@ export default function Landing() {
 
   const onSubmit = async () => {
     console.log("onSubmit called - authMode:", authMode);
-    console.log("Form data:", { name, email, password, confirmPassword });
 
     try {
       setLoading(true);
 
       if (authMode === "signup") {
-        console.log("Validating signup...");
-
         if (!name || !email || !password || !confirmPassword) {
-          console.log("Missing fields validation failed");
           Alert.alert("Error", "Please fill in all fields");
           setLoading(false);
           return;
         }
         if (password !== confirmPassword) {
-          console.log("Password mismatch validation failed");
           Alert.alert("Error", "Passwords do not match");
           setLoading(false);
           return;
         }
-        if (password.length < 6) {
-          console.log("Password length validation failed");
-          Alert.alert("Error", "Password must be at least 6 characters");
-          setLoading(false);
-          return;
-        }
-
-        console.log("Making signup request to:", `${API_URL}/signup`);
 
         let signupRes;
         
         if (selectedImage) {
-          // Use signup-with-pfp endpoint (with image)
-          console.log("Using signup-with-pfp endpoint with image");
-          console.log("Platform:", Platform.OS);
-          
-          const filename = selectedImage.uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(filename || '');
-          const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-          console.log("File info:", { filename, type, uri: selectedImage.uri });
-
-          // Use fetch API for better file upload support across platforms
           const formData = new FormData();
           formData.append('name', name);
           formData.append('email', email);
           formData.append('password', password);
           formData.append('confirm_password', confirmPassword);
 
-          // Handle file upload based on platform
+          const filename = selectedImage.uri.split('/').pop();
+          const match = /\.(\w+)$/.exec(filename || '');
+          const type = match ? `image/${match[1]}` : 'image/jpeg';
+
           if (Platform.OS === 'web') {
-            // For web, convert to blob
-            console.log("Converting image to blob for web");
             const response = await fetch(selectedImage.uri);
             const blob = await response.blob();
-            console.log("Blob created:", { size: blob.size, type: blob.type });
             formData.append('photo', blob, `profile_${Date.now()}.${match ? match[1] : 'jpg'}`);
           } else {
-            // For React Native/Expo - need to handle file differently
-            console.log("Using native file upload");
-            try {
-              // Read the file as base64 and convert to blob
-              const response = await fetch(selectedImage.uri);
-              const blob = await response.blob();
-              console.log("Blob created from native URI:", { size: blob.size, type: blob.type });
-              formData.append('photo', blob, `profile_${Date.now()}.${match ? match[1] : 'jpg'}`);
-            } catch (e) {
-              console.log("Error converting to blob, falling back to direct URI:", e);
-              formData.append('photo', {
-                uri: selectedImage.uri,
-                type: type,
-                name: `profile_${Date.now()}.${match ? match[1] : 'jpg'}`
-              } as any);
-            }
+            formData.append('photo', {
+              uri: selectedImage.uri,
+              type: type,
+              name: `profile_${Date.now()}.${match ? match[1] : 'jpg'}`
+            } as any);
           }
 
-          console.log("FormData prepared, posting to:", `${API_URL}/signup-with-pfp`);
           signupRes = await axios.post(`${API_URL}/signup-with-pfp`, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            timeout: 30000,
+            headers: { 'Content-Type': 'multipart/form-data' },
           });
         } else {
-          // Use regular signup endpoint (no image)
-          console.log("Using regular signup endpoint");
-          
           signupRes = await axios.post(`${API_URL}/signup`, {
-            name: name,
-            email: email,
-            password: password,
-            confirm_password: confirmPassword,
+            name, email, password, confirm_password: confirmPassword,
           });
         }
 
-        console.log("Signup response received:", signupRes);
-        console.log("Signup response data:", signupRes.data);
-
-        // Check if signup was successful
         if (signupRes.status === 200 && signupRes.data.success) {
-          console.log("Signup successful!");
-          
-          // Auto-login after successful signup
-          try {
-            const loginRes = await axios.post(`${API_URL}/login`, {
-              email,
-              password,
-            });
+          // AUTO-LOGIN LOGIC AFTER SIGNUP
+          const loginRes = await axios.post(`${API_URL}/login`, { email, password });
+          if (loginRes.data.success) {
+            const userData = loginRes.data.user;
+            const userRole = userData.role || "user";
 
-            if (loginRes.data.success && loginRes.data.token) {
-              await storeData("jwt_token", loginRes.data.token);
+            await storeData("jwt_token", loginRes.data.token);
+            await storeData("user_role", userRole);
+            await storeData("user_id", userData.id);
+            await storeData("name", userData.name);
+            await storeData("photoProfile", userData.photoProfile);
 
-              const payload = decodeJWT(loginRes.data.token);
-              const userId = payload?.sub;
-              if (userId) {
-                await storeData("user_id", userId);
-              }
-
-              await storeData("userEmail", email);
-              await storeData("name", name);
-              await storeData("photoProfile", 
-                signupRes.data.user?.photoProfile || 
-                signupRes.data.photoProfile || 
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1b5e20&color=fff`
-              );
-
-              Alert.alert("Success", "Account created and logged in!");
-              closeAuthModal();
+            Alert.alert("Success", "Account created!");
+            closeAuthModal();
+            
+            // Redirect based on role
+            if (userRole === "admin") {
+              router.replace("/admin");
+            } else {
               router.replace("/(tabs)/Home");
             }
-          } catch (loginError) {
-            Alert.alert("Success", "Account created! Please log in.");
-            setAuthMode("login");
           }
         } else {
-          const errorMessage = signupRes.data?.error || signupRes.data?.message || "Signup failed";
-          console.log("Signup failed:", errorMessage);
-          Alert.alert("Signup Error", errorMessage);
+          Alert.alert("Error", signupRes.data?.error || "Signup failed");
         }
         setLoading(false);
         return;
       }
 
-      // Login
+      // LOGIN LOGIC
       if (!email || !password) {
         Alert.alert("Error", "Please fill in all fields");
         setLoading(false);
         return;
       }
 
-      const loginRes = await axios.post(`${API_URL}/login`, {
-        email,
-        password,
-      });
+      const loginRes = await axios.post(`${API_URL}/login`, { email, password });
 
-      if (!loginRes.data.success || !loginRes.data.token) {
-        Alert.alert("Login Error", loginRes.data.error || "Invalid credentials");
-        setLoading(false);
-        return;
+      if (loginRes.data.success && loginRes.data.token) {
+        // 1. Kunin ang user object mula sa response
+        const userData = loginRes.data.user;
+        const userRole = userData.role || "user"; // Ito ang role na galing sa DB
+
+        // 2. I-save ang lahat sa AsyncStorage
+        await storeData("jwt_token", loginRes.data.token);
+        await storeData("user_role", userRole);
+        await storeData("user_id", userData.id);
+        await storeData("userEmail", email);
+        await storeData("name", userData.name);
+        await storeData("photoProfile", userData.photoProfile);
+
+        console.log("Login Success! Role:", userRole);
+        closeAuthModal();
+
+        // 3. PAG-REDIRECT (ADMIN vs USER)
+        if (userRole === "admin") {
+          router.replace("/admin");
+        } else {
+          router.replace("/(tabs)/Home");
+        }
+      } else {
+        Alert.alert("Error", loginRes.data.error || "Invalid credentials");
       }
-
-      // Save JWT token
-      await storeData("jwt_token", loginRes.data.token);
-
-      // Decode JWT for user_id
-      const payload = decodeJWT(loginRes.data.token);
-      const userId = payload?.sub;
-      if (userId) {
-        await storeData("user_id", userId);
-      }
-
-      // Store user info
-      await storeData("userEmail", email);
-      await storeData("name", loginRes.data.user?.name || email.split("@")[0]);
-      await storeData("photoProfile", loginRes.data.user?.photoProfile || 
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(email.split("@")[0])}&background=1b5e20&color=fff`);
-
-      closeAuthModal();
-      router.replace("/(tabs)/Home");
     } catch (err: any) {
       console.error("Auth error:", err);
-      console.error("Error details:", err.response?.data);
-      
-      let errorMessage = "Something went wrong";
-      
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      if (err.code === 'ECONNREFUSED') {
-        errorMessage = "Cannot connect to server. Make sure backend is running.";
-      } else if (err.code === 'NETWORK_ERROR') {
-        errorMessage = "Network error. Check your connection.";
-      }
-      
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error", err.response?.data?.error || "Connection error");
+    } finally {
       setLoading(false);
     }
   };
