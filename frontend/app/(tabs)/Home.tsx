@@ -30,6 +30,24 @@ const DURIAN_DATA = [
   { id: 8, province: "Maguindanao", lat: 6.9528, lon: 124.4258, production: 5100 },
   { id: 9, province: "Zamboanga Sibugay", lat: 7.5000, lon: 122.3333, production: 4200 },
   { id: 10, province: "Misamis Oriental", lat: 8.5042, lon: 124.6333, production: 3500 },
+
+   { id: 11, province: "Davao del Norte", lat: 7.3300, lon: 125.7100, production: 7800 },
+  { id: 12, province: "Davao Oriental", lat: 7.1600, lon: 126.2500, production: 4800 },
+  { id: 13, province: "Davao Occidental", lat: 6.3500, lon: 125.4000, production: 3000 },
+  { id: 14, province: "Agusan del Sur", lat: 8.9400, lon: 125.5200, production: 2500 },
+  { id: 15, province: "Lanao del Sur", lat: 7.6800, lon: 124.3000, production: 2200 },
+  { id: 16, province: "Lanao del Norte", lat: 8.0500, lon: 124.2500, production: 1800 },
+  { id: 17, province: "Sulu", lat: 6.0500, lon: 121.0000, production: 1200 },
+
+  // 🟡 Small-scale / emerging areas outside Mindanao
+  { id: 18, province: "Cagayan Valley", lat: 17.6400, lon: 121.7300, production: 500 },
+  { id: 19, province: "Western Visayas", lat: 11.7000, lon: 122.5700, production: 400 },
+  { id: 20, province: "Central Visayas", lat: 10.3100, lon: 123.8900, production: 350 },
+  { id: 21, province: "Eastern Visayas", lat: 11.2000, lon: 125.0000, production: 300 },
+  { id: 22, province: "CALABARZON", lat: 14.2000, lon: 121.1500, production: 200 },
+  { id: 23, province: "MIMAROPA", lat: 12.5000, lon: 121.0000, production: 150 },
+  { id: 24, province: "Central Luzon", lat: 15.0000, lon: 120.9000, production: 100 }
+
 ];
 
 export default function Home() {
@@ -113,26 +131,31 @@ export default function Home() {
   let trace;
   
  if (mapMode === 'heatmap') {
-  // Heatmap mode
+  // Heatmap mode (normalized and contrast-adjusted)
+  const maxProduction = Math.max(...DURIAN_DATA.map(d => d.production));
   trace = {
     type: 'densitymapbox',
     lat: DURIAN_DATA.map(d => d.lat),
     lon: DURIAN_DATA.map(d => d.lon),
-    z: DURIAN_DATA.map(d => d.production / 1000),
-    radius: 40,
+    // Normalize to 0..1 so colorscale maps consistently
+    z: DURIAN_DATA.map(d => d.production / maxProduction),
+    zmin: 0,
+    zmax: 1,
+    radius: 60,
     colorscale: [
-      [0, 'rgba(0, 255, 0, 0.2)'],     
-      [0.3, 'rgba(255, 255, 0, 0.6)'], 
-      [0.6, 'rgba(255, 165, 0, 0.8)'], 
-      [1, 'rgba(255, 0, 0, 0.9)']      
+      [0, 'rgba(0, 255, 0, 0.06)'],
+      [0.2, 'rgba(255, 255, 0, 0.65)'],
+      [0.5, 'rgba(255, 165, 0, 0.85)'],
+      [0.8, 'rgba(255, 100, 0, 0.95)'],
+      [1, 'rgba(255, 0, 0, 1)']
     ],
     hoverinfo: 'text',
-    text: DURIAN_DATA.map(d => 
-      `<b>${d.province}</b><br>Production: ${d.production.toLocaleString()} MT<br>(${((d.production / 45000) * 100).toFixed(1)}% of Davao City)`
+    text: DURIAN_DATA.map(d =>
+      `<b>${d.province}</b><br>Production: ${d.production.toLocaleString()} MT<br>(${((d.production / maxProduction) * 100).toFixed(1)}% of top producer)`
     ),
     showscale: true,
     colorbar: {
-      title: 'Production (K MT)',
+      title: 'Production (relative)',
       titleside: 'right'
     }
   };
@@ -172,23 +195,25 @@ export default function Home() {
     autosize: true,
     mapbox: {
       style: 'open-street-map',
-      center: { lat: 12.8797, lon: 121.7740 },
-      zoom: 5,
+      // Center roughly on the Philippines and lower zoom to include all islands
+      center: { lat: 12.0, lon: 122.0 },
+      zoom: 4,
+      minzoom: 3,
       bearing: 0,
       pitch: 0,
-      // LIMIT MAP TO PHILIPPINES ONLY
+      // Expanded bounds to allow full country view while keeping panning reasonable
       bounds: {
-        west: 116.0,   // Left boundary
-        east: 127.0,   // Right boundary
-        south: 4.5,    // Bottom boundary
-        north: 21.5    // Top boundary
+        west: 110.0,   // Left boundary (includes extreme western islands)
+        east: 131.0,   // Right boundary (east-most islands)
+        south: -2.0,   // Bottom boundary (includes southernmost islands)
+        north: 22.5    // Top boundary (includes northern islands)
       }
     },
     height: 500,
     margin: { t: 50, b: 20, l: 20, r: 20 },
     hovermode: 'closest',
     showlegend: false,
-    // Prevent users from panning outside Philippines
+    // Prevent users from panning too far from the Philippines
     dragmode: 'pan'
   };
 
