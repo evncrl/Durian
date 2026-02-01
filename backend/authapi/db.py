@@ -445,7 +445,13 @@ def upload_user_pfp(
         import traceback
         print(f"[DB] Cloudinary upload failed: {str(e)}")
         print(f"[DB] Traceback: {traceback.format_exc()}")
-        raise Exception(f"Cloudinary upload failed: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "photoProfile": None,
+            "photoThumbnail": None,
+            "photoPublicId": None
+        }
 
 def delete_user_pfp(user_id: str) -> bool:
     """
