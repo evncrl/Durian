@@ -375,13 +375,7 @@ def delete_user_route(user_id):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# ---------------------------
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8000)
-
-    # ---------------------------
-# ADMIN ENDPOINTS
-# ---------------------------
+#admin
 
 @app.route("/admin/users", methods=["GET", "OPTIONS"])
 def get_all_users():
@@ -404,20 +398,5 @@ def get_all_users():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     
-@app.route("/admin/users", methods=["GET", "OPTIONS"])
-def get_all_users():
-    if request.method == "OPTIONS":
-        return '', 200
-    try:
-        # Kunin lahat ng users pero huwag isama ang password
-        users = list(users_collection.find({}, {"password": 0}))
-        # Gawing string ang ObjectId para mabasa ng frontend
-        for user in users:
-            user["_id"] = str(user["_id"])
-            
-        return jsonify({
-            "success": True,
-            "users": users
-        }), 200
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=8000)
