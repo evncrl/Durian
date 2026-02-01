@@ -220,12 +220,12 @@ def signup_user_with_pfp(name, email, password, confirm_password, photo_file=Non
             
             # Upload to Cloudinary
 
-            print(f"[SIGNUP] Uploading to Cloudinary with user_id: {user_id_obj}")
+            print(f"[SIGNUP] Uploading to Cloudinary with user_id: {user_id}")
             upload_result = upload_user_pfp(
 
                 image_data=image_data,
 
-                user_id=user_id_obj,
+                user_id=user_id,  
 
                 username=name,
 

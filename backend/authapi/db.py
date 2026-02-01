@@ -358,6 +358,11 @@ def upload_user_pfp(
         Dictionary with upload result
     """
     try:
+        # Convert user_id to ObjectId if it's a string
+        if isinstance(user_id, str):
+            from bson.objectid import ObjectId
+            user_id = ObjectId(user_id)
+        
         # Get user to check for existing PFP
         user = users_collection.find_one({"_id": user_id})
         
