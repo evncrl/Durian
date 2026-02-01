@@ -510,12 +510,11 @@ def generate_default_pfp_url(username: str) -> str:
     return f"https://ui-avatars.com/api/?name={initials}&background=random&color=fff&size=150&bold=true"
 
 
-# Idagdag mo ito pansamantala sa dulo ng db.py tapos i-run ang file
 def initialize_roles():
     result = users_collection.update_many(
-        {"role": {"$exists": False}}, # Hanapin lahat ng walang 'role' field
-        {"$set": {"role": "user"}}    # Gawin silang 'user'
+        {"role": {"$exists": False}},
+        {"$set": {"role": "user"}}   
     )
     print(f"Updated {result.modified_count} users with default role.")
 
-# initialize_roles() # I-uncomment mo ito para tumakbo
+initialize_roles() 

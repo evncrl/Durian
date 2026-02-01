@@ -328,6 +328,54 @@ def status():
     })
 
 # ---------------------------
+# USER MANAGEMENT ENDPOINTS
+# ---------------------------
+
+@app.route("/user/users", methods=["GET", "OPTIONS"])
+def get_all_users_fixed():
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        users = list(users_collection.find({}, {"password": 0}))
+        for user in users:
+            user["_id"] = str(user["_id"])
+        return jsonify({"success": True, "users": users}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/user/users/<user_id>/role", methods=["PUT", "OPTIONS"])
+def update_user_role(user_id):
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        data = request.json
+        new_role = data.get("role")
+        users_collection.update_one({"_id": ObjectId(user_id)}, {"$set": {"role": new_role}})
+        return jsonify({"success": True, "message": "Role updated"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/user/users/<user_id>/deactivate", methods=["PUT", "OPTIONS"])
+def deactivate_user_route(user_id):
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        users_collection.update_one({"_id": ObjectId(user_id)}, {"$set": {"isActive": False}})
+        return jsonify({"success": True, "message": "User deactivated"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/user/users/<user_id>", methods=["DELETE", "OPTIONS"])
+def delete_user_route(user_id):
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        users_collection.delete_one({"_id": ObjectId(user_id)})
+        return jsonify({"success": True, "message": "User deleted"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ---------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8000)
 
