@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import datetime
 from dotenv import load_dotenv
 import os
@@ -14,9 +13,7 @@ from routes.chatbot_routes import chatbot_bp
 
 app = Flask(__name__)
 
-# Allow ALL origins for ngrok testing
-CORS(app, resources={r"/*": {"origins": "*"}})
-
+# CORS will be handled in after_request hook below
 # Register Blueprints
 app.register_blueprint(forum_bp, url_prefix='/forum')
 app.register_blueprint(profile_bp, url_prefix='/profile')
@@ -43,10 +40,18 @@ def health():
 # Handle CORS preflight requests
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # Get the origin from request headers
+    origin = request.headers.get('Origin')
+    
+    # Allow specific origins or all for development
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        response.headers['Access-Control-Allow-Origin'] = '*'
+    
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'false'
     return response
 
 @app.route("/", methods=["GET", "OPTIONS"])
