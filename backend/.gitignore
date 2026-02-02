@@ -21,3 +21,10 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+#dataset
+datasets/
+*.h5
+*.pb
+*.tflite
+models/trained_*
