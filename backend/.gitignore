@@ -1,6 +1,7 @@
 @"
 # Python
 backend/venv/
+backend/venv310/
 __pycache__/
 *.pyc
 *.pyo
