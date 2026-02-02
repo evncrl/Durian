@@ -249,54 +249,57 @@ export const useLandingStyles = () => {
       lineHeight: isSmallScreen ? 20 : 22,
     },
 
-    // Info/Features Section
-    infoSection: {
-      paddingVertical: isSmallScreen ? 40 : isMediumScreen ? 56 : 72,
-      paddingHorizontal: isSmallScreen ? 16 : isMediumScreen ? 24 : 32,
-      backgroundColor: '#ffffff',
-    },
-    sectionTitle: {
-      fontSize: isSmallScreen ? 26 : isMediumScreen ? 32 : 38,
-      fontWeight: '800',
-      color: '#1f2937',
-      textAlign: 'center',
-      marginBottom: isSmallScreen ? 32 : isMediumScreen ? 40 : 48,
-      letterSpacing: 0.5,
-    },
+    // ABOUT US Section
+   infoSection: {
+  paddingVertical: isSmallScreen ? 40 : 56,
+  paddingHorizontal: isSmallScreen ? 20 : 32,
+  backgroundColor: '#ffffff',
+},
+sectionTitle: {
+  fontSize: isSmallScreen ? 28 : 36,
+  fontWeight: '800',
+  color: '#0f172a',
+  textAlign: 'center',
+  marginBottom: isSmallScreen ? 32 : 48,
+  lineHeight: isSmallScreen ? 36 : 44,
+},
 
-    // Feature Block
-    featureBlock: {
-      marginBottom: isSmallScreen ? 32 : isMediumScreen ? 40 : 48,
-      backgroundColor: '#f8faf9',
-      borderRadius: 20,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: '#e5e7eb',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.06,
-          shadowRadius: 12,
-        },
-        android: {
-          elevation: 2,
-        },
-      }),
+// Feature Block
+featureBlock: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: isSmallScreen ? 24 : 32,
+  padding: isSmallScreen ? 20 : 24,
+  backgroundColor: '#ffffff',
+  borderRadius: 16,
+  borderLeftWidth: 4,
+  borderLeftColor: '#10b981', // Emerald green accent
+  ...Platform.select({
+    ios: {
+      shadowColor: '#10b981',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
     },
-    featureImage: {
-      width: '100%',
-      height: isSmallScreen ? 200 : isMediumScreen ? 260 : 320,
-      resizeMode: 'cover',
+    android: {
+      elevation: 3,
     },
-    featureText: {
-      fontSize: isSmallScreen ? 15 : isMediumScreen ? 16 : 18,
-      fontWeight: '500',
-      color: '#374151',
-      padding: isSmallScreen ? 20 : isMediumScreen ? 24 : 28,
-      lineHeight: isSmallScreen ? 22 : isMediumScreen ? 24 : 28,
-      backgroundColor: '#ffffff',
-    },
+  }),
+},
+featureImage: {
+  width: isSmallScreen ? 80 : 100,
+  height: isSmallScreen ? 80 : 100,
+  borderRadius: 12,
+  marginRight: isSmallScreen ? 16 : 20,
+  resizeMode: 'cover',
+},
+featureText: {
+  flex: 1,
+  fontSize: isSmallScreen ? 16 : 18,
+  fontWeight: '600',
+  color: '#334155',
+  lineHeight: isSmallScreen ? 24 : 28,
+},
 
     // Facts Section
     factsSection: {

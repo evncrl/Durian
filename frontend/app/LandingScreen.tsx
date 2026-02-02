@@ -462,7 +462,7 @@ export default function Landing() {
         </View>
 
 
-        {/* FEATURES SECTION */}
+        {/* About Us */}
         <View style={styles.infoSection} onLayout={(e) => { const y = e.nativeEvent?.layout?.y ?? 0; setAnchors(prev => ({ ...prev, about: y })); }}>
           <Text style={styles.sectionTitle}>Why Choose Durianostics?</Text>
 

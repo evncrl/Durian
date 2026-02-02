@@ -14,6 +14,28 @@ export default StyleSheet.create({
     paddingBottom: 40,
   },
 
+  // Welcome Section
+  welcomeSection: {
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
   // Navbar
   navbar: {
     backgroundColor: "#ffffff",
