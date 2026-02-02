@@ -204,18 +204,18 @@ export default function Landing() {
             } as any);
           }
 
-          signupRes = await axios.post(`${API_URL}/signup-with-pfp`, formData, {
+          signupRes = await axios.post(`${API_URL}/auth/signup-with-pfp`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
           });
         } else {
-          signupRes = await axios.post(`${API_URL}/signup`, {
+          signupRes = await axios.post(`${API_URL}/auth/signup`, {
             name, email, password, confirm_password: confirmPassword,
           });
         }
 
         if (signupRes.status === 200 && signupRes.data.success) {
           // AUTO-LOGIN LOGIC AFTER SIGNUP
-          const loginRes = await axios.post(`${API_URL}/login`, { email, password });
+          const loginRes = await axios.post(`${API_URL}/auth/login`, { email, password });
           if (loginRes.data.success) {
             const userData = loginRes.data.user;
             const userRole = userData.role || "user";
@@ -250,7 +250,7 @@ export default function Landing() {
         return;
       }
 
-      const loginRes = await axios.post(`${API_URL}/login`, { email, password });
+      const loginRes = await axios.post(`${API_URL}/auth/login`, { email, password });
 
       if (loginRes.data.success && loginRes.data.token) {
         // 1. Kunin ang user object mula sa response

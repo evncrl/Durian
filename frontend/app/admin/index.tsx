@@ -57,7 +57,7 @@ const AdminDashboard = () => {
 
   const fetchUsers = () => {
     setLoading(true);
-    fetch(`${API_URL}/user/users`, {
+    fetch(`${API_URL}/admin/users`, {
       headers: {
         'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
   };
 
   const updateUserRole = (userId: string, newRole: string) => {
-    fetch(`${API_URL}/user/users/${userId}/role`, {
+    fetch(`${API_URL}/admin/users/${userId}/role`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
   };
 
   const deactivateUser = (userId: string) => {
-    fetch(`${API_URL}/user/users/${userId}/deactivate`, {
+    fetch(`${API_URL}/admin/users/${userId}/deactivate`, {
       method: 'PUT',
       headers: {
         'ngrok-skip-browser-warning': 'true',
@@ -145,7 +145,7 @@ const AdminDashboard = () => {
           text: "Delete", 
           style: "destructive", 
           onPress: () => {
-            fetch(`${API_URL}/user/users/${userId}`, {
+            fetch(`${API_URL}/admin/users/${userId}`, {
               method: 'DELETE',
               headers: { 'ngrok-skip-browser-warning': 'true' }
             })

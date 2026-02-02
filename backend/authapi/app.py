@@ -10,6 +10,7 @@ from routes.forum_routes import forum_bp
 from routes.profile_routes import profile_bp
 from routes.auth_routes import auth_bp
 from routes.chatbot_routes import chatbot_bp
+from routes.admin.admin_routes import admin_bp
 
 app = Flask(__name__)
 
@@ -19,6 +20,7 @@ app.register_blueprint(forum_bp, url_prefix='/forum')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+app.register_blueprint(admin_bp, url_prefix='/admin')
 
 # ---------------------------
 # Core App Routes
