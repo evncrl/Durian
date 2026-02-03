@@ -45,7 +45,7 @@ export default function Landing() {
   const scrollRef = useRef<ScrollView | null>(null);
   const flatListRef = useRef<FlatList<any> | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [anchors, setAnchors] = useState({ home: 0, about: 0, contact: 0 });
+  const [anchors, setAnchors] = useState({ home: 0, about: 0});
 
   const carouselData = [
     {
@@ -396,9 +396,7 @@ export default function Landing() {
               <TouchableOpacity style={styles.navItem} onPress={() => scrollRef.current?.scrollTo({ y: anchors.about, animated: true })}>
                 <Text style={styles.navText}>About Us</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.navItem} onPress={() => scrollRef.current?.scrollTo({ y: anchors.contact, animated: true })}>
-                <Text style={styles.navText}>Contact</Text>
-              </TouchableOpacity>
+              
             </View>
           </ScrollView>
         </View>
