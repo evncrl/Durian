@@ -16,12 +16,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useScannerStyles } from '../styles/Scanner.styles';
 import { API_URL } from '../config/appconf';
+import { useUser } from '../contexts/UserContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function Scanner() {
   const styles = useScannerStyles();
   const router = useRouter();
+  const { user } = useUser();
   
   // Camera state
   const [facing, setFacing] = useState<CameraType>('back');
@@ -150,13 +152,25 @@ export default function Scanner() {
         } as any);
       }
 
-      // Send to backend
+      // Add user_id to save scan to history
+      if (user?.id) {
+        formData.append('user_id', user.id);
+        formData.append('save_to_history', 'true');
+      }
+
+      // Send to backend with user ID header
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      };
+      
+      if (user?.id) {
+        headers['X-User-Id'] = user.id;
+      }
+
       const response = await fetch(`${API_URL}/scanner/detect`, {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-        },
+        headers,
         body: formData,
       });
 
@@ -164,12 +178,19 @@ export default function Scanner() {
       
       if (result.success) {
         setAnalysisResult(result);
+        
+        // Use Cloudinary URL if scan was saved, otherwise use local URI
+        const displayImageUri = result.cloudinary?.image_url || imageUri;
+        
         // Navigate to results screen with data
         router.push({
           pathname: '/DurianScanResult',
           params: {
-            imageUri: imageUri,
+            imageUri: displayImageUri,
+            localImageUri: imageUri, // Keep local URI as fallback
             result: JSON.stringify(result),
+            scanSaved: result.scan_saved ? 'true' : 'false',
+            scanId: result.scan_id || '',
           },
         });
       } else {

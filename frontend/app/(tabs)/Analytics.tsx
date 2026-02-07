@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,51 +6,145 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAnalyticsStyles } from '../styles/Analytics.styles';
+import { API_URL } from '../config/appconf';
+import { useUser } from '../contexts/UserContext';
 
 const { width } = Dimensions.get('window');
 
+interface ScanItem {
+  id: string;
+  variety: string;
+  quality: number;
+  status: string;
+  time: string;
+  image_url?: string;
+  thumbnail_url?: string;
+  created_at?: string;
+  durian_count: number;
+  confidence: number;
+}
+
+interface AnalyticsData {
+  stats: {
+    total_scans: number;
+    export_ready_percent: number;
+    rejected_percent: number;
+    avg_quality: number;
+    top_variety: string;
+    weekly_growth: number;
+  };
+  weekly_data: Array<{
+    day: string;
+    date: string;
+    scans: number;
+    quality: number;
+  }>;
+  quality_distribution: Array<{
+    range: string;
+    count: number;
+    percentage: number;
+  }>;
+  recent_scans: ScanItem[];
+}
+
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  
   const styles = useAnalyticsStyles();
+  const { user } = useUser();
 
-  // Mock data - replace with real data from your backend
-  const stats = {
-    totalScans: 1248,
-    exportQuality: 82,
-    rejected: 18,
-    avgQuality: 7.8,
-    weeklyGrowth: 12.5,
-    topVariety: 'Puyat',
+  // Fetch analytics data from backend
+  const fetchAnalytics = useCallback(async () => {
+    if (!user?.id) {
+      setError('Please log in to view your analytics');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_URL}/scanner/analytics/${user.id}?time_range=${timeRange}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAnalyticsData(data);
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to load analytics');
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+      setError('Failed to connect to server');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user?.id, timeRange]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  // Default values when no data
+  const stats = analyticsData?.stats || {
+    total_scans: 0,
+    export_ready_percent: 0,
+    rejected_percent: 0,
+    avg_quality: 0,
+    top_variety: 'N/A',
+    weekly_growth: 0,
   };
 
-  const weeklyData = [
-    { day: 'Mon', scans: 45, quality: 85 },
-    { day: 'Tue', scans: 52, quality: 88 },
-    { day: 'Wed', scans: 38, quality: 82 },
-    { day: 'Thu', scans: 61, quality: 90 },
-    { day: 'Fri', scans: 48, quality: 86 },
-    { day: 'Sat', scans: 35, quality: 79 },
-    { day: 'Sun', scans: 29, quality: 81 },
-  ];
+  const weeklyData = analyticsData?.weekly_data || [];
+  const recentScans = analyticsData?.recent_scans || [];
+  const qualityDistribution = analyticsData?.quality_distribution || [];
 
-  const recentScans = [
-    { id: 1, variety: 'Puyat', quality: 92, status: 'Export Ready', time: '2 hrs ago' },
-    { id: 2, variety: 'Arancillo', quality: 78, status: 'Export Ready', time: '4 hrs ago' },
-    { id: 3, variety: 'Puyat', quality: 45, status: 'Rejected', time: '5 hrs ago' },
-    { id: 4, variety: 'Monthong', quality: 88, status: 'Export Ready', time: '6 hrs ago' },
-  ];
+  const maxScans = Math.max(...weeklyData.map(d => d.scans), 1);
 
-  const qualityDistribution = [
-    { range: '90-100', count: 425, percentage: 34 },
-    { range: '80-89', count: 374, percentage: 30 },
-    { range: '70-79', count: 249, percentage: 20 },
-    { range: '0-69', count: 200, percentage: 16 },
-  ];
+  // Format date for display
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-  const maxScans = Math.max(...weeklyData.map(d => d.scans));
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#27AE60" />
+        <Text style={{ color: '#fff', marginTop: 16 }}>Loading analytics...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -72,7 +166,28 @@ export default function Analytics() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#27AE60"
+            colors={['#27AE60']}
+          />
+        }
       >
+        {/* Error Message */}
+        {error && (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#E74C3C', textAlign: 'center' }}>{error}</Text>
+            <TouchableOpacity 
+              style={{ marginTop: 12, padding: 10, backgroundColor: '#27AE60', borderRadius: 8 }}
+              onPress={fetchAnalytics}
+            >
+              <Text style={{ color: '#fff' }}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Time Range Selector */}
         <View style={styles.timeRangeContainer}>
           {(['week', 'month', 'year'] as const).map((range) => (
@@ -103,10 +218,12 @@ export default function Analytics() {
             <View style={styles.metricHeader}>
               <Text style={styles.metricIcon}>📊</Text>
               <View style={styles.metricBadge}>
-                <Text style={styles.metricBadgeText}>+{stats.weeklyGrowth}%</Text>
+                <Text style={styles.metricBadgeText}>
+                  {stats.weekly_growth >= 0 ? '+' : ''}{stats.weekly_growth}%
+                </Text>
               </View>
             </View>
-            <Text style={styles.metricValue}>{stats.totalScans.toLocaleString()}</Text>
+            <Text style={styles.metricValue}>{stats.total_scans.toLocaleString()}</Text>
             <Text style={styles.metricLabel}>Total Scans</Text>
             <Text style={styles.metricSubtext}>This {timeRange}</Text>
           </View>
@@ -114,27 +231,27 @@ export default function Analytics() {
           {/* Export Quality */}
           <View style={styles.metricCard}>
             <Text style={styles.metricIcon}>✅</Text>
-            <Text style={styles.metricValue}>{stats.exportQuality}%</Text>
+            <Text style={styles.metricValue}>{stats.export_ready_percent}%</Text>
             <Text style={styles.metricLabel}>Export Quality</Text>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${stats.exportQuality}%` }]} />
+              <View style={[styles.progressFill, { width: `${stats.export_ready_percent}%` }]} />
             </View>
           </View>
 
           {/* Rejected */}
           <View style={styles.metricCard}>
             <Text style={styles.metricIcon}>⚠️</Text>
-            <Text style={styles.metricValue}>{stats.rejected}%</Text>
+            <Text style={styles.metricValue}>{stats.rejected_percent}%</Text>
             <Text style={styles.metricLabel}>Rejected</Text>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, styles.progressFillWarning, { width: `${stats.rejected}%` }]} />
+              <View style={[styles.progressFill, styles.progressFillWarning, { width: `${stats.rejected_percent}%` }]} />
             </View>
           </View>
 
           {/* Avg Quality Score */}
           <View style={styles.metricCard}>
             <Text style={styles.metricIcon}>⭐</Text>
-            <Text style={styles.metricValue}>{stats.avgQuality}/10</Text>
+            <Text style={styles.metricValue}>{stats.avg_quality}/100</Text>
             <Text style={styles.metricLabel}>Avg Quality Score</Text>
             <Text style={styles.metricSubtext}>Based on AI analysis</Text>
           </View>
@@ -142,7 +259,7 @@ export default function Analytics() {
           {/* Top Variety */}
           <View style={styles.metricCard}>
             <Text style={styles.metricIcon}>👑</Text>
-            <Text style={styles.metricValue}>{stats.topVariety}</Text>
+            <Text style={styles.metricValue}>{stats.top_variety}</Text>
             <Text style={styles.metricLabel}>Top Variety</Text>
             <Text style={styles.metricSubtext}>Most scanned</Text>
           </View>
@@ -199,42 +316,103 @@ export default function Analytics() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Scans</Text>
-            <TouchableOpacity>
-              <Text style={styles.sectionLink}>View All →</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/Scanner')}>
+              <Text style={styles.sectionLink}>Scan New →</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.recentScansCard}>
-            {recentScans.map((scan) => (
-              <View key={scan.id} style={styles.scanItem}>
-                <View style={styles.scanIcon}>
-                  <Text style={styles.scanIconText}>🥭</Text>
-                </View>
-                <View style={styles.scanInfo}>
-                  <Text style={styles.scanVariety}>{scan.variety}</Text>
-                  <Text style={styles.scanTime}>{scan.time}</Text>
-                </View>
-                <View style={styles.scanMetrics}>
-                  <Text style={styles.scanQuality}>{scan.quality}%</Text>
-                  <View style={[
-                    styles.scanStatusBadge,
-                    scan.status === 'Rejected' && styles.scanStatusBadgeRejected,
-                  ]}>
-                    <Text style={[
-                      styles.scanStatusText,
-                      scan.status === 'Rejected' && styles.scanStatusTextRejected,
-                    ]}>
-                      {scan.status}
-                    </Text>
+          
+          {recentScans.length === 0 ? (
+            <View style={[styles.recentScansCard, { alignItems: 'center', paddingVertical: 40 }]}>
+              <Text style={{ color: '#666', fontSize: 16, marginBottom: 8 }}>No scans yet</Text>
+              <Text style={{ color: '#888', fontSize: 14 }}>Start scanning durians to see your history</Text>
+              <TouchableOpacity 
+                style={{ marginTop: 16, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#27AE60', borderRadius: 8 }}
+                onPress={() => router.push('/(tabs)/Scanner')}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600' }}>Start Scanning</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.recentScansCard}>
+              {recentScans.map((scan) => (
+                <TouchableOpacity 
+                  key={scan.id} 
+                  style={[styles.scanItem, { alignItems: 'flex-start' }]}
+                  activeOpacity={0.7}
+                >
+                  {/* Scan Image */}
+                  {scan.thumbnail_url ? (
+                    <Image 
+                      source={{ uri: scan.thumbnail_url }}
+                      style={{ 
+                        width: 60, 
+                        height: 60, 
+                        borderRadius: 8,
+                        backgroundColor: '#333',
+                      }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.scanIcon, { width: 60, height: 60, borderRadius: 8 }]}>
+                      <Text style={styles.scanIconText}>🥭</Text>
+                    </View>
+                  )}
+                  
+                  {/* Scan Details */}
+                  <View style={[styles.scanInfo, { flex: 1, marginLeft: 12 }]}>
+                    <Text style={styles.scanVariety}>{scan.variety}</Text>
+                    <Text style={styles.scanTime}>{scan.time}</Text>
+                    {scan.created_at && (
+                      <Text style={{ color: '#666', fontSize: 11, marginTop: 2 }}>
+                        {formatDate(scan.created_at)}
+                      </Text>
+                    )}
+                    <View style={{ flexDirection: 'row', marginTop: 4, gap: 8 }}>
+                      <Text style={{ color: '#888', fontSize: 12 }}>
+                        {scan.durian_count} detected
+                      </Text>
+                      <Text style={{ color: '#888', fontSize: 12 }}>
+                        {(scan.confidence * 100).toFixed(0)}% conf.
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </View>
-            ))}
-          </View>
+                  
+                  {/* Quality & Status */}
+                  <View style={[styles.scanMetrics, { alignItems: 'flex-end' }]}>
+                    <Text style={[
+                      styles.scanQuality,
+                      { 
+                        color: scan.quality >= 70 ? '#27AE60' : 
+                               scan.quality >= 50 ? '#F39C12' : '#E74C3C',
+                        fontSize: 18,
+                        fontWeight: '700'
+                      }
+                    ]}>
+                      {Math.round(scan.quality)}%
+                    </Text>
+                    <View style={[
+                      styles.scanStatusBadge,
+                      scan.status === 'Rejected' && styles.scanStatusBadgeRejected,
+                      scan.status === 'Local Sale' && { backgroundColor: 'rgba(245, 158, 11, 0.2)' },
+                    ]}>
+                      <Text style={[
+                        styles.scanStatusText,
+                        scan.status === 'Rejected' && styles.scanStatusTextRejected,
+                        scan.status === 'Local Sale' && { color: '#F39C12' },
+                      ]}>
+                        {scan.status}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Export Button */}
-        <TouchableOpacity style={styles.exportButton}>
-          <Text style={styles.exportButtonText}>📥 Export Full Report</Text>
+        <TouchableOpacity style={styles.exportButton} onPress={onRefresh}>
+          <Text style={styles.exportButtonText}>🔄 Refresh Data</Text>
         </TouchableOpacity>
 
         {/* Bottom Spacing */}

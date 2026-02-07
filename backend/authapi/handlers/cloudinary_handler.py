@@ -129,3 +129,162 @@ class CloudinaryPFP:
             "photoProfile": f"https://ui-avatars.com/api/?name={initials}&background=random&color=fff&size=400&bold=true",
             "photoThumbnail": f"https://ui-avatars.com/api/?name={initials}&background=random&color=fff&size=150&bold=true"
         }
+
+
+class CloudinaryScan:
+    """Scan image handler for Cloudinary"""
+    
+    @staticmethod
+    async def upload_scan_image(
+        image_data: bytes,
+        user_id: str,
+        scan_id: str
+    ) -> Dict[str, Any]:
+        """
+        Upload durian scan image to Cloudinary
+        
+        Args:
+            image_data: Image bytes
+            user_id: MongoDB user ID
+            scan_id: Unique scan identifier
+        
+        Returns:
+            Dict with upload results
+        """
+        try:
+            # Generate public ID for scan image
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            public_id = f"scans/{user_id}/{scan_id}_{timestamp}"
+            
+            # Upload to Cloudinary with optimizations
+            upload_result = cloudinary.uploader.upload(
+                BytesIO(image_data),
+                public_id=public_id,
+                folder=f"scans/{user_id}",
+                overwrite=True,
+                transformation=[
+                    {"width": 800, "height": 800, "crop": "limit"},
+                    {"quality": "auto:good"},
+                    {"fetch_format": "auto"}
+                ],
+                # Generate thumbnail
+                eager=[
+                    {"width": 200, "height": 200, "crop": "fill", "gravity": "center"}
+                ]
+            )
+            
+            # Get URLs
+            secure_url = upload_result.get("secure_url")
+            public_id = upload_result.get("public_id")
+            
+            # Get thumbnail URL
+            thumbnail_url = None
+            eager_transformations = upload_result.get("eager", [])
+            for transformation in eager_transformations:
+                if transformation.get("width") == 200:
+                    thumbnail_url = transformation.get("secure_url")
+                    break
+            
+            if not thumbnail_url:
+                thumbnail_url = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    width=200,
+                    height=200,
+                    crop="fill",
+                    gravity="center",
+                    quality="auto:good"
+                )[0]
+            
+            return {
+                "success": True,
+                "image_url": secure_url,
+                "thumbnail_url": thumbnail_url,
+                "public_id": public_id,
+                "format": upload_result.get("format"),
+                "size": upload_result.get("bytes")
+            }
+            
+        except Exception as e:
+            print(f"Cloudinary scan upload error: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "image_url": None,
+                "thumbnail_url": None
+            }
+    
+    @staticmethod
+    def upload_scan_image_sync(
+        image_path: str,
+        user_id: str,
+        scan_id: str
+    ) -> Dict[str, Any]:
+        """
+        Synchronous version for uploading scan image from file path
+        """
+        try:
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            public_id = f"scans/{user_id}/{scan_id}_{timestamp}"
+            
+            upload_result = cloudinary.uploader.upload(
+                image_path,
+                public_id=public_id,
+                folder=f"scans/{user_id}",
+                overwrite=True,
+                transformation=[
+                    {"width": 800, "height": 800, "crop": "limit"},
+                    {"quality": "auto:good"},
+                    {"fetch_format": "auto"}
+                ],
+                eager=[
+                    {"width": 200, "height": 200, "crop": "fill", "gravity": "center"}
+                ]
+            )
+            
+            secure_url = upload_result.get("secure_url")
+            public_id = upload_result.get("public_id")
+            
+            thumbnail_url = None
+            eager_transformations = upload_result.get("eager", [])
+            for transformation in eager_transformations:
+                if transformation.get("width") == 200:
+                    thumbnail_url = transformation.get("secure_url")
+                    break
+            
+            if not thumbnail_url:
+                thumbnail_url = cloudinary.utils.cloudinary_url(
+                    public_id,
+                    width=200,
+                    height=200,
+                    crop="fill",
+                    gravity="center",
+                    quality="auto:good"
+                )[0]
+            
+            return {
+                "success": True,
+                "image_url": secure_url,
+                "thumbnail_url": thumbnail_url,
+                "public_id": public_id,
+                "format": upload_result.get("format"),
+                "size": upload_result.get("bytes")
+            }
+            
+        except Exception as e:
+            print(f"Cloudinary scan upload error: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "image_url": None,
+                "thumbnail_url": None
+            }
+    
+    @staticmethod
+    def delete_scan_image(public_id: str) -> bool:
+        """Delete a scan image from Cloudinary"""
+        try:
+            result = cloudinary.uploader.destroy(public_id)
+            return result.get("result") == "ok"
+        except Exception as e:
+            print(f"Error deleting scan image: {e}")
+            return False

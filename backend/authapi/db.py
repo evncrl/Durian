@@ -518,3 +518,299 @@ def initialize_roles():
     print(f"Updated {result.modified_count} users with default role.")
 
 initialize_roles() 
+
+
+# ---------------------------
+# Scans collection for scan history
+# ---------------------------
+scans_collection = db["scans"]
+
+def save_scan(
+    user_id: str,
+    image_url: str,
+    thumbnail_url: str,
+    cloudinary_public_id: str,
+    detection_result: Dict[str, Any],
+    analysis_result: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """
+    Save a durian scan to the database
+    
+    Args:
+        user_id: User who performed the scan
+        image_url: Cloudinary URL for full image
+        thumbnail_url: Cloudinary URL for thumbnail
+        cloudinary_public_id: Cloudinary public ID for deletion
+        detection_result: Raw detection data from YOLO
+        analysis_result: Processed analysis data
+    
+    Returns:
+        The saved scan document or None if failed
+    """
+    try:
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        
+        # Get user info
+        user = users_collection.find_one({"_id": user_oid})
+        if not user:
+            print(f"[DB] User not found: {user_id}")
+            return None
+        
+        # Determine durian variety and quality from analysis
+        primary_class = analysis_result.get("primary_class", "Unknown")
+        quality_score = analysis_result.get("quality_score", 0)
+        confidence = analysis_result.get("primary_confidence", 0)
+        total_count = analysis_result.get("total_count", 0)
+        
+        # Determine status based on quality score
+        if quality_score >= 70:
+            status = "Export Ready"
+        elif quality_score >= 50:
+            status = "Local Sale"
+        else:
+            status = "Rejected"
+        
+        scan_data = {
+            "user_id": user_oid,
+            "username": user.get("name", "Anonymous"),
+            "image_url": image_url,
+            "thumbnail_url": thumbnail_url,
+            "cloudinary_public_id": cloudinary_public_id,
+            "variety": primary_class,
+            "quality_score": quality_score,
+            "confidence": confidence,
+            "status": status,
+            "durian_count": total_count,
+            "detection": detection_result,
+            "analysis": analysis_result,
+            "created_at": datetime.utcnow(),
+        }
+        
+        result = scans_collection.insert_one(scan_data)
+        
+        if result.inserted_id:
+            scan_data["_id"] = result.inserted_id
+            print(f"[DB] Scan saved: {result.inserted_id}")
+            return scan_data
+        return None
+        
+    except Exception as e:
+        print(f"[DB] Error saving scan: {e}")
+        return None
+
+
+def get_user_scans(
+    user_id: str,
+    limit: int = 50,
+    skip: int = 0
+) -> List[Dict[str, Any]]:
+    """
+    Get all scans for a user, sorted by most recent
+    """
+    try:
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        scans = scans_collection.find({"user_id": user_oid}).sort("created_at", -1).skip(skip).limit(limit)
+        return list(scans)
+    except Exception as e:
+        print(f"[DB] Error getting user scans: {e}")
+        return []
+
+
+def get_scan_by_id(scan_id: str) -> Optional[Dict[str, Any]]:
+    """Get a single scan by ID"""
+    try:
+        scan_oid = ObjectId(scan_id) if not isinstance(scan_id, ObjectId) else scan_id
+        return scans_collection.find_one({"_id": scan_oid})
+    except Exception as e:
+        print(f"[DB] Error getting scan: {e}")
+        return None
+
+
+def delete_scan(scan_id: str, user_id: str) -> bool:
+    """Delete a scan (only by owner)"""
+    try:
+        scan_oid = ObjectId(scan_id) if not isinstance(scan_id, ObjectId) else scan_id
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        
+        result = scans_collection.delete_one({"_id": scan_oid, "user_id": user_oid})
+        return result.deleted_count > 0
+    except Exception as e:
+        print(f"[DB] Error deleting scan: {e}")
+        return False
+
+
+def get_user_scan_stats(user_id: str, time_range: str = "month") -> Dict[str, Any]:
+    """
+    Get aggregated scan statistics for a user
+    
+    Args:
+        user_id: User ID
+        time_range: 'week', 'month', or 'year'
+    
+    Returns:
+        Dictionary with scan statistics
+    """
+    try:
+        from datetime import timedelta
+        
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        
+        # Calculate date range
+        now = datetime.utcnow()
+        if time_range == "week":
+            start_date = now - timedelta(days=7)
+        elif time_range == "year":
+            start_date = now - timedelta(days=365)
+        else:  # month (default)
+            start_date = now - timedelta(days=30)
+        
+        # Get scans in time range
+        scans = list(scans_collection.find({
+            "user_id": user_oid,
+            "created_at": {"$gte": start_date}
+        }))
+        
+        if not scans:
+            return {
+                "total_scans": 0,
+                "export_ready": 0,
+                "rejected": 0,
+                "avg_quality": 0,
+                "top_variety": "N/A",
+                "weekly_growth": 0
+            }
+        
+        total_scans = len(scans)
+        export_ready = sum(1 for s in scans if s.get("status") == "Export Ready")
+        rejected = sum(1 for s in scans if s.get("status") == "Rejected")
+        
+        quality_scores = [s.get("quality_score", 0) for s in scans]
+        avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
+        
+        # Get top variety
+        varieties = {}
+        for s in scans:
+            variety = s.get("variety", "Unknown")
+            varieties[variety] = varieties.get(variety, 0) + 1
+        top_variety = max(varieties, key=varieties.get) if varieties else "N/A"
+        
+        # Calculate weekly growth
+        week_ago = now - timedelta(days=7)
+        two_weeks_ago = now - timedelta(days=14)
+        
+        this_week = sum(1 for s in scans if s.get("created_at", now) >= week_ago)
+        last_week = len(list(scans_collection.find({
+            "user_id": user_oid,
+            "created_at": {"$gte": two_weeks_ago, "$lt": week_ago}
+        })))
+        
+        if last_week > 0:
+            weekly_growth = ((this_week - last_week) / last_week) * 100
+        else:
+            weekly_growth = 100 if this_week > 0 else 0
+        
+        return {
+            "total_scans": total_scans,
+            "export_ready_percent": round((export_ready / total_scans) * 100, 1) if total_scans > 0 else 0,
+            "rejected_percent": round((rejected / total_scans) * 100, 1) if total_scans > 0 else 0,
+            "avg_quality": round(avg_quality, 1),
+            "top_variety": top_variety,
+            "weekly_growth": round(weekly_growth, 1)
+        }
+        
+    except Exception as e:
+        print(f"[DB] Error getting scan stats: {e}")
+        return {
+            "total_scans": 0,
+            "export_ready_percent": 0,
+            "rejected_percent": 0,
+            "avg_quality": 0,
+            "top_variety": "N/A",
+            "weekly_growth": 0
+        }
+
+
+def get_weekly_scan_data(user_id: str) -> List[Dict[str, Any]]:
+    """
+    Get daily scan counts for the past 7 days
+    """
+    try:
+        from datetime import timedelta
+        
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        now = datetime.utcnow()
+        
+        weekly_data = []
+        day_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        
+        for i in range(6, -1, -1):
+            day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+            
+            day_scans = list(scans_collection.find({
+                "user_id": user_oid,
+                "created_at": {"$gte": day_start, "$lt": day_end}
+            }))
+            
+            quality_scores = [s.get("quality_score", 0) for s in day_scans]
+            avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
+            
+            weekly_data.append({
+                "day": day_names[day_start.weekday()],
+                "date": day_start.strftime("%Y-%m-%d"),
+                "scans": len(day_scans),
+                "quality": round(avg_quality, 1)
+            })
+        
+        return weekly_data
+        
+    except Exception as e:
+        print(f"[DB] Error getting weekly data: {e}")
+        return []
+
+
+def get_quality_distribution(user_id: str, time_range: str = "month") -> List[Dict[str, Any]]:
+    """
+    Get quality score distribution for charts
+    """
+    try:
+        from datetime import timedelta
+        
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        now = datetime.utcnow()
+        
+        if time_range == "week":
+            start_date = now - timedelta(days=7)
+        elif time_range == "year":
+            start_date = now - timedelta(days=365)
+        else:
+            start_date = now - timedelta(days=30)
+        
+        scans = list(scans_collection.find({
+            "user_id": user_oid,
+            "created_at": {"$gte": start_date}
+        }))
+        
+        total = len(scans) or 1  # Avoid division by zero
+        
+        ranges = [
+            {"range": "90-100", "min": 90, "max": 100},
+            {"range": "80-89", "min": 80, "max": 89},
+            {"range": "70-79", "min": 70, "max": 79},
+            {"range": "0-69", "min": 0, "max": 69},
+        ]
+        
+        distribution = []
+        for r in ranges:
+            count = sum(1 for s in scans if r["min"] <= s.get("quality_score", 0) <= r["max"])
+            distribution.append({
+                "range": r["range"],
+                "count": count,
+                "percentage": round((count / total) * 100, 1)
+            })
+        
+        return distribution
+        
+    except Exception as e:
+        print(f"[DB] Error getting quality distribution: {e}")
+        return []
