@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # Use local YOLO model (your trained model)
-from yolo_detector import get_yolo_detector
+from ai.yolo_detector import get_yolo_detector
 
 scanner_bp = Blueprint('scanner', __name__)
 

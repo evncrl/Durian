@@ -19,15 +19,7 @@ const DURIAN_DATA = [
   { id: 13, province: "Davao Occidental", lat: 6.3500, lon: 125.4000, production: 3000 },
   { id: 14, province: "Agusan del Sur", lat: 8.9400, lon: 125.5200, production: 2500 },
   { id: 15, province: "Lanao del Sur", lat: 7.6800, lon: 124.3000, production: 2200 },
-  { id: 16, province: "Lanao del Norte", lat: 8.0500, lon: 124.2500, production: 1800 },
-  { id: 17, province: "Sulu", lat: 6.0500, lon: 121.0000, production: 1200 },
-  { id: 18, province: "Cagayan Valley", lat: 17.6400, lon: 121.7300, production: 500 },
-  { id: 19, province: "Western Visayas", lat: 11.7000, lon: 122.5700, production: 400 },
-  { id: 20, province: "Central Visayas", lat: 10.3100, lon: 123.8900, production: 350 },
-  { id: 21, province: "Eastern Visayas", lat: 11.2000, lon: 125.0000, production: 300 },
-  { id: 22, province: "CALABARZON", lat: 14.2000, lon: 121.1500, production: 200 },
-  { id: 23, province: "MIMAROPA", lat: 12.5000, lon: 121.0000, production: 150 },
-  { id: 24, province: "Central Luzon", lat: 15.0000, lon: 120.9000, production: 100 }
+  { id: 16, province: "Lanao del Norte", lat: 8.0500, lon: 124.2500, production: 1800 }
 ];
 
 interface HeatmapProps {

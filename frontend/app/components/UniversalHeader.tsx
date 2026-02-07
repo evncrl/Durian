@@ -25,9 +25,9 @@ interface UniversalHeaderProps {
 const navItems = [
   { id: '1', title: 'Home', icon: 'home' as const, screen: 'Home' },
   { id: '2', title: 'Scanner', icon: 'camera' as const, screen: 'Scanner' },
-  { id: '3', title: 'Shop', icon: 'storefront' as const, screen: 'Shop' },
-  { id: '4', title: 'Chatbot', icon: 'chatbox' as const, screen: 'Chatbot' },
- 
+  { id: '3', title: 'Analytics', icon: 'stats-chart' as const, screen: 'Analytics' },
+  { id: '4', title: 'Shop', icon: 'storefront' as const, screen: 'Shop' },
+  { id: '5', title: 'Chatbot', icon: 'chatbox' as const, screen: 'Chatbot' },
 ];
 
 export default function UniversalHeader({ 

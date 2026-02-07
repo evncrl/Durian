@@ -8,6 +8,9 @@ import {
   ScrollView,
   Platform,
   Dimensions,
+  Modal,
+  TextInput,
+  StyleSheet as RNStyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -34,6 +37,12 @@ const AdminDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [showDeactivated, setShowDeactivated] = useState(false);
+  
+  // Deactivation modal state
+  const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
 
   useEffect(() => {
     fetchStatus();
@@ -125,17 +134,43 @@ const AdminDashboard = () => {
       });
   };
 
+  const openDeactivateModal = (user: User) => {
+    setUserToDeactivate(user);
+    setDeactivateReason('');
+    setDeactivateModalVisible(true);
+  };
+
+  const closeDeactivateModal = () => {
+    setDeactivateModalVisible(false);
+    setUserToDeactivate(null);
+    setDeactivateReason('');
+  };
+
   const deactivateUser = (userId: string) => {
-    fetch(`${API_URL}/admin/users/${userId}/deactivate`, {
+    openDeactivateModal(users.find(u => u._id === userId) || null as any);
+  };
+
+  const confirmDeactivateUser = () => {
+    if (!userToDeactivate) return;
+    if (!deactivateReason.trim()) {
+      Alert.alert("Error", "Please provide a reason for deactivation.");
+      return;
+    }
+
+    setDeactivating(true);
+    fetch(`${API_URL}/admin/users/${userToDeactivate._id}/deactivate`, {
       method: 'PUT',
       headers: {
+        'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true',
-      }
+      },
+      body: JSON.stringify({ reason: deactivateReason.trim() })
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          Alert.alert("Success", "User deactivated.");
+          Alert.alert("Success", "User deactivated and notified via email.");
+          closeDeactivateModal();
           fetchUsers();
         } else {
           Alert.alert("Error", data.error || "Failed to deactivate user.");
@@ -144,7 +179,8 @@ const AdminDashboard = () => {
       .catch((err) => {
         console.error("Deactivate User Error:", err);
         Alert.alert("Error", "Failed to deactivate user.");
-      });
+      })
+      .finally(() => setDeactivating(false));
   };
 
   const reactivateUser = (userId: string) => {
@@ -297,7 +333,7 @@ const AdminDashboard = () => {
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity 
-                    onPress={() => deleteUser(user._id)} 
+                    onPress={() => openDeactivateModal(user)} 
                     style={styles.deleteBtn}
                   >
                     <Text style={styles.deleteBtnText}>Deactivate</Text>
@@ -309,8 +345,149 @@ const AdminDashboard = () => {
         )}
         </View>
       </ScrollView>
+
+      {/* Deactivation Reason Modal */}
+      <Modal
+        visible={deactivateModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeDeactivateModal}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.modalContainer}>
+            <Text style={modalStyles.modalTitle}>Deactivate User</Text>
+            {userToDeactivate && (
+              <Text style={modalStyles.userInfo}>
+                {userToDeactivate.name} ({userToDeactivate.email})
+              </Text>
+            )}
+            <Text style={modalStyles.label}>Reason for deactivation:</Text>
+            <TextInput
+              style={modalStyles.textInput}
+              placeholder="Enter the reason for deactivation..."
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={4}
+              value={deactivateReason}
+              onChangeText={setDeactivateReason}
+              textAlignVertical="top"
+            />
+            <Text style={modalStyles.note}>
+              The user will receive an email notification with this reason.
+            </Text>
+            <View style={modalStyles.buttonRow}>
+              <TouchableOpacity 
+                style={modalStyles.cancelBtn} 
+                onPress={closeDeactivateModal}
+                disabled={deactivating}
+              >
+                <Text style={modalStyles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[modalStyles.confirmBtn, deactivating && modalStyles.disabledBtn]} 
+                onPress={confirmDeactivateUser}
+                disabled={deactivating}
+              >
+                <Text style={modalStyles.confirmBtnText}>
+                  {deactivating ? 'Deactivating...' : 'Confirm Deactivate'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
+
+// Modal styles
+const modalStyles = RNStyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    width: '100%',
+    maxWidth: 450,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1b5e20',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  userInfo: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 100,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 12,
+  },
+  note: {
+    fontSize: 12,
+    color: '#888',
+    fontStyle: 'italic',
+    marginBottom: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#e0e0e0',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: '#d32f2f',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  confirmBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  disabledBtn: {
+    backgroundColor: '#ccc',
+  },
+});
 
 export default AdminDashboard;

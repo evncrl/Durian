@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from bson.objectid import ObjectId
 from db import users_collection
+from handlers.email_handler import send_deactivation_email, send_reactivation_email
 import datetime
 
 # Create Blueprint
@@ -71,40 +72,95 @@ def update_user_role(user_id):
 
 @admin_bp.route("/users/<user_id>/deactivate", methods=["PUT", "OPTIONS"])
 def deactivate_user(user_id):
-    """Deactivate user (admin)"""
+    """Deactivate user (admin) with reason and email notification"""
     if request.method == "OPTIONS":
         return '', 200
     
     try:
+        # Get reason from request body
+        data = request.json or {}
+        reason = data.get("reason", "No reason provided")
+        
+        # First, get the user info for email
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return jsonify({"success": False, "error": "User not found"}), 404
+        
+        # Update user status
         result = users_collection.update_one(
             {"_id": ObjectId(user_id)},
-            {"$set": {"isActive": False, "updatedAt": datetime.datetime.utcnow().isoformat()}}
+            {
+                "$set": {
+                    "isActive": False,
+                    "deactivationReason": reason,
+                    "deactivatedAt": datetime.datetime.utcnow().isoformat(),
+                    "updatedAt": datetime.datetime.utcnow().isoformat()
+                }
+            }
         )
         
         if result.modified_count > 0:
-            return jsonify({"success": True, "message": "User deactivated"}), 200
+            # Send deactivation email
+            user_email = user.get("email", "")
+            user_name = user.get("name", "User")
+            
+            email_sent = False
+            if user_email:
+                email_sent = send_deactivation_email(user_email, user_name, reason)
+            
+            return jsonify({
+                "success": True,
+                "message": "User deactivated",
+                "emailSent": email_sent
+            }), 200
         else:
-            return jsonify({"success": False, "error": "User not found"}), 404
+            return jsonify({"success": False, "error": "User not found or already deactivated"}), 404
             
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
 @admin_bp.route("/users/<user_id>/activate", methods=["PUT", "OPTIONS"])
 def activate_user(user_id):
-    """Reactivate user (admin)"""
+    """Reactivate user (admin) with email notification"""
     if request.method == "OPTIONS":
         return '', 200
     
     try:
+        # First, get the user info for email
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return jsonify({"success": False, "error": "User not found"}), 404
+        
         result = users_collection.update_one(
             {"_id": ObjectId(user_id)},
-            {"$set": {"isActive": True, "updatedAt": datetime.datetime.utcnow().isoformat()}}
+            {
+                "$set": {
+                    "isActive": True,
+                    "updatedAt": datetime.datetime.utcnow().isoformat()
+                },
+                "$unset": {
+                    "deactivationReason": "",
+                    "deactivatedAt": ""
+                }
+            }
         )
         
         if result.modified_count > 0:
-            return jsonify({"success": True, "message": "User reactivated"}), 200
+            # Send reactivation email
+            user_email = user.get("email", "")
+            user_name = user.get("name", "User")
+            
+            email_sent = False
+            if user_email:
+                email_sent = send_reactivation_email(user_email, user_name)
+            
+            return jsonify({
+                "success": True,
+                "message": "User reactivated",
+                "emailSent": email_sent
+            }), 200
         else:
-            return jsonify({"success": False, "error": "User not found"}), 404
+            return jsonify({"success": False, "error": "User not found or already active"}), 404
             
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

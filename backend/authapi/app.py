@@ -76,13 +76,15 @@ def health():
 
 def after_request(response):
 
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    # Only add CORS headers if not already set by flask-cors
 
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning')
+    if 'Access-Control-Allow-Origin' not in response.headers:
 
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Origin', '*')
 
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning'
+
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
 
     return response
 
