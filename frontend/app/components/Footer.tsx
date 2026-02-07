@@ -81,7 +81,7 @@ const Footer: React.FC<FooterProps> = ({
           <Text style={styles.sectionTitle}>Contact Us</Text>
           <View style={styles.contactItem}>
             <Ionicons name="mail-outline" size={16} color="#A7F3D0" />
-            <Text style={styles.contactText}>support@durianapp@gmail.com</Text>
+            <Text style={styles.contactText}>durianapp_support@gmail.com</Text>
           </View>
           <View style={styles.contactItem}>
             <Ionicons name="call-outline" size={16} color="#A7F3D0" />

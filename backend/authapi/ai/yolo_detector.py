@@ -1,4 +1,4 @@
-# backend/authapi/yolo_detector.py
+# backend/authapi/ai/yolo_detector.py
 """
 Local YOLO Detector using trained model
 Uses the custom-trained YOLOv8 model for durian detection
@@ -10,11 +10,11 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 # Get the base directory
-BASE_DIR = Path(__file__).parent.parent
+BASE_DIR = Path(__file__).parent.parent.parent
 MODELS_DIR = BASE_DIR / "models"
 
 # Default model path - update this if you train a new model
-DEFAULT_MODEL = "durian_detector_durian_detection_20260203_205034.pt"
+DEFAULT_MODEL = "durian_detector_durian_detection_20260206_201634.pt"
 
 
 class YOLODetector:

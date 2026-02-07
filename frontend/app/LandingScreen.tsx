@@ -495,7 +495,7 @@ export default function Landing() {
             <View style={styles.teamMember}>
               <View style={styles.teamImageWrapper}>
                 <Image
-                  source={require("../assets/images/feature2.jpg")}
+                  source={require("../assets/images/evan.jpg")}
                   style={styles.teamImage}
                 />
               </View>

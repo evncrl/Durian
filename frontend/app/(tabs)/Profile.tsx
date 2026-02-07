@@ -148,7 +148,7 @@ export default function Profile() {
       formData.append('userId', userId);
 
       const response = await axios.put(
-        `${API_URL}/update-pfp`,
+        `${API_URL}/profile/update-pfp`,
         formData,
         {
           headers: {

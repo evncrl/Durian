@@ -7,6 +7,7 @@ import Scanner from './(tabs)/Scanner';
 import Shop from './(tabs)/Shop';
 import Chatbot from './(tabs)/Chatbot';
 import Profile from './(tabs)/Profile';
+import Analytics from './(tabs)/Analytics';
 
 export default function AppContainer() {
   const { currentScreen, navigateToScreen } = useNavigation();
@@ -21,6 +22,8 @@ export default function AppContainer() {
         return <Shop />;
       case 'Chatbot':
         return <Chatbot />;
+     case 'Analytics':
+        return <Analytics />;
       case 'Profile':
         return <Profile />;
       default:
