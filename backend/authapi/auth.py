@@ -99,25 +99,21 @@ def login_user(email: str, password: str):
     user = users_collection.find_one({"email": email})
 
     if not user or not verify_password(password, user["password"]):
-
         return {"error": "Invalid credentials"}
 
-
+    # Prevent login if user is not active
+    if not user.get("isActive", True):
+        return {"error": "User is deactivated. Please contact support."}
 
     # Set isLoggedIn True
-
     users_collection.update_one(
-
         {"_id": user["_id"]},
-
         {"$set": {"isLoggedIn": True, "lastLogin": datetime.datetime.utcnow()}}
-
     )
 
 
 
     # JWT payload
-
     payload = {
 
         "sub": str(user["_id"]),
@@ -338,6 +334,7 @@ def signup_user_with_pfp(name, email, password, confirm_password, photo_file=Non
             "id": str(user["_id"]),
             "name": user["name"],
             "email": user["email"],
+            "role": user.get("role", "user"),
             "photoProfile": user.get("photoProfile"),
             "photoThumbnail": user.get("photoThumbnail"),
             "photoPublicId": user.get("photoPublicId"),

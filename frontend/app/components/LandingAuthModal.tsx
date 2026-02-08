@@ -42,6 +42,7 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedImage, setSelectedImage] = useState<ImagePickerAsset | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>("");
   const { isSmallScreen } = useResponsive();
   const styles = useLandingStyles();
 
@@ -116,6 +117,7 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
 
   const onSubmit = async () => {
     setLoading(true);
+    setErrorMsg("");
     try {
       if (authMode === 'signup') {
         if (!name || !email || !password || !confirmPassword) {
@@ -170,13 +172,13 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
             await storeData('photoProfile', userData.photoProfile);
             Alert.alert('Success', 'Account created!');
             await refreshUser();
-            onClose();
             // Redirect to admin dashboard if admin after signup
             if (userRole === 'admin') {
               router.replace('/admin');
             } else {
               router.replace('/');
             }
+            onClose();
           } else {
             Alert.alert('Error', loginRes.data.error || 'Login after signup failed');
           }
@@ -188,7 +190,7 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
       }
       // LOGIN LOGIC
       if (!email || !password) {
-        Alert.alert('Error', 'Please fill in all fields');
+        setErrorMsg('Please fill in all fields');
         setLoading(false);
         return;
       }
@@ -203,20 +205,20 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
         await storeData('name', userData.name);
         await storeData('photoProfile', userData.photoProfile);
         await refreshUser();
-        onClose();
-        Alert.alert('Success', 'Logged in!');
         // Redirect to admin dashboard if admin
         if (userRole === 'admin') {
           router.replace('/admin');
         } else {
           router.replace('/');
         }
+        onClose();
+        Alert.alert('Success', 'Logged in!');
       } else {
-        Alert.alert('Error', loginRes.data.error || 'Invalid credentials');
+        setErrorMsg(loginRes.data.error || 'Invalid credentials');
       }
     } catch (err: any) {
       console.error('Auth error:', err);
-      Alert.alert('Error', err?.response?.data?.error || 'Connection error');
+      setErrorMsg(err?.response?.data?.error || 'Connection error');
     } finally {
       setLoading(false);
     }
@@ -296,6 +298,9 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
               secureTextEntry
               editable={!loading}
             />
+            {errorMsg ? (
+              <Text style={{ color: '#d32f2f', marginTop: 4, marginBottom: 4, textAlign: 'center' }}>{errorMsg}</Text>
+            ) : null}
             {authMode === 'signup' && (
               <TextInput
                 style={styles.input}
