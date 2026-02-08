@@ -13,12 +13,10 @@ import {
   ActivityIndicator,
   RefreshControl
 } from "react-native";
+
 import { useResponsive } from '../utils/platform';
 import styles from "../styles/Forum.styles";
 import { API_URL } from "../config/appconf";
-
-const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
-const isMobile = width < 768;
 
 interface ForumPost {
   _id: string;
@@ -56,6 +54,8 @@ interface ForumProps {
 }
 
 export default function Forum({ embedded = false }: ForumProps) {
+  const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
+  const isMobile = width < 768;
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewPostModal, setShowNewPostModal] = useState(false);

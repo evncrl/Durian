@@ -1,445 +1,853 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions, Platform } from 'react-native';
 
-export default StyleSheet.create({
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Modern Color Palette - Vibrant Community Theme
+const colors = {
+  // Primary - Fresh Green
+  primary: '#16a34a',
+  primaryDark: '#15803d',
+  primaryLight: '#22c55e',
+  primaryGlow: '#4ade80',
+  
+  // Accent Colors
+  accent: '#3b82f6',
+  accentDark: '#2563eb',
+  accentLight: '#60a5fa',
+  
+  // Category Colors
+  qualityRed: '#dc2626',
+  qualityRedBg: '#fee2e2',
+  practiceBlue: '#2563eb',
+  practiceBlueBg: '#dbeafe',
+  exportGreen: '#16a34a',
+  exportGreenBg: '#dcfce7',
+  discussionGray: '#4b5563',
+  discussionGrayBg: '#f3f4f6',
+  
+  // Neutrals
+  white: '#ffffff',
+  gray50: '#f9fafb',
+  gray100: '#f3f4f6',
+  gray200: '#e5e7eb',
+  gray300: '#d1d5db',
+  gray400: '#9ca3af',
+  gray500: '#6b7280',
+  gray600: '#4b5563',
+  gray700: '#374151',
+  gray800: '#1f2937',
+  gray900: '#111827',
+  
+  // Status Colors
+  success: '#10b981',
+  warning: '#f59e0b',
+  error: '#ef4444',
+  info: '#3b82f6',
+  
+  // Overlays
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlayLight: 'rgba(0, 0, 0, 0.3)',
+  overlayDark: 'rgba(0, 0, 0, 0.7)',
+  glassWhite: 'rgba(255, 255, 255, 0.95)',
+  
+  // Gradient Colors
+  gradientStart: '#16a34a',
+  gradientMid: '#22c55e',
+  gradientEnd: '#4ade80',
+};
+
+// Responsive sizing
+const isSmallScreen = SCREEN_WIDTH < 375;
+const isMediumScreen = SCREEN_WIDTH >= 375 && SCREEN_WIDTH < 768;
+const isLargeScreen = SCREEN_WIDTH >= 768;
+const isWebPlatform = Platform.OS === 'web';
+
+const scale = (size: number) => {
+  if (isLargeScreen) return size * 1.1;
+  if (isSmallScreen) return size * 0.9;
+  return size;
+};
+
+const verticalScale = (size: number) => {
+  if (isLargeScreen) return size * 1.05;
+  if (isSmallScreen) return size * 0.85;
+  return size;
+};
+
+const styles = StyleSheet.create({
+  // ========== MAIN CONTAINER ==========
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.gray50,
   },
+
+  // ========== HEADER ==========
   header: {
-    backgroundColor: '#16a34a',
-    paddingTop: 60,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
+
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: scale(20),
   },
+
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
+    fontSize: isSmallScreen ? 24 : isLargeScreen ? 32 : 28,
+    fontWeight: '800',
+    color: colors.gray900,
+    letterSpacing: -0.5,
   },
+
   headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
+    fontSize: scale(14),
+    color: colors.gray500,
     marginTop: 4,
+    fontWeight: '500',
   },
+
   newPostButton: {
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
+    backgroundColor: colors.primary,
     paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: `0 4px 12px ${colors.primary}40`,
+      },
+    }),
   },
+
   newPostButtonText: {
-    color: '#16a34a',
-    fontWeight: '600',
-    fontSize: 14,
+    color: colors.white,
+    fontSize: scale(15),
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
+
+  // ========== SEARCH SECTION ==========
   searchSection: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: scale(20),
+    paddingVertical: 16,
+    backgroundColor: colors.white,
   },
+
   searchInput: {
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: colors.gray100,
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: scale(15),
+    color: colors.gray900,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.gray200,
   },
+
+  // ========== CATEGORY TABS ==========
   categoryTabs: {
-    marginTop: 16,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
   },
+
   categoryTabsContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: scale(20),
+    paddingVertical: 12,
+    gap: 8,
   },
+
   categoryTab: {
-    paddingHorizontal: 20,
     paddingVertical: 8,
-    marginRight: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.gray100,
+    marginRight: 8,
   },
+
   categoryTabActive: {
-    backgroundColor: '#16a34a',
+    backgroundColor: colors.primary,
   },
+
   categoryTabText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  categoryTabTextActive: {
-    color: 'white',
+    fontSize: scale(14),
     fontWeight: '600',
+    color: colors.gray600,
   },
+
+  categoryTabTextActive: {
+    color: colors.white,
+  },
+
+  // ========== STATS BAR ==========
   statsBar: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 10,
-    paddingVertical: 16,
     justifyContent: 'space-around',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    paddingVertical: 16,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
   },
+
   statItem: {
     alignItems: 'center',
   },
+
   statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontSize: scale(20),
+    fontWeight: '800',
+    color: colors.primary,
+    marginBottom: 4,
   },
+
   statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
+    fontSize: scale(12),
+    color: colors.gray500,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
   statDivider: {
     width: 1,
-    backgroundColor: '#e5e7eb',
+    height: 30,
+    backgroundColor: colors.gray200,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  loadingText: {
-    marginTop: 12,
-    color: '#6b7280',
-  },
+
+  // ========== POSTS CONTAINER ==========
   postsContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: scale(20),
+    paddingTop: 12,
+    paddingBottom: 20,
   },
+
+  // ========== POST CARD ==========
   postCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      },
+    }),
   },
+
   pinnedBadge: {
-    backgroundColor: '#fef3c7',
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    backgroundColor: colors.warning,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 4,
-    marginBottom: 8,
+    borderRadius: 12,
+    marginBottom: 12,
   },
+
   pinnedText: {
-    fontSize: 12,
-    color: '#92400e',
-    fontWeight: '500',
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: colors.white,
+    letterSpacing: 0.3,
   },
+
+  // ========== POST HEADER ==========
   postHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
+
   authorAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 12,
+    backgroundColor: colors.gray200,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
+
   postHeaderInfo: {
     flex: 1,
+    marginLeft: 12,
   },
+
   authorName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: scale(15),
+    fontWeight: '700',
+    color: colors.gray900,
+    marginBottom: 2,
   },
+
   postTimestamp: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
+    fontSize: scale(12),
+    color: colors.gray500,
+    fontWeight: '500',
   },
+
   categoryBadge: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
+
   categoryBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: scale(11),
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
+  // ========== POST CONTENT ==========
   postTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: scale(18),
+    fontWeight: '800',
+    color: colors.gray900,
     marginBottom: 8,
+    lineHeight: 24,
   },
+
   postContent: {
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 20,
+    fontSize: scale(15),
+    color: colors.gray600,
+    lineHeight: 22,
+    marginBottom: 12,
   },
+
+  // ========== POST FOOTER ==========
   postFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 16,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.gray200,
   },
+
   postStats: {
     flexDirection: 'row',
+    gap: 16,
   },
+
   statGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 20,
+    gap: 6,
   },
+
   statIcon: {
     fontSize: 18,
-    marginRight: 4,
   },
+
   likedIcon: {
-    color: '#dc2626',
+    transform: [{ scale: 1.1 }],
   },
+
   statText: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: scale(14),
+    color: colors.gray600,
+    fontWeight: '600',
   },
+
   replyButton: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 16,
+    backgroundColor: colors.gray100,
     paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.gray200,
   },
+
   replyButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: scale(14),
+    fontWeight: '700',
+    color: colors.primary,
   },
-  emptyState: {
+
+  // ========== LOADING & EMPTY STATES ==========
+  loadingContainer: {
+    paddingVertical: 60,
     alignItems: 'center',
-    padding: 40,
+    justifyContent: 'center',
   },
+
+  loadingText: {
+    marginTop: 12,
+    fontSize: scale(15),
+    color: colors.gray500,
+    fontWeight: '600',
+  },
+
+  emptyState: {
+    paddingVertical: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   emptyStateIcon: {
-    fontSize: 48,
+    fontSize: 64,
     marginBottom: 16,
   },
+
   emptyStateText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: scale(20),
+    fontWeight: '700',
+    color: colors.gray700,
     marginBottom: 8,
   },
+
   emptyStateSubtext: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: scale(14),
+    color: colors.gray500,
+    textAlign: 'center',
+    maxWidth: 250,
   },
-  // Modal Styles
+
+  // ========== MODAL ==========
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
+
   modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: '80%',
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    maxHeight: '90%',
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 20,
+      },
+      web: {
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.3)',
+      },
+    }),
   },
+
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.gray200,
   },
+
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: scale(22),
+    fontWeight: '800',
+    color: colors.gray900,
+    letterSpacing: -0.5,
   },
+
   closeButton: {
-    padding: 8,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: '#6b7280',
-  },
-  commentsList: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  noComments: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
   },
-  noCommentsText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 8,
+
+  closeButtonText: {
+    fontSize: 20,
+    color: colors.gray600,
+    fontWeight: '700',
   },
-  noCommentsSubtext: {
-    fontSize: 14,
-    color: '#6b7280',
+
+  // ========== FORM INPUTS ==========
+  input: {
+    backgroundColor: colors.gray100,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: scale(15),
+    color: colors.gray900,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.gray200,
   },
-  commentItem: {
+
+  // ========== CATEGORY SELECTION ==========
+  categorySelection: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 24,
+    gap: 8,
     marginBottom: 16,
   },
+
+  categoryOption: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.gray100,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+  },
+
+  categoryOptionActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+
+  categoryOptionText: {
+    fontSize: scale(13),
+    fontWeight: '600',
+    color: colors.gray700,
+  },
+
+  // ========== MODAL FOOTER ==========
+  modalFooter: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    gap: 12,
+  },
+
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray200,
+  },
+
+  cancelButtonText: {
+    fontSize: scale(16),
+    fontWeight: '700',
+    color: colors.gray700,
+  },
+
+  postButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: `0 4px 12px ${colors.primary}40`,
+      },
+    }),
+  },
+
+  postButtonDisabled: {
+    opacity: 0.5,
+  },
+
+  postButtonText: {
+    fontSize: scale(16),
+    fontWeight: '700',
+    color: colors.white,
+    letterSpacing: 0.3,
+  },
+
+  // ========== COMMENTS ==========
+  commentsList: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    maxHeight: SCREEN_HEIGHT * 0.5,
+  },
+
+  commentItem: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+
   commentAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    marginRight: 12,
+    backgroundColor: colors.gray200,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
+
   commentContent: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-    padding: 12,
+    marginLeft: 12,
+    backgroundColor: colors.gray100,
     borderRadius: 12,
+    padding: 12,
   },
+
   commentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
+
   commentAuthor: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: scale(14),
+    fontWeight: '700',
+    color: colors.gray900,
   },
+
   commentTime: {
-    fontSize: 12,
-    color: '#6b7280',
+    fontSize: scale(11),
+    color: colors.gray500,
+    fontWeight: '500',
   },
+
   commentText: {
-    fontSize: 14,
-    color: '#4b5563',
+    fontSize: scale(14),
+    color: colors.gray700,
     lineHeight: 20,
+    marginBottom: 8,
   },
+
   commentLikeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
     alignSelf: 'flex-start',
+    gap: 4,
   },
+
   commentLikeIcon: {
-    fontSize: 16,
-    marginRight: 4,
+    fontSize: 14,
   },
+
   commentLikeCount: {
-    fontSize: 12,
-    color: '#6b7280',
+    fontSize: scale(12),
+    color: colors.gray600,
+    fontWeight: '600',
   },
+
+  noComments: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+
+  noCommentsText: {
+    fontSize: scale(18),
+    fontWeight: '700',
+    color: colors.gray700,
+    marginBottom: 6,
+  },
+
+  noCommentsSubtext: {
+    fontSize: scale(14),
+    color: colors.gray500,
+  },
+
+  // ========== COMMENT INPUT ==========
   commentInputContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: colors.gray200,
+    backgroundColor: colors.white,
+    gap: 12,
     alignItems: 'flex-end',
   },
+
   commentInput: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.gray100,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    marginRight: 8,
+    fontSize: scale(15),
+    color: colors.gray900,
     maxHeight: 100,
-    fontSize: 14,
+    borderWidth: 1,
+    borderColor: colors.gray200,
   },
+
   submitCommentButton: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 20,
+    backgroundColor: colors.primary,
     paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 20,
+    minWidth: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: `0 4px 12px ${colors.primary}40`,
+      },
+    }),
   },
+
   submitCommentButtonDisabled: {
-    backgroundColor: '#9ca3af',
+    opacity: 0.5,
   },
+
   submitCommentButtonText: {
-    color: 'white',
-    fontWeight: '600',
+    fontSize: scale(15),
+    fontWeight: '700',
+    color: colors.white,
+    letterSpacing: 0.3,
+  },
+
+  // ========== ADDITIONAL ELEMENTS ==========
+  
+  // Trending Badge
+  trendingBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: colors.warning,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+
+  trendingText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.white,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Verified Badge
+  verifiedBadge: {
+    marginLeft: 4,
     fontSize: 14,
   },
-  input: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginHorizontal: 20,
-    marginTop: 12,
-    fontSize: 16,
+
+  // Engagement Bar
+  engagementBar: {
+    height: 3,
+    backgroundColor: colors.gray200,
+    borderRadius: 2,
+    marginTop: 8,
+    overflow: 'hidden',
   },
-  categorySelection: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    marginTop: 12,
+
+  engagementFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
   },
-  categoryOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+
+  // Tag
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: colors.accent + '20',
+    marginRight: 6,
+  },
+
+  tagText: {
+    fontSize: scale(11),
+    fontWeight: '600',
+    color: colors.accent,
+  },
+
+  // Share Button
+  shareButton: {
+    padding: 8,
     borderRadius: 20,
-    backgroundColor: '#e5e7eb',
-    marginRight: 8,
+    backgroundColor: colors.gray100,
+  },
+
+  // Poll Option
+  pollOption: {
+    backgroundColor: colors.gray100,
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.gray200,
   },
-  categoryOptionActive: {
-    backgroundColor: '#16a34a',
+
+  pollOptionSelected: {
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
-  categoryOptionText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-  },
-  cancelButtonText: {
-    color: '#374151',
+
+  pollOptionText: {
+    fontSize: scale(15),
     fontWeight: '600',
+    color: colors.gray900,
   },
-  postButton: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  postButtonDisabled: {
-    backgroundColor: '#9ca3af',
-  },
-  postButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+
+  pollPercentage: {
+    fontSize: scale(13),
+    fontWeight: '700',
+    color: colors.primary,
   },
 });
+
+export default styles;
+export { colors };

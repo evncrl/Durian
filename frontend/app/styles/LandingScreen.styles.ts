@@ -2,8 +2,6 @@
 import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { useResponsive } from '../utils/platform';
 
-const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
-
 // Vibrant Color Palette
 const colors = {
   // Primary Green Shades
@@ -53,31 +51,48 @@ const colors = {
   borderDark: '#4db6ac',
 };
 
-// Responsive sizing
-const scale = (size: number) => {
-  if (isWeb && isLargeScreen) return size;
-  if (isSmallScreen) return size * 0.9;
-  return size;
-};
-
-const verticalScale = (size: number) => {
-  if (isWeb && isLargeScreen) return size;
-  if (isSmallScreen) return size * 0.85;
-  return size;
-};
-
-const moderateScale = (size: number, factor = 0.5) => {
-  return size + (scale(size) - size) * factor;
-};
 
 export const useLandingStyles = () => {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
+  const screenWidth = width;
+  const screenHeight = Dimensions.get('window').height;
   const isWebPlatform = Platform.OS === 'web';
   const isSmall = screenWidth < 375;
   const isMedium = screenWidth >= 375 && screenWidth < 768;
   const isLarge = screenWidth >= 768;
 
+  // Responsive sizing (now inside the hook)
+  const scale = (size: number) => {
+    if (isWeb && isLargeScreen) return size;
+    if (isSmallScreen) return size * 0.9;
+    return size;
+  };
+
+  const verticalScale = (size: number) => {
+    if (isWeb && isLargeScreen) return size;
+    if (isSmallScreen) return size * 0.85;
+    return size;
+  };
+
+  const moderateScale = (size: number, factor = 0.5) => {
+    return size + (scale(size) - size) * factor;
+  };
+
   return StyleSheet.create({
+    squareScrollContainer: {
+      width: '100%',
+      maxWidth: 600,
+      alignSelf: 'center',
+      borderRadius: 20,
+      backgroundColor: '#f5f5f5',
+      marginTop: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 0,
+      overflow: 'visible',
+      elevation: 0,
+      shadowColor: 'transparent',
+      justifyContent: 'flex-start',
+    },
     safeArea: {
       flex: 1,
       backgroundColor: '#fff',
@@ -722,14 +737,14 @@ export const useLandingStyles = () => {
     },
     articleCard: {
       backgroundColor: colors.bgWhite,
-      borderRadius: 12,
-      padding: isSmall ? 16 : 24,
-      marginBottom: isSmall ? 12 : 16,
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 6,
-      elevation: 2,
+      borderRadius: 10,
+      paddingVertical: 14,
+      paddingHorizontal: 18,
+      marginBottom: 14,
+      borderLeftWidth: 5,
+      borderLeftColor: colors.primary,
+      shadowColor: 'transparent',
+      elevation: 0,
     },
     articleTitle: {
       fontSize: isSmall ? 16 : 18,

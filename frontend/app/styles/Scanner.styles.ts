@@ -1,6 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
 import { useResponsive } from '../utils/platform';
-const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
 
 
 
@@ -104,6 +103,7 @@ const createShadow = (elevation: number) => {
 
 export const useScannerStyles = () => {
 
+  const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
   return StyleSheet.create({
 
     container: {

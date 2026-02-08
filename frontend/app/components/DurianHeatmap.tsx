@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-import styles from '../styles/Home.styles';
+import styles from './DurianHeatmap.styles';
 import { useResponsive } from '../utils/platform';
 
 // Durian production data for Philippines
@@ -39,16 +39,19 @@ export default function DurianHeatmap(props: HeatmapProps) {
   // Load Plotly.js for web
   useEffect(() => {
     if (isWeb && !plotlyLoaded) {
+      console.log('[DurianHeatmap] Loading Plotly.js...');
       const script = document.createElement('script');
       script.src = 'https://cdn.plot.ly/plotly-2.24.1.min.js';
       script.onload = () => {
+        console.log('[DurianHeatmap] Plotly.js loaded');
         onPlotlyLoad();
         renderMap();
       };
+      script.onerror = () => {
+        console.error('[DurianHeatmap] Failed to load Plotly.js');
+      };
       document.head.appendChild(script);
-      
       return () => {
-        // Clean up
         if (document.head.contains(script)) {
           document.head.removeChild(script);
         }
@@ -58,12 +61,20 @@ export default function DurianHeatmap(props: HeatmapProps) {
 
   useEffect(() => {
     if (isWeb && plotlyLoaded) {
+      console.log('[DurianHeatmap] Rendering map...');
       renderMap();
     }
   }, [isWeb, plotlyLoaded, mapMode]);
 
   const renderMap = () => {
-    if (!plotRef.current || !(window as any).Plotly) return;
+    if (!plotRef.current) {
+      console.warn('[DurianHeatmap] plotRef.current is null');
+      return;
+    }
+    if (!(window as any).Plotly) {
+      console.warn('[DurianHeatmap] Plotly not available on window');
+      return;
+    }
 
     const { Plotly } = (window as any);
     

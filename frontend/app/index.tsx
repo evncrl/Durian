@@ -1,4 +1,13 @@
-// app/(auth)/index.tsx
-import Landing from "./LandingScreen";
+import { NavigationProvider } from './contexts/NavigationContext';
+import { UserProvider } from './contexts/UserContext';
+import AppContainer from './AppContainer';
 
-export default Landing;
+export default function RootIndex() {
+	return (
+		<NavigationProvider>
+			<UserProvider>
+				<AppContainer />
+			</UserProvider>
+		</NavigationProvider>
+	);
+}

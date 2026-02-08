@@ -9,10 +9,13 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 
 interface NavigationProviderProps {
   children: ReactNode;
+  initialScreen?: string;
 }
 
 export function NavigationProvider({ children }: NavigationProviderProps) {
-  const [currentScreen, setCurrentScreen] = useState('Home');
+  const [currentScreen, setCurrentScreen] = useState(
+    typeof initialScreen === 'string' && initialScreen.length > 0 ? initialScreen : 'Landing'
+  );
 
   const navigateToScreen = (screen: string) => {
     setCurrentScreen(screen);

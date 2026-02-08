@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/Home.styles';
 import { DURIAN_DATA } from './DurianHeatmap';
+import styles from './RegionDetails.styles';
 
 interface RegionDetailProps {
   selectedRegion: any;
@@ -11,6 +11,7 @@ interface RegionDetailProps {
 export function RegionDetail({ selectedRegion, onClose }: RegionDetailProps) {
   if (!selectedRegion) return null;
 
+  
   return (
     <View style={styles.regionDetailContainer}>
       <View style={styles.regionHeader}>

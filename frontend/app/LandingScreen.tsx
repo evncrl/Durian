@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import { Linking } from "react-native";
 import {
   View,
   Text,
@@ -15,277 +16,56 @@ import {
   SafeAreaView,
   FlatList,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import { router } from "expo-router";
-import { API_URL } from "./config/appconf"; 
+// import AsyncStorage from "@react-native-async-storage/async-storage";
+// import axios from "axios";
+// import { router } from "expo-router";
+// import { API_URL } from "./config/appconf"; 
 import { useLandingStyles } from "./styles/LandingScreen.styles";
 import { useResponsive } from './utils/platform';
-import * as ImagePicker from 'expo-image-picker';
+// import * as ImagePicker from 'expo-image-picker';
 import Footer from './components/Footer';
+import { useUser } from './contexts/UserContext';
+import DurianHeatmap from './components/DurianHeatmap';
 
-export default function Landing() {
-  const [authModalVisible, setAuthModalVisible] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [imageUri, setImageUri] = useState<string | null>(null);
+function Landing(props: any = {}) {
+  // All hooks must be declared at the top, before any conditional or early return
+  const { user } = useUser();
+  const [plotlyLoaded, setPlotlyLoaded] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [authDropdownVisible, setAuthDropdownVisible] = useState(false);
-
   const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
-
   const styles = useLandingStyles();
   const scrollRef = useRef<ScrollView | null>(null);
   const flatListRef = useRef<FlatList<any> | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [anchors, setAnchors] = useState({ home: 0, about: 0});
+  const [anchors, setAnchors] = useState<{ home: number; about: number }>({ home: 0, about: 0 });
+  const openAuthModal = props.openAuthModal;
+  // Carousel index state (was missing after cleanup)
+  const [currentIndex, setCurrentIndex] = useState(0);
+  // Remove all local modal/auth state and handlers
+
 
   const carouselData = [
     {
       id: "1",
       title: "Know Your Durian Instantly",
       subtitle: "AI-powered quality analysis for damage, disease & export standards",
-      image: require("../assets/images/durian-bg.jpg"),
+      image: require("../assets/images/durian-bg.jpg"), // unchanged, correct path
     },
     {
       id: "2",
       title: "Fast & Accurate Analysis",
       subtitle: "Get instant AI-powered quality assessment in seconds",
-      image: require("../assets/images/durian-bg1.jpg"),
+      image: require("../assets/images/durian-bg1.jpg"), // unchanged, correct path
     },
     {
       id: "3",
       title: "Early Detection Matters",
       subtitle: "Identify damage and disease before it's too late",
-      image: require("../assets/images/durian-bg2.jpg"),
+      image: require("../assets/images/durian-bg2.jpg"), // unchanged, correct path
     },
   ];
 
-  // Image picker function
-  const pickImage = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to upload a profile picture!');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true,
-      });
-
-      if (!result.canceled) {
-        setSelectedImage(result.assets[0]);
-        setImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
-    }
-  };
-
-  const takePhoto = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Sorry, we need camera permissions to take a photo!');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: true,
-      });
-
-      if (!result.canceled) {
-        setSelectedImage(result.assets[0]);
-        setImageUri(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo');
-    }
-  };
-
-  const clearImage = () => {
-    setSelectedImage(null);
-    setImageUri(null);
-  };
-
-  const openAuthModal = (mode: "login" | "signup") => {
-    setAuthMode(mode);
-    setAuthModalVisible(true);
-  };
-
-  const closeAuthModal = () => {
-    setAuthModalVisible(false);
-    setName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setSelectedImage(null);
-    setImageUri(null);
-    setLoading(false);
-  };
-
-  const storeData = async (key: string, value: string): Promise<void> => {
-    await AsyncStorage.setItem(key, value);
-  };
-
-  const decodeJWT = (token: string) => {
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error("JWT decode error:", error);
-      return null;
-    }
-  };
-
-  const onSubmit = async () => {
-    console.log("onSubmit called - authMode:", authMode);
-
-    try {
-      setLoading(true);
-
-      if (authMode === "signup") {
-        if (!name || !email || !password || !confirmPassword) {
-          Alert.alert("Error", "Please fill in all fields");
-          setLoading(false);
-          return;
-        }
-        if (password !== confirmPassword) {
-          Alert.alert("Error", "Passwords do not match");
-          setLoading(false);
-          return;
-        }
-
-        let signupRes;
-        
-        if (selectedImage) {
-          const formData = new FormData();
-          formData.append('name', name);
-          formData.append('email', email);
-          formData.append('password', password);
-          formData.append('confirm_password', confirmPassword);
-
-          const filename = selectedImage.uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(filename || '');
-          const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-          if (Platform.OS === 'web') {
-            const response = await fetch(selectedImage.uri);
-            const blob = await response.blob();
-            formData.append('photo', blob, `profile_${Date.now()}.${match ? match[1] : 'jpg'}`);
-          } else {
-            formData.append('photo', {
-              uri: selectedImage.uri,
-              type: type,
-              name: `profile_${Date.now()}.${match ? match[1] : 'jpg'}`
-            } as any);
-          }
-
-          signupRes = await axios.post(`${API_URL}/auth/signup-with-pfp`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-        } else {
-          signupRes = await axios.post(`${API_URL}/auth/signup`, {
-            name, email, password, confirm_password: confirmPassword,
-          });
-        }
-
-        if (signupRes.status === 200 && signupRes.data.success) {
-          // AUTO-LOGIN LOGIC AFTER SIGNUP
-          const loginRes = await axios.post(`${API_URL}/auth/login`, { email, password });
-          if (loginRes.data.success) {
-            const userData = loginRes.data.user;
-            const userRole = userData.role || "user";
-
-            await storeData("jwt_token", loginRes.data.token);
-            await storeData("user_role", userRole);
-            await storeData("user_id", userData.id);
-            await storeData("name", userData.name);
-            await storeData("photoProfile", userData.photoProfile);
-
-            Alert.alert("Success", "Account created!");
-            closeAuthModal();
-            
-            // Redirect based on role
-            if (userRole === "admin") {
-              router.replace("/admin");
-            } else {
-              router.replace("/(tabs)/Home");
-            }
-          }
-        } else {
-          Alert.alert("Error", signupRes.data?.error || "Signup failed");
-        }
-        setLoading(false);
-        return;
-      }
-
-      // LOGIN LOGIC
-      if (!email || !password) {
-        Alert.alert("Error", "Please fill in all fields");
-        setLoading(false);
-        return;
-      }
-
-      const loginRes = await axios.post(`${API_URL}/auth/login`, { email, password });
-
-      if (loginRes.data.success && loginRes.data.token) {
-        // 1. Kunin ang user object mula sa response
-        const userData = loginRes.data.user;
-        const userRole = userData.role || "user"; // Ito ang role na galing sa DB
-
-        // 2. I-save ang lahat sa AsyncStorage
-        await storeData("jwt_token", loginRes.data.token);
-        await storeData("user_role", userRole);
-        await storeData("user_id", userData.id);
-        await storeData("userEmail", email);
-        await storeData("name", userData.name);
-        await storeData("photoProfile", userData.photoProfile);
-
-        console.log("Login Success! Role:", userRole);
-        closeAuthModal();
-
-        // 3. PAG-REDIRECT (ADMIN vs USER)
-        if (userRole === "admin") {
-          router.replace("/admin");
-        } else {
-          router.replace("/(tabs)/Home");
-        }
-      } else {
-        Alert.alert("Error", loginRes.data.error || "Invalid credentials");
-      }
-    } catch (err: any) {
-      console.error("Auth error:", err);
-      Alert.alert("Error", err.response?.data?.error || "Connection error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ...existing code...
 
   const startAutoScroll = () => {
     stopAutoScroll();
@@ -331,6 +111,13 @@ export default function Landing() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Durianostics Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Image source={require('../assets/images/icon.png')} style={styles.logo} />
+          <Text style={styles.headerTitle}>Durianostics</Text>
+        </View>
+      </View>
       <ScrollView
         ref={scrollRef}
         style={styles.container}
@@ -339,67 +126,6 @@ export default function Landing() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Image
-              source={require('../assets/images/icon.png')}
-              style={styles.logo} 
-              resizeMode="contain"
-            />
-            <Text style={styles.headerTitle}>Durianostics</Text>
-          </View>
-    
-          <View style={styles.headerRight}>
-            <View style={styles.authMenuWrapper}>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton, styles.authMenuButton]}
-                onPress={() => setAuthDropdownVisible(!authDropdownVisible)}
-              >
-                <Text style={[styles.buttonText, styles.primaryButtonText, { fontSize: 14 }]}>⋯</Text>
-              </TouchableOpacity>
-
-              {authDropdownVisible && (
-                <View style={styles.authDropdown}>
-                  <TouchableOpacity
-                    style={styles.authDropdownItem}
-                    onPress={() => {
-                      setAuthDropdownVisible(false);
-                      openAuthModal("login");
-                    }}
-                  >
-                    <Text style={styles.authDropdownText}>Login</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.authDropdownItem}
-                    onPress={() => {
-                      setAuthDropdownVisible(false);
-                      openAuthModal("signup");
-                    }}
-                  >
-                    <Text style={styles.authDropdownText}>Sign Up</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-
-        {/* NAVIGATION */}
-        <View style={styles.nav}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.navScroll}>
-              <TouchableOpacity style={styles.navItem} onPress={() => scrollRef.current?.scrollTo({ y: anchors.home, animated: true })}>
-                <Text style={styles.navText}>Home</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.navItem} onPress={() => scrollRef.current?.scrollTo({ y: anchors.about, animated: true })}>
-                <Text style={styles.navText}>About Us</Text>
-              </TouchableOpacity>
-              
-            </View>
-          </ScrollView>
-        </View>
-
         {/* HERO CAROUSEL SECTION */}
         <View style={styles.heroSection} onLayout={(e) => { const y = e.nativeEvent?.layout?.y ?? 0; setAnchors(prev => ({ ...prev, home: y })); }}>
           <View style={styles.heroContent}>
@@ -428,13 +154,11 @@ export default function Landing() {
                 startAutoScroll();
               }}
               scrollEventThrottle={16}
-              // Improve reliability for scrollToIndex and nested scrolling
               getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
               nestedScrollEnabled={true}
               directionalLockEnabled={true}
               initialNumToRender={1}
             />
-
             {/* Carousel Indicators */}
             <View style={styles.indicatorsContainer}>
               {carouselData.map((_, index) => {
@@ -454,52 +178,94 @@ export default function Landing() {
                 );
               })}
             </View>
-
             {/* Buttons */}
             <View style={styles.heroButtons}>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton, loading && styles.disabledButton]}
-                onPress={() => openAuthModal("login")}
-                disabled={loading}
-              >
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>
-                  Get Started
-                </Text>
-              </TouchableOpacity>
+              {!user && (
+                <TouchableOpacity
+                  style={[styles.button, styles.primaryButton]}
+                  onPress={() => openAuthModal("login")}
+                >
+                  <Text style={[styles.buttonText, styles.primaryButtonText]}>
+                    Get Started
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
-
-
-        {/* Featured Articles */}
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Featured Articles</Text>
-          <Text style={styles.aboutSubtitle}>Read the latest insights and news about durian farming, export, and AI technology.</Text>
-
-          <View style={styles.articlesContainer}>
-            <View style={styles.articleCard}>
-              <Text style={styles.articleTitle}>AI in Durian Quality Control</Text>
-              <Text style={styles.articleDesc}>Discover how artificial intelligence is revolutionizing durian quality assessment for farmers and exporters.</Text>
-            </View>
-            <View style={styles.articleCard}>
-              <Text style={styles.articleTitle}>Exporting Durian: Best Practices</Text>
-              <Text style={styles.articleDesc}>Learn the key steps and regulations for successfully exporting durian to international markets.</Text>
-            </View>
-            <View style={styles.articleCard}>
-              <Text style={styles.articleTitle}>Early Disease Detection</Text>
-              <Text style={styles.articleDesc}>How early detection and AI can help prevent crop loss and improve yields for durian farmers.</Text>
+        {/* Featured + Heatmap Side by Side */}
+        <View
+          style={{
+            flexDirection: width < 600 ? 'column' : 'row',
+            gap: 24,
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            marginVertical: 24,
+          }}
+        >
+          <View
+            style={
+              width < 600
+                ? { width: '100%' }
+                : { flex: 1, minWidth: 320, maxWidth: 600 }
+            }
+          >
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Featured Articles</Text>
+              <Text style={styles.aboutSubtitle}>Read the latest insights and news about durian farming, export, and AI technology.</Text>
+              <View style={styles.squareScrollContainer}>
+                <ScrollView
+                  showsVerticalScrollIndicator={true}
+                  style={{ height: 320 }}
+                  contentContainerStyle={{ alignItems: 'stretch', justifyContent: 'flex-start' }}
+                >
+                  <TouchableOpacity
+                    style={[styles.articleCard, { marginBottom: 16 }]}
+                    onPress={() => Linking.openURL("https://ijtech.eng.ui.ac.id/article/view/6640")}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.articleTitle}>Detection and Sizing of Durian using Zero-Shot Deep Learning Models</Text>
+                    <Text style={styles.articleDesc}>Dela Cruz and Concepcion (2023) designed a computerized method of automated detection and size estimation of durian fruits, which is a demanding process in determining the yield and quality of durian fruits in the Philippines through precision agriculture. </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.articleCard, { marginBottom: 16 }]}
+                    onPress={() => Linking.openURL("https://www.researchgate.net/publication/370517327_Identification_of_Durian_Leaf_Disease_Using_Convolutional_Neural_Network")}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.articleTitle}>AI-Based Durian Disease Detection</Text>
+                    <Text style={styles.articleDesc}>Identification of durian disease has been a significant problem with the Philippine agriculture because this nation has been applying manually-monitored and laboratory validated procedures. </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.articleCard}
+                    onPress={() => Linking.openURL("https://www.researchgate.net/publication/370517328_Computer_Vision-Based_Non-invasive_Sweetness_Assessment_of_Mangifera_Indica_L_Fruit_Using_K-means_Clustering_and_CNN")}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.articleTitle}>Non-Destructive Fruit Quality Assessment via Image Analysis</Text>
+                    <Text style={styles.articleDesc}>Secretaria et al. (2025) also evaluated the post-harvest traits of the Puyat type of durian to be able to set definite quality standards of Filipino growers who are attempting to enter international markets. </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
             </View>
           </View>
+          <View
+            style={
+              width < 600
+                ? { width: '100%', marginTop: 24 }
+                : { flex: 1, minWidth: 320, maxWidth: 600 }
+            }
+          >
+            <DurianHeatmap
+              mapMode={'heatmap'}
+              onMapModeChange={() => {}}
+              onRegionSelect={() => {}}
+              plotlyLoaded={plotlyLoaded}
+              onPlotlyLoad={() => setPlotlyLoaded(true)}
+            />
+          </View>
         </View>
-
-
-       
-
         {/* FOOTER */}
         <Footer />
-
       </ScrollView>
-
       {showScrollTop && (
         <TouchableOpacity
           style={styles.scrollTopButton}
@@ -508,157 +274,8 @@ export default function Landing() {
           <Text style={styles.scrollTopButtonText}>↑</Text>
         </TouchableOpacity>
       )}
-
-      {/* AUTH MODAL */}
-      <Modal
-        visible={authModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={closeAuthModal}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalOverlay}>
-            <ScrollView 
-              style={styles.modalContent}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              showsVerticalScrollIndicator={false}
-            >
-              <Text style={styles.modalTitle}>
-                {authMode === "login" ? "Login" : "Sign Up"}
-              </Text>
-
-              {/* Profile Picture Upload Section (only for signup) */}
-              {authMode === "signup" && (
-                <View style={styles.profilePictureSection}>
-                  <Text style={styles.sectionLabel}>Profile Picture (Optional)</Text>
-                  
-                  <View style={styles.profileImageContainer}>
-                    {imageUri ? (
-                      <>
-                        <Image 
-                          source={{ uri: imageUri || '' }} 
-                          style={styles.profileImage}
-                        />
-                        <TouchableOpacity 
-                          style={styles.removeImageButton}
-                          onPress={clearImage}
-                        >
-                          <Text style={styles.removeImageText}>×</Text>
-                        </TouchableOpacity>
-                      </>
-                    ) : (
-                      <View style={styles.placeholderImage}>
-                        <Text style={styles.placeholderText}>No Image</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.imageButtonsContainer}>
-                    <TouchableOpacity 
-                      style={[styles.imageButton, styles.galleryButton]}
-                      onPress={pickImage}
-                      disabled={loading}
-                    >
-                      <Text style={styles.imageButtonText}>📁 Gallery</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={[styles.imageButton, styles.cameraButton]}
-                      onPress={takePhoto}
-                      disabled={loading}
-                    >
-                      <Text style={styles.imageButtonText}>📷 Camera</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-
-              {authMode === "signup" && (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  value={name}
-                  onChangeText={setName}
-                  editable={!loading}
-                  autoCapitalize="words"
-                />
-              )}
-
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                editable={!loading}
-                autoCapitalize="none"
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                editable={!loading}
-              />
-
-              {authMode === "signup" && (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry
-                  editable={!loading}
-                />
-              )}
-
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton, { marginTop: 8 }, loading && styles.disabledButton]}
-                onPress={onSubmit}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={[styles.buttonText, styles.primaryButtonText]}>
-                    {authMode === "login" ? "Login" : "Sign Up"}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ marginTop: 16, paddingVertical: 8 }}
-                onPress={() => {
-                  clearImage();
-                  setAuthMode(authMode === "login" ? "signup" : "login");
-                }}
-                disabled={loading}
-              >
-                <Text style={{ color: "#1b5e20", textAlign: "center", fontSize: isSmallScreen ? 14 : 15 }}>
-                  {authMode === "login"
-                    ? "Don't have an account? Sign Up"
-                    : "Already have an account? Login"}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ marginTop: 8, paddingVertical: 8 }}
-                onPress={closeAuthModal}
-                disabled={loading}
-              >
-                <Text style={{ color: "#6b7280", textAlign: "center", fontSize: isSmallScreen ? 14 : 15 }}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </SafeAreaView>
   );
 }
+
+export default Landing;
