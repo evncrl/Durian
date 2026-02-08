@@ -55,7 +55,7 @@ interface ForumProps {
 
 export default function Forum({ embedded = false }: ForumProps) {
   // Regex to block links, emails, and some bad words (customize as needed)
-  const forbiddenRegex = /(https?:\/\/|www\.|@|\b(badword1|badword2|fuck|shit|bitch|asshole|damn|cunt|nigger|fag|faggot|slut|whore|dick|pussy|cock|cum|sex|porn|rape|kill|murder|suicide|die)\b)/i;
+  const forbiddenRegex = /(https?:\/\/|www\.|@|\b(badword1|badword2|fuck|shit|bitch|asshole|damn|cunt|nigger|fag|faggot|slut|whore|dick|pussy|cock|cum|sex|porn|rape|kill|murder|suicide|die|tangina|putangina|pota|gago|tarantado|putanginamo|pakyu|gaga|gagi|tite|bilat|puke|burat|pepe|ulol)\b)/i;
   const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
   const isMobile = width < 768;
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -570,6 +570,7 @@ export default function Forum({ embedded = false }: ForumProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Create New Post</Text>
               <TouchableOpacity onPress={() => setShowNewPostModal(false)} style={styles.closeButton}>

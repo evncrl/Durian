@@ -447,29 +447,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
+    alignItems: 'center',
   },
 
   modalContent: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    maxHeight: '90%',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 20,
-      },
-      web: {
-        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.3)',
-      },
-    }),
-  },
+  backgroundColor: colors.white,
+  borderTopLeftRadius: 24,    
+  borderTopRightRadius: 24,
+  borderBottomLeftRadius: 24, 
+  borderBottomRightRadius: 24,
+  
+
+  width: SCREEN_WIDTH > 500 ? 450 : '94%', 
+  marginBottom: Platform.OS === 'ios' ? 40 : 20, 
+  
+  maxHeight: '85%',
+  paddingBottom: Platform.OS === 'ios' ? 20 : 15,
+  overflow: 'hidden', 
+  
+  ...Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -10 },
+      shadowOpacity: 0.15,
+      shadowRadius: 15,
+    },
+    android: {
+      elevation: 10,
+    },
+    web: {
+      boxShadow: '0 -10px 25px rgba(0, 0, 0, 0.1)',
+    },
+  }),
+},
+
+modalHandle: {
+  width: 40,
+  height: 5,
+  backgroundColor: colors.gray300,
+  borderRadius: 2.5,
+  alignSelf: 'center',
+  marginTop: 10,
+},
 
   modalHeader: {
     flexDirection: 'row',
@@ -512,7 +531,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: scale(15),
     color: colors.gray900,
-    marginHorizontal: 24,
+    marginHorizontal: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: colors.gray200,
@@ -848,6 +867,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 });
+
+
+
 
 export default styles;
 export { colors };
