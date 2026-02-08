@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { router } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config/appconf';
@@ -170,6 +171,12 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
             Alert.alert('Success', 'Account created!');
             await refreshUser();
             onClose();
+            // Redirect to admin dashboard if admin after signup
+            if (userRole === 'admin') {
+              router.replace('/admin');
+            } else {
+              router.replace('/');
+            }
           } else {
             Alert.alert('Error', loginRes.data.error || 'Login after signup failed');
           }
@@ -198,6 +205,12 @@ export default function LandingAuthModal({ visible, mode, onClose }: LandingAuth
         await refreshUser();
         onClose();
         Alert.alert('Success', 'Logged in!');
+        // Redirect to admin dashboard if admin
+        if (userRole === 'admin') {
+          router.replace('/admin');
+        } else {
+          router.replace('/');
+        }
       } else {
         Alert.alert('Error', loginRes.data.error || 'Invalid credentials');
       }

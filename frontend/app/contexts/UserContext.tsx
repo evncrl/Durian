@@ -7,6 +7,7 @@ interface User {
   email: string;
   photoProfile: string;
   photoPublicId: string;
+  role: string;
 }
 
 interface UserContextType {
@@ -32,6 +33,7 @@ export function UserProvider({ children }: UserProviderProps) {
       const storedEmail = await AsyncStorage.getItem('email');
       const storedPhoto = await AsyncStorage.getItem('photoProfile');
       const storedPublicId = await AsyncStorage.getItem('photoPublicId');
+      const storedRole = await AsyncStorage.getItem('user_role');
 
       if (storedId) {
         setUser({
@@ -40,6 +42,7 @@ export function UserProvider({ children }: UserProviderProps) {
           email: storedEmail || '',
           photoProfile: storedPhoto || '',
           photoPublicId: storedPublicId || '',
+          role: storedRole || 'user',
         });
       }
     } catch (error) {

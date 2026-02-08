@@ -54,6 +54,8 @@ interface ForumProps {
 }
 
 export default function Forum({ embedded = false }: ForumProps) {
+  // Regex to block links, emails, and some bad words (customize as needed)
+  const forbiddenRegex = /(https?:\/\/|www\.|@|\b(badword1|badword2|fuck|shit|bitch|asshole|damn|cunt|nigger|fag|faggot|slut|whore|dick|pussy|cock|cum|sex|porn|rape|kill|murder|suicide|die)\b)/i;
   const { isWeb, isSmallScreen, isMediumScreen, isLargeScreen, width } = useResponsive();
   const isMobile = width < 768;
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -69,6 +71,7 @@ export default function Forum({ embedded = false }: ForumProps) {
   // New Post state
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
+  const [inputError, setInputError] = useState<string | null>(null);
   const [newPostCategory, setNewPostCategory] = useState<string>("All");
   const [creatingPost, setCreatingPost] = useState(false);
 
@@ -149,12 +152,15 @@ export default function Forum({ embedded = false }: ForumProps) {
       Alert.alert("Error", "Comment cannot be empty");
       return;
     }
-
+    if (forbiddenRegex.test(newComment)) {
+      setInputError("This message contains inappropriate language");
+      return;
+    }
     if (!userId || !selectedPost) {
       Alert.alert("Error", "Please login to comment");
       return;
     }
-
+    setInputError(null);
     try {
       setSubmittingComment(true);
       const response = await fetch(`${API_URL}/forum/comments`, {
@@ -169,15 +175,10 @@ export default function Forum({ embedded = false }: ForumProps) {
           user_id: userId,
         }),
       });
-
       const data = await response.json();
-      
       if (data.success) {
-        // Add new comment to list
         setComments([...comments, data.comment]);
-        // Clear input
         setNewComment("");
-        // Update post reply count
         setPosts(posts.map(post => 
           post._id === selectedPost._id 
             ? { ...post, replies: post.replies + 1 }
@@ -200,14 +201,16 @@ export default function Forum({ embedded = false }: ForumProps) {
       Alert.alert("Error", "Title and content are required");
       return;
     }
-
+    if (forbiddenRegex.test(newPostTitle) || forbiddenRegex.test(newPostContent)) {
+      setInputError("This message contains inappropriate language");
+      return;
+    }
     if (!userId) {
-      // On web Alert.alert may not be obvious; also log to console
       console.warn('[CLIENT] submitNewPost blocked - not logged in');
       Alert.alert("Error", "Please login to post");
       return;
     }
-
+    setInputError(null);
     try {
       setCreatingPost(true);
       const baseUrl = API_URL.replace(/\/+$/, '');
@@ -219,7 +222,6 @@ export default function Forum({ embedded = false }: ForumProps) {
         user_id: userId,
       };
       console.log('[CLIENT] submitNewPost ->', url, payload);
-
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -229,7 +231,6 @@ export default function Forum({ embedded = false }: ForumProps) {
         },
         body: JSON.stringify(payload),
       });
-
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         const text = await response.text();
@@ -237,14 +238,10 @@ export default function Forum({ embedded = false }: ForumProps) {
         Alert.alert('Error', `Server error: ${response.status}`);
         return;
       }
-
       const data = await response.json();
       console.log('[CLIENT] submitNewPost response:', response.status, data);
-
       if (data.success) {
-        // Prepend new post to list
         setPosts((prev) => [data.post, ...prev]);
-        // Reset and close modal
         setNewPostTitle("");
         setNewPostContent("");
         setNewPostCategory("All");
@@ -431,7 +428,13 @@ export default function Forum({ embedded = false }: ForumProps) {
                 styles.categoryTab,
                 selectedCategory === category && styles.categoryTabActive
               ]}
-              onPress={() => setSelectedCategory(category)}
+              onPress={() => {
+                setSelectedCategory(category);
+                setInputError(null);
+                setNewPostTitle("");
+                setNewPostContent("");
+                setNewComment("");
+              }}
             >
               <Text style={[
                 styles.categoryTabText,
@@ -574,13 +577,16 @@ export default function Forum({ embedded = false }: ForumProps) {
               </TouchableOpacity>
             </View>
 
+
+            {inputError && (
+              <Text style={{ color: 'red', marginBottom: 8, textAlign: 'center' }}>{inputError}</Text>
+            )}
             <TextInput
               style={styles.input}
               placeholder="Title"
               value={newPostTitle}
               onChangeText={setNewPostTitle}
             />
-
             <TextInput
               style={[styles.input, { height: 120 }]}
               placeholder="What's on your mind?"
@@ -593,7 +599,10 @@ export default function Forum({ embedded = false }: ForumProps) {
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat}
-                  onPress={() => setNewPostCategory(cat)}
+                  onPress={() => {
+                    setNewPostCategory(cat);
+                    setInputError(null);
+                  }}
                   style={[styles.categoryOption, newPostCategory === cat && styles.categoryOptionActive]}
                 >
                   <Text style={styles.categoryOptionText}>{cat}</Text>
@@ -678,6 +687,9 @@ export default function Forum({ embedded = false }: ForumProps) {
 
             {/* Comment Input */}
             <View style={styles.commentInputContainer}>
+              {inputError && (
+                <Text style={{ color: 'red', marginBottom: 4, textAlign: 'center' }}>{inputError}</Text>
+              )}
               <TextInput
                 style={styles.commentInput}
                 placeholder="Write a comment..."
