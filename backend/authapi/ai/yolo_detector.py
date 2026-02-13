@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).parent.parent.parent
 MODELS_DIR = BASE_DIR / "models"
 
 # Default model path - update this if you train a new model
-DEFAULT_MODEL = "durian_detector_durian_detection_20260206_201634.pt"
+DEFAULT_MODEL = "durian_detector_durian_detection_20260212_220446.pt"
 
 
 class YOLODetector:

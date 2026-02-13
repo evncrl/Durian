@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
   TextInput,
-  Image, 
+  Image,
   StyleSheet,
   Modal,
   Alert,
   ActivityIndicator,
   RefreshControl
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown, FadeInUp, Layout, ZoomIn } from 'react-native-reanimated';
 
-import { useResponsive } from '../utils/platform';
-import styles from "../styles/Forum.styles";
-import { API_URL } from "../config/appconf";
+import { useResponsive } from '@/utils/platform';
+import styles from "@/styles/Forum.styles";
+import { API_URL } from "@/config/appconf";
 
 interface ForumPost {
   _id: string;
@@ -107,7 +109,7 @@ export default function Forum({ embedded = false }: ForumProps) {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         console.log('[CLIENT] fetchPosts data.posts length:', data.posts?.length, 'firstId:', data.posts?.[0]?._id);
         setPosts(data.posts);
@@ -134,7 +136,7 @@ export default function Forum({ embedded = false }: ForumProps) {
         }
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setComments(data.comments);
       }
@@ -179,8 +181,8 @@ export default function Forum({ embedded = false }: ForumProps) {
       if (data.success) {
         setComments([...comments, data.comment]);
         setNewComment("");
-        setPosts(posts.map(post => 
-          post._id === selectedPost._id 
+        setPosts(posts.map(post =>
+          post._id === selectedPost._id
             ? { ...post, replies: post.replies + 1 }
             : post
         ));
@@ -275,11 +277,11 @@ export default function Forum({ embedded = false }: ForumProps) {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Update post in local state
-        setPosts(posts.map(post => 
-          post._id === postId 
+        setPosts(posts.map(post =>
+          post._id === postId
             ? { ...post, likes: data.likes, liked: data.liked }
             : post
         ));
@@ -307,11 +309,11 @@ export default function Forum({ embedded = false }: ForumProps) {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Update comment in local state
-        setComments(comments.map(comment => 
-          comment._id === commentId 
+        setComments(comments.map(comment =>
+          comment._id === commentId
             ? { ...comment, likes: data.likes }
             : comment
         ));
@@ -361,12 +363,12 @@ export default function Forum({ embedded = false }: ForumProps) {
   }, [posts]);
 
   const getCategoryColor = (category: string) => {
-    switch(category) {
-      case "Quality Issues": return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      case "Best Practices": return { backgroundColor: "#dbeafe", color: "#2563eb" };
-      case "Export Tips": return { backgroundColor: "#dcfce7", color: "#16a34a" };
-      case "General Discussion": return { backgroundColor: "#f3f4f6", color: "#4b5563" };
-      default: return { backgroundColor: "#f3f4f6", color: "#4b5563" };
+    switch (category) {
+      case "Quality Issues": return { backgroundColor: "rgba(220, 38, 38, 0.15)", color: "#dc2626" };
+      case "Best Practices": return { backgroundColor: "rgba(37, 99, 235, 0.15)", color: "#2563eb" };
+      case "Export Tips": return { backgroundColor: "rgba(22, 163, 106, 0.15)", color: "#16a34a" };
+      case "General Discussion": return { backgroundColor: "rgba(142, 151, 117, 0.15)", color: "#8E9775" };
+      default: return { backgroundColor: "rgba(142, 151, 117, 0.15)", color: "#8E9775" };
     }
   };
 
@@ -386,7 +388,7 @@ export default function Forum({ embedded = false }: ForumProps) {
             <Text style={styles.headerTitle}>Community Forum</Text>
             <Text style={styles.headerSubtitle}>Share knowledge and get expert advice</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.newPostButton}
             onPress={() => setShowNewPostModal(true)}
           >
@@ -395,7 +397,7 @@ export default function Forum({ embedded = false }: ForumProps) {
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.container}
         scrollEnabled={!embedded}
         nestedScrollEnabled={!embedded}
@@ -415,8 +417,8 @@ export default function Forum({ embedded = false }: ForumProps) {
         </View>
 
         {/* Category Tabs */}
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.categoryTabs}
           contentContainerStyle={styles.categoryTabsContent}
@@ -474,77 +476,100 @@ export default function Forum({ embedded = false }: ForumProps) {
 
         {/* Forum Posts */}
         <View style={styles.postsContainer}>
-          {posts.map((post) => {
+          {posts.map((post, index) => {
             const categoryStyle = getCategoryColor(post.category);
             return (
-              <View key={post._id} style={styles.postCard}>
+              <Animated.View
+                key={post._id}
+                entering={FadeInDown.delay(index * 100).springify()}
+                layout={Layout.springify()}
+                style={styles.postCard}
+              >
                 {/* Pinned Badge */}
                 {post.is_pinned && (
                   <View style={styles.pinnedBadge}>
-                    <Text style={styles.pinnedText}>📌 Pinned</Text>
+                    <Ionicons name="pin" size={12} color="#f59e0b" style={{ marginRight: 4 }} />
+                    <Text style={styles.pinnedText}>Pinned</Text>
                   </View>
                 )}
 
                 {/* Post Header */}
                 <View style={styles.postHeader}>
-                  <Image 
-                    source={{ uri: post.user_avatar || "https://via.placeholder.com/40" }} 
-                    style={styles.authorAvatar} 
+                  <Image
+                    source={{ uri: post.user_avatar || "https://via.placeholder.com/40" }}
+                    style={styles.authorAvatar}
                   />
                   <View style={styles.postHeaderInfo}>
                     <Text style={styles.authorName}>{post.username}</Text>
                     <Text style={styles.postTimestamp}>{post.timestamp || "Just now"}</Text>
                   </View>
-                  <View style={[styles.categoryBadge, { backgroundColor: categoryStyle.backgroundColor }]}>
+                  <Animated.View
+                    entering={ZoomIn.delay(index * 100 + 400).springify()}
+                    style={[styles.categoryBadge, { backgroundColor: categoryStyle.backgroundColor }]}
+                  >
                     <Text style={[styles.categoryBadgeText, { color: categoryStyle.color }]}>
                       {post.category}
                     </Text>
-                  </View>
+                  </Animated.View>
                 </View>
 
                 {/* Post Content */}
                 <TouchableOpacity onPress={() => openCommentsModal(post)}>
-                  <Text style={styles.postTitle}>{post.title}</Text>
-                  <Text style={styles.postContent} numberOfLines={2}>
+                  <Animated.Text
+                    entering={FadeInUp.delay(index * 100 + 200).springify()}
+                    style={styles.postTitle}
+                  >
+                    {post.title}
+                  </Animated.Text>
+                  <Animated.Text
+                    entering={FadeInUp.delay(index * 100 + 300).springify()}
+                    style={styles.postContent}
+                    numberOfLines={2}
+                  >
                     {post.content}
-                  </Text>
+                  </Animated.Text>
                 </TouchableOpacity>
 
                 {/* Post Footer */}
                 <View style={styles.postFooter}>
                   <View style={styles.postStats}>
-                    <TouchableOpacity 
-                      style={styles.statGroup}
-                      onPress={() => handleLikePost(post._id)}
-                    >
-                      <Text style={[
-                        styles.statIcon,
-                        post.liked_by?.includes(userId || "") && styles.likedIcon
-                      ]}>
-                        {post.liked_by?.includes(userId || "") ? "❤️" : "🤍"}
-                      </Text>
-                      <Text style={styles.statText}>{formatNumber(post.likes)}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.statGroup}
-                      onPress={() => openCommentsModal(post)}
-                    >
-                      <Text style={styles.statIcon}>💬</Text>
-                      <Text style={styles.statText}>{formatNumber(post.replies)}</Text>
-                    </TouchableOpacity>
-                    <View style={styles.statGroup}>
-                      <Text style={styles.statIcon}>👁</Text>
-                      <Text style={styles.statText}>{formatNumber(post.views)}</Text>
-                    </View>
+                    <Animated.View entering={FadeInUp.delay(index * 100 + 500).springify()}>
+                      <TouchableOpacity
+                        style={styles.statGroup}
+                        onPress={() => handleLikePost(post._id)}
+                      >
+                        <Ionicons
+                          name={post.liked_by?.includes(userId || "") ? "heart" : "heart-outline"}
+                          size={18}
+                          color={post.liked_by?.includes(userId || "") ? "#ef4444" : "#64748b"}
+                        />
+                        <Text style={styles.statText}>{formatNumber(post.likes)}</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+                    <Animated.View entering={FadeInUp.delay(index * 100 + 600).springify()}>
+                      <TouchableOpacity
+                        style={styles.statGroup}
+                        onPress={() => openCommentsModal(post)}
+                      >
+                        <Ionicons name="chatbubble-outline" size={18} color="#64748b" />
+                        <Text style={styles.statText}>{formatNumber(post.replies)}</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+                    <Animated.View entering={FadeInUp.delay(index * 100 + 700).springify()}>
+                      <View style={styles.statGroup}>
+                        <Ionicons name="eye-outline" size={18} color="#64748b" />
+                        <Text style={styles.statText}>{formatNumber(post.views)}</Text>
+                      </View>
+                    </Animated.View>
                   </View>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.replyButton}
                     onPress={() => openCommentsModal(post)}
                   >
                     <Text style={styles.replyButtonText}>Reply</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </Animated.View>
             );
           })}
         </View>
@@ -552,7 +577,7 @@ export default function Forum({ embedded = false }: ForumProps) {
         {/* Empty State */}
         {!loadingPosts && posts.length === 0 && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>🔍</Text>
+            <Ionicons name="search-outline" size={48} color="#9ca3af" style={{ marginBottom: 12 }} />
             <Text style={styles.emptyStateText}>No posts found</Text>
             <Text style={styles.emptyStateSubtext}>
               Try adjusting your search or filter
@@ -574,7 +599,7 @@ export default function Forum({ embedded = false }: ForumProps) {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Create New Post</Text>
               <TouchableOpacity onPress={() => setShowNewPostModal(false)} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>✕</Text>
+                <Ionicons name="close-outline" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
 
@@ -645,7 +670,7 @@ export default function Forum({ embedded = false }: ForumProps) {
                 onPress={() => setShowCommentsModal(false)}
                 style={styles.closeButton}
               >
-                <Text style={styles.closeButtonText}>✕</Text>
+                <Ionicons name="close-outline" size={24} color="#64748b" />
               </TouchableOpacity>
             </View>
 
@@ -661,9 +686,9 @@ export default function Forum({ embedded = false }: ForumProps) {
               ) : (
                 comments.map((comment) => (
                   <View key={comment._id} style={styles.commentItem}>
-                    <Image 
-                      source={{ uri: comment.user_avatar || "https://via.placeholder.com/40" }} 
-                      style={styles.commentAvatar} 
+                    <Image
+                      source={{ uri: comment.user_avatar || "https://via.placeholder.com/40" }}
+                      style={styles.commentAvatar}
                     />
                     <View style={styles.commentContent}>
                       <View style={styles.commentHeader}>
@@ -671,13 +696,15 @@ export default function Forum({ embedded = false }: ForumProps) {
                         <Text style={styles.commentTime}>{comment.timestamp}</Text>
                       </View>
                       <Text style={styles.commentText}>{comment.content}</Text>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.commentLikeButton}
                         onPress={() => handleLikeComment(comment._id)}
                       >
-                        <Text style={styles.commentLikeIcon}>
-                          {comment.liked_by?.includes(userId || "") ? "❤️" : "🤍"}
-                        </Text>
+                        <Ionicons
+                          name={comment.liked_by?.includes(userId || "") ? "heart" : "heart-outline"}
+                          size={16}
+                          color={comment.liked_by?.includes(userId || "") ? "#ef4444" : "#64748b"}
+                        />
                         <Text style={styles.commentLikeCount}>{comment.likes}</Text>
                       </TouchableOpacity>
                     </View>

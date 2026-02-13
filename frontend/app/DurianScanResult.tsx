@@ -11,18 +11,18 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import styles from './styles/DurianScanResults.styles';
+import styles from '@/styles/DurianScanResults.styles';
 
 const { width } = Dimensions.get('window');
 
 export default function DurianScanResult() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  
+
   // Parse the result from params
   const imageUri = params.imageUri as string;
   const resultStr = params.result as string;
-  
+
   let result: any = null;
   try {
     result = resultStr ? JSON.parse(resultStr) : null;
@@ -92,7 +92,7 @@ export default function DurianScanResult() {
           {/* Detection Details */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Detection Details</Text>
-            
+
             <View style={styles.detailRow}>
               <Ionicons name="search-outline" size={20} color="#666" />
               <Text style={styles.detailLabel}>Objects Found:</Text>
@@ -131,14 +131,14 @@ export default function DurianScanResult() {
                   <View style={styles.objectInfo}>
                     <Text style={styles.objectClass}>{obj.class_name}</Text>
                     <View style={styles.confidenceBar}>
-                      <View 
+                      <View
                         style={[
-                          styles.confidenceFill, 
-                          { 
+                          styles.confidenceFill,
+                          {
                             width: `${obj.confidence * 100}%`,
                             backgroundColor: getQualityColor(obj.confidence * 100)
                           }
-                        ]} 
+                        ]}
                       />
                     </View>
                   </View>
@@ -176,17 +176,17 @@ export default function DurianScanResult() {
 
       {/* Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity 
-          style={styles.scanAgainButton} 
+        <TouchableOpacity
+          style={styles.scanAgainButton}
           onPress={() => router.back()}
         >
           <Ionicons name="camera-outline" size={20} color="#fff" />
           <Text style={styles.scanAgainText}>Scan Again</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.homeButton} 
-          onPress={() => router.push('/(tabs)/Home')}
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => router.push('/LandingScreen')}
         >
           <Ionicons name="home-outline" size={20} color="#27AE60" />
           <Text style={styles.homeText}>Go Home</Text>
@@ -200,4 +200,5 @@ export default function DurianScanResult() {
     </ScrollView>
   );
 }
+
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useUser } from '../contexts/UserContext';
+import { useUser } from '@/contexts/UserContext';
+import { useResponsive } from '@/utils/platform';
 import {
   View,
   Text,
@@ -15,9 +16,11 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
-import { API_URL } from '../config/appconf';
-import styles from '../styles/adminstyles/index.styles';
-import AdminSidebar from '../components/admin/AdminSidebar';
+import { API_URL } from '@/config/appconf';
+import { useAdminStyles } from '@/styles/admin_styles/index.styles';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import { Fonts, Palette } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const modalStyles = RNStyleSheet.create({
   overlay: {
@@ -28,9 +31,9 @@ const modalStyles = RNStyleSheet.create({
     padding: 20,
   },
   modalContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
+    backgroundColor: Palette.white,
+    borderRadius: 24,
+    padding: 32,
     width: '100%',
     maxWidth: 450,
     shadowColor: '#000',
@@ -40,9 +43,9 @@ const modalStyles = RNStyleSheet.create({
     elevation: 10,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1b5e20',
+    fontSize: 24,
+    fontFamily: Fonts.bold,
+    color: Palette.charcoalEspresso,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -54,7 +57,7 @@ const modalStyles = RNStyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: Fonts.semiBold,
     color: '#333',
     marginBottom: 8,
   },
@@ -72,6 +75,7 @@ const modalStyles = RNStyleSheet.create({
     fontSize: 12,
     color: '#888',
     fontStyle: 'italic',
+    fontFamily: Fonts.medium,
     marginBottom: 20,
   },
   buttonRow: {
@@ -88,7 +92,7 @@ const modalStyles = RNStyleSheet.create({
   },
   cancelBtnText: {
     color: '#333',
-    fontWeight: '600',
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
   },
   confirmBtn: {
@@ -99,8 +103,8 @@ const modalStyles = RNStyleSheet.create({
     alignItems: 'center',
   },
   confirmBtnText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: Palette.white,
+    fontFamily: Fonts.bold,
     fontSize: 14,
   },
   disabledBtn: {
@@ -117,8 +121,9 @@ interface User {
   isActive: boolean;
 }
 
-const AdminDashboard: React.FC = () => {
-  const { user, loading: userLoading } = useUser();
+export default function Admin() {
+  const styles = useAdminStyles();
+  const { user, loading: userLoading, refreshUser, logout } = useUser();
 
   useEffect(() => {
     if (!userLoading && (!user || user.role !== 'admin')) {
@@ -129,14 +134,14 @@ const AdminDashboard: React.FC = () => {
 
   if (userLoading || !user) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#1b5e20" />
-        <Text>Checking admin access...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Palette.linenWhite }}>
+        <ActivityIndicator size="large" color={Palette.warmCopper} />
+        <Text style={{ marginTop: 12, fontFamily: Fonts.medium, color: Palette.slate }}>Checking admin access...</Text>
       </View>
     );
   }
-  const { width } = Dimensions.get('window');
-  const isMobile = width < 768;
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { isWeb, isSmallScreen } = useResponsive();
 
   const [loading, setLoading] = useState(true);
   const [statusData, setStatusData] = useState<{ message: string } | null>(null);
@@ -203,7 +208,7 @@ const AdminDashboard: React.FC = () => {
   // Logout handler
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove(['jwt_token', 'user_role', 'user_id', 'name']);
+      await logout();
       Alert.alert('Logged Out', 'Redirecting to home screen...');
       router.replace('/');
     } catch (e) {
@@ -319,22 +324,44 @@ const AdminDashboard: React.FC = () => {
   if (loading && users.length === 0) {
     return (
       <View style={styles.centeredContainer}>
-        <ActivityIndicator size="large" color="#1b5e20" />
-        <Text style={{ marginTop: 10 }}>Connecting to server...</Text>
+        <ActivityIndicator size="large" color={Palette.warmCopper} />
+        <Text style={{ marginTop: 12, fontFamily: Fonts.medium, color: Palette.slate }}>Connecting to server...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, flexDirection: isMobile ? 'column' : 'row' }}>
-      {/* Sidebar for desktop/tablet */}
-      {!isMobile && <AdminSidebar />}
+    <View style={{ flex: 1, flexDirection: (isSmallScreen || !isWeb) ? 'column' : 'row', backgroundColor: Palette.linenWhite }}>
+      {/* Sidebar - handles its own responsive visibility internally */}
+      <AdminSidebar isVisible={sidebarVisible} onClose={() => setSidebarVisible(false)} />
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarVisible && (isSmallScreen || !isWeb) && (
+        <TouchableOpacity
+          style={overlayStyles.overlay}
+          activeOpacity={1}
+          onPress={() => setSidebarVisible(false)}
+        />
+      )}
+
       {/* Main content */}
       <View style={{ flex: 1 }}>
         <ScrollView
           style={[styles.container]}
-          contentContainerStyle={isMobile ? undefined : { paddingBottom: 40 }}
+          contentContainerStyle={(isSmallScreen || !isWeb) ? undefined : { paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
         >
+          {/* Mobile Header */}
+          {(isSmallScreen || !isWeb) && (
+            <View style={mobileHeaderStyles.header}>
+              <TouchableOpacity onPress={() => setSidebarVisible(true)}>
+                <Ionicons name="menu" size={32} color={Palette.deepObsidian} />
+              </TouchableOpacity>
+              <Text style={mobileHeaderStyles.title}>Admin Panel</Text>
+              <View style={{ width: 32 }} />
+            </View>
+          )}
+
           <View style={styles.header}>
             <Text style={styles.title}>Dashboard</Text>
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -345,9 +372,9 @@ const AdminDashboard: React.FC = () => {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>System Status</Text>
             <View style={styles.statusRow}>
-              <View style={[styles.statusIndicator, { backgroundColor: error ? 'red' : '#4caf50' }]} />
+              <View style={[styles.statusIndicator, { backgroundColor: error ? '#ef4444' : '#22c55e' }]} />
               <Text style={styles.statusText}>
-                {error ? 'Backend Offline' : statusData?.message || 'Online'}
+                {error ? 'Backend Offline' : statusData?.message || 'Operational'}
               </Text>
             </View>
             {error && (
@@ -359,7 +386,7 @@ const AdminDashboard: React.FC = () => {
 
           <Text style={styles.welcomeText}>Welcome, Administrator!</Text>
 
-          <View style={[styles.card, { marginBottom: 40 }]}> 
+          <View style={[styles.card, { marginBottom: 40 }]}>
             <Text style={styles.cardTitle}>User Management</Text>
             <TouchableOpacity
               style={[styles.retryBtn, { alignSelf: 'flex-start', marginTop: 10 }]}
@@ -475,7 +502,36 @@ const AdminDashboard: React.FC = () => {
       </View>
     </View>
   );
-};
+}
 
-export default AdminDashboard;
 
+const overlayStyles = RNStyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 999,
+  }
+});
+
+const mobileHeaderStyles = RNStyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: Palette.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.stoneGray,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: Fonts.bold,
+    color: Palette.deepObsidian,
+  }
+});

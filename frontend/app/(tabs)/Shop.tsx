@@ -1,143 +1,76 @@
-
 import React, { useEffect, useState } from "react";
-import Footer from "../components/Footer";
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Platform,
 } from "react-native";
-
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  contentContainer: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subheader: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 18,
-    textAlign: 'center',
-  },
-  productsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  productCard: {
-    width: 220,
-    backgroundColor: '#f4f4f4',
-    borderRadius: 14,
-    padding: 16,
-    margin: 8,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  productImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
-    marginBottom: 10,
-    resizeMode: 'cover',
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  productDesc: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#1b5e20',
-  },
-  buyButton: {
-    backgroundColor: '#1b5e20',
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buyButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-});
+import { Ionicons } from '@expo/vector-icons';
+import Footer from "@/components/Footer";
+import { shopStyles, colors } from "@/styles/Shop.styles";
+import { Fonts } from "@/constants/theme";
+import Animated, { useSharedValue, useAnimatedScrollHandler, FadeInDown } from 'react-native-reanimated';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { AnimatedImage } from '@/components/ui/AnimatedImage';
 
 type Product = {
   id: string;
   name: string;
+  category: string;
   price: number;
   image: any;
   description: string;
+  isNew?: boolean;
 };
 
 const DUMMY_PRODUCTS: Product[] = [
   {
     id: "1",
-    name: "Premium Durian",
-    price: 1200,
+    name: "Musang King Premium",
+    category: "Fresh Fruit",
+    price: 1850,
     image: require("../../assets/images/durian-bg.jpg"),
-    description: "Top-grade durian, hand-picked for quality.",
+    description: "The gold standard of durians. Creamy, bittersweet, and incredibly rich flavor.",
+    isNew: true,
   },
   {
     id: "2",
-    name: "Durian Chips",
-    price: 350,
+    name: "Golden Durian Chips",
+    category: "Snacks",
+    price: 450,
     image: require("../../assets/images/durian-bg1.jpg"),
-    description: "Crispy, delicious durian chips.",
+    description: "Vacuum-fried to preserve the intense natural flavor and crunch.",
   },
   {
     id: "3",
-    name: "Durian Jam",
-    price: 250,
+    name: "Artisan Durian Spread",
+    category: "Pantry",
+    price: 320,
     image: require("../../assets/images/durian-bg2.jpg"),
-    description: "Sweet and creamy durian jam.",
+    description: "Hand-crafted with 100% real pulp. Perfect for toasts and desserts.",
+  },
+  {
+    id: "4",
+    name: "D24 Traditional Harvest",
+    category: "Fresh Fruit",
+    price: 1250,
+    image: require("../../assets/images/feature1.jpg"),
+    description: "Balanced sweetness with a smooth, custard-like texture. A classic favorite.",
+    isNew: true,
   },
 ];
 
 export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
 
   useEffect(() => {
-    // Simulate API call
     const timer = setTimeout(() => {
       setProducts(DUMMY_PRODUCTS);
       setLoading(false);
@@ -147,33 +80,88 @@ export default function Shop() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Loading shop...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgLight }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, fontFamily: Fonts.regular, color: colors.textMedium }}>Curating your selection...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, flexDirection: 'column', backgroundColor: '#fff' }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>🛒 Durian Shop</Text>
-        <Text style={styles.subheader}>Buy premium durian products</Text>
-        <View style={styles.productsGrid}>
-          {products.map((product) => (
-            <View key={product.id} style={styles.productCard}>
-              <Image source={product.image} style={styles.productImage} />
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productDesc}>{product.description}</Text>
-              <Text style={styles.productPrice}>₱{product.price}</Text>
-              <TouchableOpacity style={styles.buyButton} onPress={() => alert('Feature coming soon!')}>
-                <Text style={styles.buyButtonText}>Buy Now</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+    <View style={shopStyles.container}>
+      <Animated.ScrollView
+        style={shopStyles.container}
+        contentContainerStyle={shopStyles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+      >
+        <View style={shopStyles.header}>
+          <ScrollReveal scrollY={scrollY}>
+            <Animated.Text
+              entering={FadeInDown.duration(800).delay(200)}
+              style={shopStyles.title}
+            >
+              Durianostics Shop
+            </Animated.Text>
+          </ScrollReveal>
+          <ScrollReveal scrollY={scrollY}>
+            <Animated.Text
+              entering={FadeInDown.duration(800).delay(300)}
+              style={shopStyles.subtitle}
+            >
+              Discover our curated collection of premium durian varieties and artisan products.
+            </Animated.Text>
+          </ScrollReveal>
         </View>
-      </ScrollView>
-      <Footer />
+
+        <View style={shopStyles.section}>
+          <View style={shopStyles.grid}>
+            {products.map((product, index) => (
+              <ScrollReveal key={product.id} scrollY={scrollY} style={shopStyles.card} index={index}>
+                <View style={shopStyles.imageContainer}>
+                  <AnimatedImage
+                    source={product.image}
+                    style={shopStyles.image}
+                    entering={FadeInDown.delay(index * 100)}
+                  />
+                  {product.isNew && (
+                    <View style={shopStyles.badge}>
+                      <Text style={shopStyles.badgeText}>New Arrival</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={shopStyles.cardContent}>
+                  <Text style={shopStyles.category}>{product.category}</Text>
+                  <Text style={shopStyles.productName}>{product.name}</Text>
+                  <Text style={shopStyles.description} numberOfLines={2}>
+                    {product.description}
+                  </Text>
+
+                  <View style={shopStyles.priceRow}>
+                    <View style={shopStyles.priceContainer}>
+                      <Text style={shopStyles.priceLabel}>Price</Text>
+                      <Text style={shopStyles.price}>₱{product.price.toLocaleString()}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={shopStyles.buyButton}
+                      onPress={() => alert('Adding to cart...')}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={24} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollReveal>
+            ))}
+          </View>
+        </View>
+
+        <Footer />
+      </Animated.ScrollView>
     </View>
   );
 }
+

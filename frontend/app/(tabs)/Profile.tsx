@@ -17,17 +17,20 @@ import {
 import axios from 'axios';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../config/appconf';
+import { API_URL } from '@/config/appconf';
 import * as ImagePicker from 'expo-image-picker';
-import { 
-  Ionicons, 
-  MaterialIcons, 
-  Feather, 
-  FontAwesome5 
+import {
+  Ionicons,
+  MaterialIcons,
+  Feather,
+  FontAwesome5
 } from '@expo/vector-icons';
-import { styles } from '../styles/Profile.styles';
+import { styles } from '@/styles/Profile.styles';
+import { Fonts, Palette } from '@/constants/theme';
+import { useUser } from '@/contexts/UserContext';
 
 export default function Profile() {
+  const { user, loading: userLoading, refreshUser, logout } = useUser();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [photoUri, setPhotoUri] = useState<string>('');
@@ -54,7 +57,7 @@ export default function Profile() {
     if (Platform.OS !== 'web') {
       const { status: galleryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-      
+
       if (galleryStatus !== 'granted') {
         Alert.alert('Permission needed', 'Please allow access to your photos to upload profile pictures.');
       }
@@ -72,7 +75,7 @@ export default function Profile() {
     try {
       const storedToken = await AsyncStorage.getItem('jwt_token');
       const storedId = await AsyncStorage.getItem('user_id');
-      
+
       if (!storedToken || !storedId) {
         router.replace('/');
         return;
@@ -82,7 +85,7 @@ export default function Profile() {
       const storedName = await AsyncStorage.getItem('name');
       const storedPhoto = await AsyncStorage.getItem('photoProfile');
       const storedPublicId = await AsyncStorage.getItem('photoPublicId');
-      
+
       if (storedName) setName(storedName);
       if (storedPhoto) setPhotoUri(storedPhoto);
       if (storedPublicId) setPhotoPublicId(storedPublicId);
@@ -92,7 +95,7 @@ export default function Profile() {
         const res = await axios.get(`${API_URL}/profile/${storedId}`, {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
-        
+
         if (res.data.name) {
           setName(res.data.name);
           await AsyncStorage.setItem('name', res.data.name);
@@ -121,18 +124,18 @@ export default function Profile() {
     try {
       const token = await AsyncStorage.getItem('jwt_token');
       const userId = await AsyncStorage.getItem('user_id');
-      
+
       if (!token || !userId) {
         throw new Error('Not authenticated');
       }
 
       const formData = new FormData();
-      
+
       if (!isWeb) {
         const filename = imageUri.split('/').pop() || 'profile.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
-        
+
         // @ts-ignore
         formData.append('photo', {
           uri: imageUri,
@@ -144,7 +147,7 @@ export default function Profile() {
         const blob = await response.blob();
         formData.append('photo', blob, 'profile.jpg');
       }
-      
+
       formData.append('userId', userId);
 
       const response = await axios.put(
@@ -159,7 +162,7 @@ export default function Profile() {
       );
 
       return response.data;
-      
+
     } catch (error) {
       console.error('Cloudinary upload error:', error);
       throw error;
@@ -169,12 +172,12 @@ export default function Profile() {
   const pickImageFromGallery = async () => {
     try {
       setUploadingPhoto(true);
-      
+
       if (isWeb) {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        
+
         input.onchange = async (event: any) => {
           const file = event.target.files[0];
           if (file) {
@@ -183,13 +186,13 @@ export default function Profile() {
               const result = e.target?.result as string;
               try {
                 const uploadResult = await uploadPhotoToCloudinary(result);
-                
+
                 setPhotoUri(uploadResult.photoProfile);
                 setPhotoPublicId(uploadResult.photoPublicId);
-                
+
                 await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
                 await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
-                
+
                 Alert.alert('Success', 'Profile photo updated!');
               } catch (error) {
                 Alert.alert('Error', 'Failed to upload photo');
@@ -198,7 +201,7 @@ export default function Profile() {
             reader.readAsDataURL(file);
           }
         };
-        
+
         input.click();
       } else {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -211,13 +214,13 @@ export default function Profile() {
         if (!result.canceled && result.assets[0].uri) {
           try {
             const uploadResult = await uploadPhotoToCloudinary(result.assets[0].uri);
-            
+
             setPhotoUri(uploadResult.photoProfile);
             setPhotoPublicId(uploadResult.photoPublicId);
-            
+
             await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
             await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
-            
+
             Alert.alert('Success', 'Profile photo updated!');
           } catch (error) {
             Alert.alert('Error', 'Failed to upload photo');
@@ -236,7 +239,7 @@ export default function Profile() {
   const takePhotoWithCamera = async () => {
     try {
       setUploadingPhoto(true);
-      
+
       if (isWeb) {
         Alert.alert('Info', 'Camera access is limited on web. Please use "Choose from Gallery" instead.');
         return;
@@ -252,13 +255,13 @@ export default function Profile() {
       if (!result.canceled && result.assets[0].uri) {
         try {
           const uploadResult = await uploadPhotoToCloudinary(result.assets[0].uri);
-          
+
           setPhotoUri(uploadResult.photoProfile);
           setPhotoPublicId(uploadResult.photoPublicId);
-          
+
           await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
           await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
-          
+
           Alert.alert('Success', 'Profile photo updated!');
         } catch (error) {
           Alert.alert('Error', 'Failed to upload photo');
@@ -323,6 +326,7 @@ export default function Profile() {
       );
 
       await AsyncStorage.setItem('name', name.trim());
+      await refreshUser(); // Update global state
 
       Alert.alert('Success', 'Profile updated successfully!');
       setIsEditing(false);
@@ -342,18 +346,8 @@ export default function Profile() {
   const handleLogout = async () => {
     console.log('handleLogout called');
     try {
-      // Close any open modals first
       setPhotoModalVisible(false);
-      
-      // Clear storage directly
-      await AsyncStorage.multiRemove([
-        'jwt_token',
-        'user_id',
-        'name',
-        'photoProfile',
-        'photoPublicId'
-      ]);
-      console.log('Storage cleared, navigating to home');
+      await logout();
       router.replace('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -366,7 +360,7 @@ export default function Profile() {
     }
     const parts = name.split(' ').filter(part => part.length > 0);
     if (parts.length === 0) return 'US';
-    
+
     return parts
       .map(n => n[0])
       .join('')
@@ -376,19 +370,19 @@ export default function Profile() {
 
   const getCloudinaryUrl = () => {
     if (!photoUri) return '';
-    
+
     if (photoUri.includes('cloudinary.com')) {
       return photoUri.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto,f_auto/');
     }
-    
+
     return photoUri;
   };
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fafafa" />
-        <ActivityIndicator size="large" color="#1b5e20" />
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.linenWhite} />
+        <ActivityIndicator size="large" color={Palette.warmCopper} />
         <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
     );
@@ -397,7 +391,7 @@ export default function Profile() {
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#fafafa" />
-      <ScrollView 
+      <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
       >
@@ -405,11 +399,11 @@ export default function Profile() {
           {/* Header */}
           <View style={styles.header}>
             {!isWeb && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => router.back()}
               >
-                <Ionicons name="arrow-back" size={22} color="#1b5e20" />
+                <Ionicons name="arrow-back" size={22} color={Palette.charcoalEspresso} />
               </TouchableOpacity>
             )}
             <Text style={styles.title}>My Profile</Text>
@@ -422,7 +416,7 @@ export default function Profile() {
             <View style={styles.avatarContainer}>
               <View style={styles.avatarWrapper}>
                 {photoUri ? (
-                  <Image 
+                  <Image
                     source={{ uri: getCloudinaryUrl() }}
                     style={styles.avatar}
                     onError={() => {
@@ -558,8 +552,8 @@ export default function Profile() {
 
                 {/* Action Buttons */}
                 <View style={styles.buttonRow}>
-                  <TouchableOpacity 
-                    onPress={handleSave} 
+                  <TouchableOpacity
+                    onPress={handleSave}
                     style={[styles.button, styles.saveButton]}
                     disabled={saving}
                   >
@@ -589,17 +583,17 @@ export default function Profile() {
               <View style={styles.infoContainer}>
                 <Text style={styles.name}>{name || 'User Name'}</Text>
                 <Text style={styles.email}>{email || 'user@example.com'}</Text>
-                
-              
-                
-          
+
+
+
+
 
                 {/* Edit Button */}
                 <TouchableOpacity
                   onPress={() => setIsEditing(true)}
                   style={styles.editButton}
                 >
-                  <Ionicons name="create-outline" size={18} color="#fff" />
+                  <Ionicons name="create-outline" size={20} color={Palette.white} />
                   <Text style={styles.buttonText}>Edit Profile</Text>
                 </TouchableOpacity>
               </View>
@@ -607,15 +601,15 @@ export default function Profile() {
           </View>
 
           {/* Logout Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               console.log('Logout button pressed');
               handleLogout();
-            }} 
+            }}
             style={styles.logoutButton}
           >
-            <Ionicons name="log-out-outline" size={18} color="#fff" />
-            <Text style={styles.buttonText}>Logout</Text>
+            <Ionicons name="log-out-outline" size={20} color={Palette.white} />
+            <Text style={styles.buttonText}>Logout Account</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -624,64 +618,64 @@ export default function Profile() {
       <Modal
         visible={photoModalVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setPhotoModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setPhotoModalVisible(false)}
                 disabled={uploadingPhoto}
               >
-                <Ionicons name="close" size={24} color="#64748b" />
+                <Ionicons name="close" size={26} color={Palette.slate} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Change Profile Photo</Text>
+              <Text style={[styles.modalTitle, { fontFamily: Fonts.bold }]}>Change Profile Photo</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
+                style={[styles.modalButton, { backgroundColor: Palette.warmCopper }]}
                 onPress={pickImageFromGallery}
                 disabled={uploadingPhoto}
               >
                 {uploadingPhoto ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={Palette.white} />
                 ) : (
                   <>
-                    <Ionicons name="image-outline" size={22} color="#fff" />
+                    <Ionicons name="image-outline" size={22} color={Palette.white} />
                     <Text style={styles.buttonText}>Choose from Gallery</Text>
                   </>
                 )}
               </TouchableOpacity>
-              
+
               <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
+                style={[styles.modalButton, { backgroundColor: Palette.charcoalEspresso }]}
                 onPress={takePhotoWithCamera}
                 disabled={uploadingPhoto || isWeb}
               >
                 {isWeb ? (
                   <>
-                    <Ionicons name="camera-outline" size={22} color="#fff" />
+                    <Ionicons name="camera-outline" size={22} color={Palette.white} />
                     <Text style={styles.buttonText}>Camera Not Available</Text>
                   </>
                 ) : (
                   <>
-                    <Ionicons name="camera-outline" size={22} color="#fff" />
+                    <Ionicons name="camera-outline" size={22} color={Palette.white} />
                     <Text style={styles.buttonText}>Take Photo</Text>
                   </>
                 )}
               </TouchableOpacity>
             </View>
-            
+
             <TouchableOpacity
               style={styles.modalCancelButton}
               onPress={() => setPhotoModalVisible(false)}
               disabled={uploadingPhoto}
             >
-              <Text style={{ color: '#64748b', fontSize: 16, fontWeight: '500' }}>
+              <Text style={{ color: Palette.slate, fontSize: 16, fontFamily: Fonts.bold }}>
                 Cancel
               </Text>
             </TouchableOpacity>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  ScrollView,
   TouchableOpacity,
   Dimensions,
   Platform,
@@ -11,9 +11,11 @@ import {
   RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useAnalyticsStyles } from '../styles/Analytics.styles';
-import { API_URL } from '../config/appconf';
-import { useUser } from '../contexts/UserContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useAnalyticsStyles } from '@/styles/Analytics.styles';
+import { API_URL } from '@/config/appconf';
+import { useUser } from '@/contexts/UserContext';
+import { Fonts } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -59,7 +61,7 @@ export default function Analytics() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  
+
   const styles = useAnalyticsStyles();
   const { user } = useUser();
 
@@ -128,8 +130,8 @@ export default function Analytics() {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
@@ -158,11 +160,11 @@ export default function Analytics() {
           style={styles.backButton}
           onPress={() => router.replace('/LandingScreen')}
         >
-          <Text style={styles.backButtonText}>✕</Text>
+          <Ionicons name="close" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -179,7 +181,7 @@ export default function Analytics() {
         {error && (
           <View style={{ padding: 20, alignItems: 'center' }}>
             <Text style={{ color: '#E74C3C', textAlign: 'center' }}>{error}</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={{ marginTop: 12, padding: 10, backgroundColor: '#27AE60', borderRadius: 8 }}
               onPress={fetchAnalytics}
             >
@@ -216,7 +218,7 @@ export default function Analytics() {
           {/* Total Scans */}
           <View style={[styles.metricCard, styles.metricCardLarge]}>
             <View style={styles.metricHeader}>
-              <Text style={styles.metricIcon}>📊</Text>
+              <Ionicons name="analytics" size={24} color="#27AE60" />
               <View style={styles.metricBadge}>
                 <Text style={styles.metricBadgeText}>
                   {stats.weekly_growth >= 0 ? '+' : ''}{stats.weekly_growth}%
@@ -230,7 +232,7 @@ export default function Analytics() {
 
           {/* Export Quality */}
           <View style={styles.metricCard}>
-            <Text style={styles.metricIcon}>✅</Text>
+            <Ionicons name="checkmark-circle" size={24} color="#27AE60" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.export_ready_percent}%</Text>
             <Text style={styles.metricLabel}>Export Quality</Text>
             <View style={styles.progressBar}>
@@ -240,7 +242,7 @@ export default function Analytics() {
 
           {/* Rejected */}
           <View style={styles.metricCard}>
-            <Text style={styles.metricIcon}>⚠️</Text>
+            <Ionicons name="warning" size={24} color="#E74C3C" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.rejected_percent}%</Text>
             <Text style={styles.metricLabel}>Rejected</Text>
             <View style={styles.progressBar}>
@@ -250,7 +252,7 @@ export default function Analytics() {
 
           {/* Avg Quality Score */}
           <View style={styles.metricCard}>
-            <Text style={styles.metricIcon}>⭐</Text>
+            <Ionicons name="star" size={24} color="#F1C40F" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.avg_quality}/100</Text>
             <Text style={styles.metricLabel}>Avg Quality Score</Text>
             <Text style={styles.metricSubtext}>Based on AI analysis</Text>
@@ -258,7 +260,7 @@ export default function Analytics() {
 
           {/* Top Variety */}
           <View style={styles.metricCard}>
-            <Text style={styles.metricIcon}>👑</Text>
+            <Ionicons name="ribbon" size={24} color="#E67E22" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.top_variety}</Text>
             <Text style={styles.metricLabel}>Top Variety</Text>
             <Text style={styles.metricSubtext}>Most scanned</Text>
@@ -320,33 +322,33 @@ export default function Analytics() {
               <Text style={styles.sectionLink}>Scan New →</Text>
             </TouchableOpacity>
           </View>
-          
+
           {recentScans.length === 0 ? (
             <View style={[styles.recentScansCard, { alignItems: 'center', paddingVertical: 40 }]}>
-              <Text style={{ color: '#666', fontSize: 16, marginBottom: 8 }}>No scans yet</Text>
-              <Text style={{ color: '#888', fontSize: 14 }}>Start scanning durians to see your history</Text>
-              <TouchableOpacity 
+              <Text style={{ color: '#666', fontSize: 16, marginBottom: 8, fontFamily: Fonts.regular }}>No scans yet</Text>
+              <Text style={{ color: '#888', fontSize: 14, fontFamily: Fonts.regular }}>Start scanning durians to see your history</Text>
+              <TouchableOpacity
                 style={{ marginTop: 16, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#27AE60', borderRadius: 8 }}
                 onPress={() => router.push('/(tabs)/Scanner')}
               >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>Start Scanning</Text>
+                <Text style={{ color: '#fff', fontFamily: Fonts.semiBold }}>Start Scanning</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.recentScansCard}>
               {recentScans.map((scan) => (
-                <TouchableOpacity 
-                  key={scan.id} 
+                <TouchableOpacity
+                  key={scan.id}
                   style={[styles.scanItem, { alignItems: 'flex-start' }]}
                   activeOpacity={0.7}
                 >
                   {/* Scan Image */}
                   {scan.thumbnail_url ? (
-                    <Image 
+                    <Image
                       source={{ uri: scan.thumbnail_url }}
-                      style={{ 
-                        width: 60, 
-                        height: 60, 
+                      style={{
+                        width: 60,
+                        height: 60,
                         borderRadius: 8,
                         backgroundColor: '#333',
                       }}
@@ -354,10 +356,10 @@ export default function Analytics() {
                     />
                   ) : (
                     <View style={[styles.scanIcon, { width: 60, height: 60, borderRadius: 8 }]}>
-                      <Text style={styles.scanIconText}>🥭</Text>
+                      <Ionicons name="leaf" size={24} color="#27AE60" />
                     </View>
                   )}
-                  
+
                   {/* Scan Details */}
                   <View style={[styles.scanInfo, { flex: 1, marginLeft: 12 }]}>
                     <Text style={styles.scanVariety}>{scan.variety}</Text>
@@ -368,24 +370,24 @@ export default function Analytics() {
                       </Text>
                     )}
                     <View style={{ flexDirection: 'row', marginTop: 4, gap: 8 }}>
-                      <Text style={{ color: '#888', fontSize: 12 }}>
+                      <Text style={{ color: '#888', fontSize: 12, fontFamily: Fonts.regular }}>
                         {scan.durian_count} detected
                       </Text>
-                      <Text style={{ color: '#888', fontSize: 12 }}>
+                      <Text style={{ color: '#888', fontSize: 12, fontFamily: Fonts.regular }}>
                         {(scan.confidence * 100).toFixed(0)}% conf.
                       </Text>
                     </View>
                   </View>
-                  
+
                   {/* Quality & Status */}
                   <View style={[styles.scanMetrics, { alignItems: 'flex-end' }]}>
                     <Text style={[
                       styles.scanQuality,
-                      { 
-                        color: scan.quality >= 70 ? '#27AE60' : 
-                               scan.quality >= 50 ? '#F39C12' : '#E74C3C',
+                      {
+                        color: scan.quality >= 70 ? '#27AE60' :
+                          scan.quality >= 50 ? '#F39C12' : '#E74C3C',
                         fontSize: 18,
-                        fontWeight: '700'
+                        fontFamily: Fonts.bold
                       }
                     ]}>
                       {Math.round(scan.quality)}%
@@ -412,7 +414,8 @@ export default function Analytics() {
 
         {/* Export Button */}
         <TouchableOpacity style={styles.exportButton} onPress={onRefresh}>
-          <Text style={styles.exportButtonText}>🔄 Refresh Data</Text>
+          <Ionicons name="refresh" size={18} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.exportButtonText}>Refresh Data</Text>
         </TouchableOpacity>
 
         {/* Bottom Spacing */}

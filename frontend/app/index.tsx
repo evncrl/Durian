@@ -1,13 +1,5 @@
-import { NavigationProvider } from './contexts/NavigationContext';
-import { UserProvider } from './contexts/UserContext';
-import AppContainer from './AppContainer';
+import { Redirect } from 'expo-router';
 
 export default function RootIndex() {
-	return (
-		<NavigationProvider>
-			<UserProvider>
-				<AppContainer />
-			</UserProvider>
-		</NavigationProvider>
-	);
+	return <Redirect href="/(tabs)" />;
 }

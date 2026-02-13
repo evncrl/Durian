@@ -19,22 +19,29 @@ def signup():
     if request.method == "OPTIONS":
         return '', 200
         
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data"}), 400
+    try: # Dagdagan natin ng try block
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data"}), 400
+            
+        required_fields = ["name", "email", "password", "confirm_password"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing fields"}), 400
         
-    required_fields = ["name", "email", "password", "confirm_password"]
-    if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing fields"}), 400
-    
-    result = signup_user(
-        name=data["name"],
-        email=data["email"],
-        password=data["password"],
-        confirm_password=data["confirm_password"]
-    )
-    status_code = 200 if "success" in result else 400
-    return jsonify(result), status_code
+        # Dito karaniwang nagka-crash dahil sa missing dependencies
+        result = signup_user(
+            name=data["name"],
+            email=data["email"],
+            password=data["password"],
+            confirm_password=data["confirm_password"]
+        )
+        status_code = 200 if "success" in result else 400
+        return jsonify(result), status_code
+
+    except Exception as e: # Huhulihin nito ang totoong error
+        print(f"[ROUTE ERROR] /signup crashed: {str(e)}")
+        print(traceback.format_exc()) # Ito ang magpapakita kung anong library ang kulang
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 @auth_bp.route("/signup-with-pfp", methods=["POST", "OPTIONS"])
 def signup_with_pfp():

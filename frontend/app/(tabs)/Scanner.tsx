@@ -10,13 +10,15 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
+import Reanimated, { FadeInUp } from 'react-native-reanimated';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useScannerStyles } from '../styles/Scanner.styles';
-import { API_URL } from '../config/appconf';
-import { useUser } from '../contexts/UserContext';
+import { useScannerStyles } from '@/styles/Scanner.styles';
+import { API_URL } from '@/config/appconf';
+import { useUser } from '@/contexts/UserContext';
+import { Fonts } from '@/constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -24,20 +26,20 @@ export default function Scanner() {
   const styles = useScannerStyles();
   const router = useRouter();
   const { user } = useUser();
-  
+
   // Camera state
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  
+
   // UI state
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
-  
+
   // Animation for scan line
   const scanLineAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Animate scan line
   useEffect(() => {
     const animateScanLine = () => {
@@ -56,7 +58,7 @@ export default function Scanner() {
         ])
       ).start();
     };
-    
+
     animateScanLine();
   }, []);
 
@@ -87,13 +89,13 @@ export default function Scanner() {
   // Take photo with camera
   const takePicture = async () => {
     if (!cameraRef.current) return;
-    
+
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
         base64: false,
       });
-      
+
       if (photo?.uri) {
         setCapturedImage(photo.uri);
         analyzeImage(photo.uri);
@@ -128,11 +130,11 @@ export default function Scanner() {
   const analyzeImage = async (imageUri: string) => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    
+
     try {
       // Create form data
       const formData = new FormData();
-      
+
       // Handle different platforms
       if (Platform.OS === 'web') {
         // For web, fetch the blob
@@ -144,7 +146,7 @@ export default function Scanner() {
         const filename = imageUri.split('/').pop() || 'durian_scan.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
-        
+
         formData.append('image', {
           uri: imageUri,
           name: filename,
@@ -163,7 +165,7 @@ export default function Scanner() {
         'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true',
       };
-      
+
       if (user?.id) {
         headers['X-User-Id'] = user.id;
       }
@@ -175,13 +177,13 @@ export default function Scanner() {
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         setAnalysisResult(result);
-        
+
         // Use Cloudinary URL if scan was saved, otherwise use local URI
         const displayImageUri = result.cloudinary?.image_url || imageUri;
-        
+
         // Navigate to results screen with data
         router.push({
           pathname: '/DurianScanResult',
@@ -281,14 +283,17 @@ export default function Scanner() {
             </View>
 
             {/* Instructions */}
-            <View style={styles.instructionsContainer}>
+            <Reanimated.View
+              entering={FadeInUp.delay(500).springify()}
+              style={styles.instructionsContainer}
+            >
               <Text style={styles.instructionsText}>
-                🥭 Position durian in frame
+                <Ionicons name="scan-circle-outline" size={20} color="#fff" /> Position durian in frame
               </Text>
               <Text style={styles.instructionsSubtext}>
                 Ensure good lighting for best results
               </Text>
-            </View>
+            </Reanimated.View>
           </View>
 
           {/* Preview of last captured image */}
@@ -349,7 +354,10 @@ export default function Scanner() {
               {isAnalyzing ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.captureText}>📷 Scan</Text>
+                <>
+                  <Ionicons name="scan" size={20} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={styles.captureText}>Analyze Durian</Text>
+                </>
               )}
             </TouchableOpacity>
 
@@ -385,7 +393,7 @@ export default function Scanner() {
           zIndex: 100,
         }}>
           <ActivityIndicator size="large" color="#27AE60" />
-          <Text style={{ color: '#fff', marginTop: 16, fontSize: 18, fontWeight: '600' }}>
+          <Text style={{ color: '#fff', marginTop: 16, fontSize: 18, fontFamily: Fonts.semiBold }}>
             🔍 Analyzing durian...
           </Text>
           <Text style={{ color: '#ccc', marginTop: 8, fontSize: 14 }}>
@@ -396,3 +404,4 @@ export default function Scanner() {
     </View>
   );
 }
+

@@ -11,7 +11,9 @@ import {
   ImageBackground,
   Dimensions,
 } from 'react-native';
-import Footer from '../components/Footer'; 
+import Footer from '@/components/Footer';
+import { Ionicons } from '@expo/vector-icons';
+import { Fonts } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -87,7 +89,7 @@ export default function About() {
 
   const SocialLink = ({ icon, url, label }: { icon: string; url?: string; label: string }) => {
     if (!url) return null;
-    
+
     return (
       <Pressable
         onPress={() => handleLinkPress(url)}
@@ -96,8 +98,12 @@ export default function About() {
           (pressed || hovered) && styles.modernSocialButtonHovered,
         ]}
       >
-        <Text style={styles.modernSocialIcon}>{icon}</Text>
-        <Text style={styles.modernSocialLabel}>{label}</Text>
+        {({ hovered }: any) => (
+          <>
+            <Ionicons name={icon as any} size={16} color={hovered ? "#fff" : "#64748B"} />
+            <Text style={[styles.modernSocialLabel, hovered && { color: '#fff' }]}>{label}</Text>
+          </>
+        )}
       </Pressable>
     );
   };
@@ -106,13 +112,13 @@ export default function About() {
     <View style={[styles.modernTeamCard, { transform: [{ rotate: index % 2 === 0 ? '1deg' : '-1deg' }] }]}>
       {/* Decorative corner accent */}
       <View style={[styles.cornerAccent, { backgroundColor: member.gradient[0] }]} />
-      
+
       <View style={styles.modernCardContent}>
         {/* Avatar with unique frame */}
         <View style={styles.modernAvatarWrapper}>
-          <View style={[styles.modernAvatarFrame, { 
+          <View style={[styles.modernAvatarFrame, {
             borderColor: member.gradient[0],
-          }]}> 
+          }]}>
             <Image
               source={member.avatar}
               style={styles.modernAvatar}
@@ -133,18 +139,18 @@ export default function About() {
 
         {/* Social links - horizontal style */}
         <View style={styles.modernSocialRow}>
-          {member.linkedin && <SocialLink icon="in" url={member.linkedin} label="LinkedIn" />}
-          {member.github && <SocialLink icon="</>" url={member.github} label="GitHub" />}
-          {member.twitter && <SocialLink icon="𝕏" url={member.twitter} label="Twitter" />}
-          {member.dribbble && <SocialLink icon="●" url={member.dribbble} label="Dribbble" />}
-          {member.website && <SocialLink icon="🔗" url={member.website} label="Web" />}
+          {member.linkedin && <SocialLink icon="logo-linkedin" url={member.linkedin} label="LinkedIn" />}
+          {member.github && <SocialLink icon="logo-github" url={member.github} label="GitHub" />}
+          {member.twitter && <SocialLink icon="logo-twitter" url={member.twitter} label="Twitter" />}
+          {member.dribbble && <SocialLink icon="logo-dribbble" url={member.dribbble} label="Dribbble" />}
+          {member.website && <SocialLink icon="link-outline" url={member.website} label="Web" />}
         </View>
       </View>
     </View>
   );
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
@@ -161,7 +167,7 @@ export default function About() {
             <View style={[styles.floatingShape, styles.floatingShape1]} />
             <View style={[styles.floatingShape, styles.floatingShape2]} />
             <View style={[styles.floatingShape, styles.floatingShape3]} />
-            
+
             <View style={styles.modernHeroContent}>
               <View style={styles.modernBadge}>
                 <Text style={styles.modernBadgeText}>EST. 2026</Text>
@@ -182,11 +188,11 @@ export default function About() {
         {/* Vision Block */}
         <View style={styles.visionBlock}>
           <View style={styles.visionIconBox}>
-            <Text style={styles.visionIcon}>✦</Text>
+            <Ionicons name="sparkles" size={24} color="#fff" />
           </View>
           <Text style={styles.visionTitle}>Our Vision</Text>
           <Text style={styles.visionText}>
-           To create a durian quality assessment app that combines cutting-edge technology with user-centric design, empowering farmers, sellers, and enthusiasts worldwide to make informed decisions and elevate the durian experience.
+            To create a durian quality assessment app that combines cutting-edge technology with user-centric design, empowering farmers, sellers, and enthusiasts worldwide to make informed decisions and elevate the durian experience.
           </Text>
         </View>
 
@@ -194,23 +200,23 @@ export default function About() {
         <View style={styles.metricsGrid}>
           <View style={styles.metricBox}>
             <View style={[styles.metricIconCircle, { backgroundColor: '#FF6B6B20' }]}>
-              <Text style={styles.metricEmoji}>🚀</Text>
+              <Ionicons name="rocket" size={32} color="#FF6B6B" />
             </View>
             <Text style={styles.metricValue}>50+</Text>
             <Text style={styles.metricLabel}>Launched Projects</Text>
           </View>
-          
+
           <View style={styles.metricBox}>
             <View style={[styles.metricIconCircle, { backgroundColor: '#4ECDC420' }]}>
-              <Text style={styles.metricEmoji}>⭐</Text>
+              <Ionicons name="star" size={32} color="#4ECDC4" />
             </View>
             <Text style={styles.metricValue}>98%</Text>
             <Text style={styles.metricLabel}>Client Satisfaction</Text>
           </View>
-          
+
           <View style={styles.metricBox}>
             <View style={[styles.metricIconCircle, { backgroundColor: '#A8E6CF20' }]}>
-              <Text style={styles.metricEmoji}>🏆</Text>
+              <Ionicons name="trophy" size={32} color="#A8E6CF" />
             </View>
             <Text style={styles.metricValue}>15+</Text>
             <Text style={styles.metricLabel}>Awards Won</Text>
@@ -223,9 +229,9 @@ export default function About() {
           <Text style={styles.teamHeaderText}>The Dream Team</Text>
           <View style={styles.teamHeaderLine} />
         </View>
-        
+
         <Text style={styles.teamTagline}>
-          Meet the minds behind the magic ✨
+          Meet the minds behind the magic <Ionicons name="sparkles" size={16} color="#FACC15" />
         </Text>
 
         <View style={styles.modernTeamGrid}>
@@ -235,7 +241,7 @@ export default function About() {
         </View>
 
 
-       
+
 
         {/* Footer */}
         <Footer />
@@ -247,12 +253,12 @@ export default function About() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#0C1A10',
   },
   scrollContent: {
     flexGrow: 1,
   },
-  
+
   // Modern Hero Section
   modernHero: {
     width: '100%',
@@ -269,7 +275,7 @@ const styles = StyleSheet.create({
   },
   modernHeroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(12, 26, 16, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -318,21 +324,17 @@ const styles = StyleSheet.create({
   modernBadgeText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '700',
+
+    fontFamily: Fonts.bold,
     letterSpacing: 2,
   },
   modernHeroTitle: {
     fontSize: 52,
-    fontWeight: '900',
+    fontFamily: Fonts.bold,
     color: '#fff',
     textAlign: 'center',
     lineHeight: 60,
     marginBottom: 16,
-    ...Platform.select({
-      web: {
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      },
-    }),
   },
   modernHeroTitleAccent: {
     color: '#4ECDC4',
@@ -343,7 +345,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 500,
   },
-  
+
   // Content
   content: {
     width: '100%',
@@ -355,16 +357,16 @@ const styles = StyleSheet.create({
   contentWeb: {
     paddingHorizontal: 40,
   },
-  
+
   // Vision Block
   visionBlock: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1A291A',
     borderRadius: 24,
     padding: 40,
     marginBottom: 40,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2D241E',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -384,7 +386,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#C1773E',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -395,19 +397,19 @@ const styles = StyleSheet.create({
   },
   visionTitle: {
     fontSize: 32,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontFamily: Fonts.bold,
+    color: '#FAF9F6',
     marginBottom: 16,
     textAlign: 'center',
   },
   visionText: {
     fontSize: 16,
     lineHeight: 28,
-    color: '#64748B',
+    color: '#94a3b8',
     textAlign: 'center',
     maxWidth: 700,
   },
-  
+
   // Metrics Grid
   metricsGrid: {
     flexDirection: 'row',
@@ -419,12 +421,12 @@ const styles = StyleSheet.create({
   metricBox: {
     flex: 1,
     minWidth: 180,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A291A',
     borderRadius: 20,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2D241E',
   },
   metricIconCircle: {
     width: 70,
@@ -439,17 +441,17 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontSize: 36,
-    fontWeight: '900',
-    color: '#0F172A',
+    fontFamily: Fonts.bold,
+    color: '#FAF9F6',
     marginBottom: 8,
   },
   metricLabel: {
     fontSize: 13,
-    color: '#64748B',
+    color: '#94a3b8',
     textAlign: 'center',
-    fontWeight: '600',
+    fontFamily: Fonts.semiBold,
   },
-  
+
   // Team Header
   teamHeader: {
     flexDirection: 'row',
@@ -460,32 +462,32 @@ const styles = StyleSheet.create({
   teamHeaderLine: {
     flex: 1,
     height: 2,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#2D241E',
   },
   teamHeaderText: {
     fontSize: 32,
-    fontWeight: '900',
-    color: '#0F172A',
+    fontFamily: Fonts.bold,
+    color: '#FAF9F6',
   },
   teamTagline: {
     fontSize: 18,
-    color: '#64748B',
+    color: '#94a3b8',
     textAlign: 'center',
     marginBottom: 40,
   },
-  
+
   // Modern Team Cards
   modernTeamGrid: {
     gap: 32,
     marginBottom: 60,
   },
   modernTeamCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1A291A',
     borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2D241E',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -526,7 +528,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 4,
     padding: 4,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A291A',
   },
   modernAvatar: {
     width: '100%',
@@ -541,7 +543,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: '#1A291A',
   },
   modernMemberInfo: {
     flex: 1,
@@ -549,8 +551,8 @@ const styles = StyleSheet.create({
   },
   modernMemberName: {
     fontSize: 24,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontFamily: Fonts.bold,
+    color: '#FAF9F6',
     marginBottom: 8,
   },
   modernRolePill: {
@@ -562,13 +564,14 @@ const styles = StyleSheet.create({
   },
   modernRoleText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: '#fff',
   },
   modernMemberDesc: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: '#94a3b8',
+    fontFamily: Fonts.regular,
   },
   modernSocialRow: {
     width: '100%',
@@ -576,19 +579,19 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#2D241E',
     paddingTop: 20,
   },
   modernSocialButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#0C1A10',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#2D241E',
     ...Platform.select({
       web: {
         cursor: 'pointer',
@@ -597,16 +600,16 @@ const styles = StyleSheet.create({
     }),
   },
   modernSocialButtonHovered: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#C1773E',
+    borderColor: '#C1773E',
   },
   modernSocialIcon: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
   },
   modernSocialLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: Fonts.semiBold,
     color: '#64748B',
   },
 

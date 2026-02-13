@@ -5,49 +5,47 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = '#354024'; // Kombu Green
+const tintColorDark = '#E5D7C4'; // Bone
+
+export const Palette = {
+  deepObsidian: '#0C1A10',
+  linenWhite: '#FAF9F6',
+  warmCopper: '#C1773E',
+  mutedSage: '#8E9775',
+  charcoalEspresso: '#2D241E',
+  stoneGray: '#E2E2E2',
+  white: '#FFFFFF',
+  slate: '#94a3b8',
+};
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: Palette.charcoalEspresso,
+    background: Palette.linenWhite,
+    tint: Palette.warmCopper,
+    surface: Palette.white,
+    border: Palette.stoneGray,
+    icon: Palette.warmCopper,
+    tabIconDefault: Palette.mutedSage,
+    tabIconSelected: Palette.warmCopper,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: Palette.linenWhite,
+    background: Palette.deepObsidian,
+    tint: Palette.warmCopper,
+    surface: '#1A291A', // Darker green surface for depth
+    border: Palette.mutedSage,
+    icon: Palette.linenWhite,
+    tabIconDefault: Palette.mutedSage,
+    tabIconSelected: Palette.warmCopper,
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const Fonts = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Montserrat_600SemiBold',
+  bold: 'Montserrat_700Bold',
+};
+

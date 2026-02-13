@@ -18,7 +18,7 @@ from routes.scanner_routes import scanner_bp
 from routes.chatbot_routes import chatbot_bp
 
 
-
+    
 app = Flask(__name__)
 
 
