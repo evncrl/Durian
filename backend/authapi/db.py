@@ -9,6 +9,7 @@ from io import BytesIO
 import uuid
 from typing import Optional, Dict, Any, List
 from bson import ObjectId
+import uuid
 
 # Load .env
 load_dotenv()
@@ -21,6 +22,7 @@ client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client["durianapp"]
 users_collection = db["users"]
 comments_collection = db["comments"]
+products_collection = db["products"]
 
 # ---------------------------
 # Cloudinary setup
@@ -814,3 +816,35 @@ def get_quality_distribution(user_id: str, time_range: str = "month") -> List[Di
     except Exception as e:
         print(f"[DB] Error getting quality distribution: {e}")
         return []
+    
+def upload_image(image_data: bytes, folder: str = "products") -> Dict[str, Any]:
+    """
+    Generic function to upload an image to Cloudinary.
+    """
+    try:
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        # Gumawa ng unique filename
+        public_id = f"{folder}/img_{timestamp}_{uuid.uuid4().hex[:6]}"
+
+        print(f"[DB] Uploading generic image to Cloudinary: {len(image_data)} bytes")
+
+        upload_result = cloudinary.uploader.upload(
+            BytesIO(image_data),
+            public_id=public_id,
+            folder=folder,
+            overwrite=True,
+            resource_type="image"
+        )
+
+        return {
+            "success": True,
+            "url": upload_result.get("secure_url"),
+            "public_id": upload_result.get("public_id")
+        }
+
+    except Exception as e:
+        print(f"[DB] Cloudinary upload failed: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from bson.objectid import ObjectId
 from db import users_collection
+from db import users_collection, products_collection
 from handlers.email_handler import send_deactivation_email, send_reactivation_email
 import datetime
 
@@ -206,5 +207,33 @@ def get_admin_stats():
             }
         }), 200
         
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+# ---------------------------
+# Admin Product Management
+# ---------------------------
+
+@admin_bp.route("/products/<product_id>", methods=["PUT", "OPTIONS"])
+def update_product(product_id):
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        data = request.json
+        products_collection.update_one(
+            {"_id": ObjectId(product_id)},
+            {"$set": data}
+        )
+        return jsonify({"success": True, "message": "Product updated"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route("/products/<product_id>", methods=["DELETE", "OPTIONS"])
+def delete_product(product_id):
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        products_collection.delete_one({"_id": ObjectId(product_id)})
+        return jsonify({"success": True, "message": "Product deleted"}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
