@@ -514,4 +514,3 @@ function Landing({ }: any) {
 }
 
 export default Landing;
-

@@ -301,4 +301,3 @@ export default function DurianHeatmap(props: HeatmapProps) {
 
 // Export the data for use in other components
 export { DURIAN_DATA };
-
