@@ -83,11 +83,11 @@ export default function AdminShop() {
         const uploadData = new FormData();
         const filename = uri.split('/').pop() || 'upload.jpg';
         
-        // 1. IMPORTANT PARA SA WEB: I-convert ang URI sa Blob
+        // for web, fetch the file and convert to blob
         const response_blob = await fetch(uri);
         const blob = await response_blob.blob();
         
-        // 2. I-append ang blob sa FormData
+        // 2. append sa FormData (Cloudinary expects 'photo' field)
         uploadData.append('photo', blob, filename);
 
         console.log("[DEBUG] Sending photo to backend...");
@@ -97,8 +97,6 @@ export default function AdminShop() {
             body: uploadData,
             headers: { 
                 'ngrok-skip-browser-warning': 'true'
-                // WAG maglagay ng 'Content-Type': 'multipart/form-data' dito, 
-                // kusa na itong ise-set ng fetch kasama ang boundary.
             }
         });
 
@@ -201,7 +199,7 @@ const performDelete = async (id: string) => {
         
         if (data.success) {
             Alert.alert("Success", "Product deleted!");
-            fetchProducts(); // I-refresh ang listahan
+            fetchProducts(); 
         } else {
             Alert.alert("Error", data.error || "Failed to delete");
         }
