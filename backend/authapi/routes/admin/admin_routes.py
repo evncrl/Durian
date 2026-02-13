@@ -233,7 +233,18 @@ def delete_product(product_id):
     if request.method == "OPTIONS":
         return '', 200
     try:
-        products_collection.delete_one({"_id": ObjectId(product_id)})
-        return jsonify({"success": True, "message": "Product deleted"}), 200
+        print(f"--- DELETE DEBUG ---")
+        print(f"Attempting to delete Product ID: {product_id}")
+
+        result = products_collection.delete_one({"_id": ObjectId(product_id)})
+        
+        if result.deleted_count > 0:
+            print(f"Successfully deleted product: {product_id}")
+            return jsonify({"success": True, "message": "Product deleted"}), 200
+        else:
+            print(f"Product not found in DB: {product_id}")
+            return jsonify({"success": False, "error": "Product not found"}), 404
+
     except Exception as e:
+        print(f"Delete Error: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500

@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 
 shop_bp = Blueprint('shop', __name__)
 
-# 1. Kunin ang lahat ng products
+# 1. fetch products with optional category filter
 @shop_bp.route("/products", methods=["GET"])
 def get_products():
     try:
@@ -21,7 +21,7 @@ def get_products():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# 2. Mag-add ng bagong product
+# 2. Add product (admin)
 @shop_bp.route("/products", methods=["POST"])
 def add_product():
     try:
@@ -36,14 +36,13 @@ def add_product():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# 3. Unique Upload Function (Pinagsama ang logic at debug)
+# 3. Unique Upload Function for Product Images
 @shop_bp.route("/upload-image", methods=["POST", "OPTIONS"])
 def upload_product_image():
     if request.method == "OPTIONS":
         return '', 200
         
     try:
-        # Debug Logs para sa Terminal
         print(f"--- UPLOAD DEBUG ---")
         if 'photo' not in request.files:
             return jsonify({"success": False, "error": "No photo field"}), 400
@@ -51,7 +50,6 @@ def upload_product_image():
         file = request.files['photo']
         image_data = file.read()
         
-        # I-upload sa Cloudinary via db.py function
         result = upload_image(image_data, folder="products")
         
         if result.get("success"):

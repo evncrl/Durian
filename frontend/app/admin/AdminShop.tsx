@@ -176,22 +176,40 @@ export default function AdminShop() {
         setFormData({ name: '', category: 'Fresh Fruit', price: '', stock: '', description: '', image_url: '' });
     };
 
-    const handleDelete = (id: string) => {
-        Alert.alert("Delete Item", "This will remove the product from the shop. Continue?", [
-            { text: "Cancel" },
-            { 
-                text: "Delete", 
-                style: 'destructive', 
-                onPress: async () => {
-                    await fetch(`${API_URL}/admin/products/${id}`, { 
-                        method: 'DELETE', 
-                        headers: { 'ngrok-skip-browser-warning': 'true' } 
-                    });
-                    fetchProducts();
-                }
-            }
-        ]);
-    };
+
+const handleDelete = (id: string) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this item?");
+    
+    if (confirmDelete) {
+        performDelete(id);
+    }
+};
+
+const performDelete = async (id: string) => {
+    try {
+        console.log(`[DEBUG] Sending DELETE request for ID: ${id}`);
+        
+        const res = await fetch(`${API_URL}/admin/products/${id}`, { 
+            method: 'DELETE', 
+            headers: { 
+                'ngrok-skip-browser-warning': 'true',
+                'Accept': 'application/json'
+            } 
+        });
+
+        const data = await res.json();
+        
+        if (data.success) {
+            Alert.alert("Success", "Product deleted!");
+            fetchProducts(); // I-refresh ang listahan
+        } else {
+            Alert.alert("Error", data.error || "Failed to delete");
+        }
+    } catch (e) {
+        console.error("[FRONTEND DELETE ERROR]", e);
+        Alert.alert("Error", "Server connection failed.");
+    }
+};
 
     useEffect(() => { fetchProducts(); }, []);
 
