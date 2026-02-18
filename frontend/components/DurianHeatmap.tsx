@@ -25,7 +25,7 @@ const DURIAN_DATA = [
 
 interface HeatmapProps {
   mapMode: 'heatmap' | 'scatter';
-  onMapModeChange: (mode: 'heatmap' | 'scatter') => void;
+  onMapModeChange: (mode: 'heatmap') => void;
   onRegionSelect: (region: any) => void;
   plotlyLoaded: boolean;
   onPlotlyLoad: () => void;
@@ -232,12 +232,6 @@ export default function DurianHeatmap(props: HeatmapProps) {
             onPress={() => onMapModeChange('heatmap')}
           >
             <Text style={styles.controlButtonText}>🔥 Heat Map</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.controlButton, mapMode === 'scatter' && styles.controlButtonActive]}
-            onPress={() => onMapModeChange('scatter')}
-          >
-            <Text style={styles.controlButtonText}>⚪ Scatter Map</Text>
           </TouchableOpacity>
         </View>
       </View>
