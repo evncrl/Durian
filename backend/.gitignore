@@ -1,49 +1,44 @@
-@"
-# Python
+# Python virtual environment
 venv/
-venv310/
-.venv/
+env/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Environment variables (SECURITY!)
+# Python environment variables
 .env
-*.env
-.env.local
-
-# Node.js
-frontend/node_modules/
-npm-debug.log*
-
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Dataset (too large)
-datasets/
-*.h5
-*.pb
-*.tflite
-
-# Trained Models (large files)
-
-
-# Training outputs
-training_scripts/runs/
-training_scripts/*.pt
-training_scripts/wandb/
+.env.*
 
 # Logs
 *.log
-logs/
 
-# Temp files
-*.tmp
-tmp/
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node / Frontend dependencies
+node_modules/
+package-lock.json
+npm-debug.log
+yarn.lock
+
+# Build / dist folders
+dist/
+build/
+frontend/build/
+frontend/dist/
+
+# IDE / editor files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# JetBrains IDEs
+*.iml
+*.iws
+
+# Misc
+*.bak
+*.swp

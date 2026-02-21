@@ -13,6 +13,12 @@ import { Fonts } from "@/constants/theme";
 import Animated, { useSharedValue, useAnimatedScrollHandler, FadeInDown } from 'react-native-reanimated';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { AnimatedImage } from '@/components/ui/AnimatedImage';
+import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthUI } from '@/contexts/AuthUIContext';
+import { useUser } from '@/contexts/UserContext';
+import { useCart } from '@/contexts/CartContext';
+
 
 type Product = {
   id: string;
@@ -30,7 +36,10 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const scrollY = useSharedValue(0);
-
+  const router = useRouter();
+  const { openAuthModal } = useAuthUI();
+  const { user } = useUser();  
+  const { addToCart } = useCart();
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
   });
@@ -129,12 +138,27 @@ export default function Shop() {
                     </View>
 
                     <TouchableOpacity
-                      style={shopStyles.buyButton}
-                      onPress={() => alert('Adding to cart...')}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="add" size={24} color="#fff" />
-                    </TouchableOpacity>
+  style={shopStyles.buyButton}
+  onPress={() => {
+     if (!user) {
+      openAuthModal('login'); // open login modal for unauthenticated users
+      return;
+    }
+     addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.image,
+    });
+
+    alert('Added to Cart');
+    
+  }}
+  activeOpacity={0.7}
+>
+  <Ionicons name="add" size={24} color="#fff" />
+</TouchableOpacity>
                   </View>
                 </View>
               </ScrollReveal>

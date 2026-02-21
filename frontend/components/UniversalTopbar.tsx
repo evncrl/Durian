@@ -16,6 +16,9 @@ import { useUser } from '@/contexts/UserContext';
 import { useAuthUI } from '@/contexts/AuthUIContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, Colors, Palette } from '@/constants/theme';
+import { useCart } from '@/contexts/CartContext';
+
+
 
 interface UniversalTopbarProps {
     // No props needed now, uses context
@@ -80,6 +83,7 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
     const { openAuthModal } = useAuthUI();
     const { width } = useWindowDimensions();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { cart } = useCart();
 
     const isCompact = width < 768;
 
@@ -123,6 +127,33 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
 
                 {/* Right side: auth / profile + hamburger */}
                 <View style={[styles.rightSection, isCompact && { marginLeft: 0 }]}>
+                    {/* Cart icon */}
+{user && (
+  <TouchableOpacity
+    style={{ marginRight: 12 }}
+    onPress={() => router.push('/checkout')} // Navigate to checkout page
+    activeOpacity={0.7}
+  >
+    <Ionicons name="cart-outline" size={28} color={Palette.warmCopper} />
+    {cart.length > 0 && (
+      <View style={{
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: 'red',
+        borderRadius: 8,
+        width: 16,
+        height: 16,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <Text style={{ color: '#fff', fontSize: 10, fontFamily: Fonts.bold }}>
+          {cart.length}
+        </Text>
+      </View>
+    )}
+  </TouchableOpacity>
+)}
                     {!isCompact && !user && (
                         <TouchableOpacity style={styles.loginBtn} onPress={() => openAuthModal('login')}>
                             <Text style={styles.loginBtnText}>Sign In</Text>
