@@ -46,29 +46,39 @@ export default function Shop() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_URL}/products`);
-        const data = await res.json();
-        // Map backend products to frontend Product type
-        const mapped = data.map((p: any) => ({
-          id: p._id,
-          name: p.name,
-          category: p.category,
-          price: p.price,
-          image: p.image ? { uri: p.image } : require("../../assets/images/durian-bg.jpg"),
-          description: p.description,
-          isNew: p.isNew || false,
-        }));
-        setProducts(mapped);
-      } catch (err) {
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
+        setLoading(true);
+        try {
+            // 1. Ensure API call is correct and includes ngrok header if needed
+            const res = await fetch(`${API_URL}/shop/products`, {
+                headers: { 'ngrok-skip-browser-warning': 'true' }
+            });
+            const data = await res.json();
+
+            // 2. check if 'products' field exists in response
+            if (data.success && data.products) {
+                const mapped = data.products.map((p: any) => ({
+                    id: p._id,
+                    name: p.name,
+                    category: p.category,
+                    price: p.price,
+                    // 3. FIX: Use 'image_url' 
+                    image: p.image_url 
+                        ? { uri: p.image_url } 
+                        : require("../../assets/images/durian-bg.jpg"),
+                    description: p.description,
+                    isNew: p.isNew || false,
+                }));
+                setProducts(mapped);
+            }
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
     };
     fetchProducts();
-  }, []);
+}, []);
 
   if (loading) {
     return (

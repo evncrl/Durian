@@ -28,7 +28,7 @@ from routes.transaction_routes import bp as transaction_bp
 load_dotenv()
 
 app = Flask(__name__)
-
+CORS(app)
 
 # Allow ALL origins for ngrok testing
 
@@ -42,7 +42,7 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(scanner_bp, url_prefix='/scanner')
 app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
-app.register_blueprint(shop_bp, url_prefix='/')
+app.register_blueprint(shop_bp, url_prefix='/shop')
 app.register_blueprint(transaction_bp)
 
 
