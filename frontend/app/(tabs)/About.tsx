@@ -35,7 +35,7 @@ export default function About() {
       name: 'Aia A. Garcia',
       role: 'Group Leader',
       description: 'Full-stack engineer with 8+ years of experience in mobile and web development. Passionate about creating seamless user experiences.',
-      avatar: require('../../assets/images/aia.jpg'),
+      //avatar: require('../../assets/images/aia.jpg'),
       github: 'https://github.com/towppy',
       linkedin: 'https://linkedin.com',
       twitter: 'https://twitter.com',

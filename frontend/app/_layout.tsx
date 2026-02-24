@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { UserProvider } from '@/contexts/UserContext';
 import {
   useFonts,
   Inter_400Regular,
@@ -24,9 +25,9 @@ import { CartProvider } from '@/contexts/CartContext';
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const { UserProvider } = require('@/contexts/UserContext');
 
+
+export default function RootLayout() {
   const [loaded, error] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -45,28 +46,28 @@ export default function RootLayout() {
   }, [loaded, error]);
 
   return (
-   <AuthUIProvider>
-  <UserProvider>
-    <CartProvider>
-      {Platform.OS === 'web' && (
-        <style dangerouslySetInnerHTML={{
-          __html: `
-          * { font-family: 'Inter_400Regular', sans-serif; }
-          h1, h2, h3, h4, h5, h6, b, strong { font-family: 'Montserrat_700Bold', sans-serif; }
-        `}} />
-      )}
-      {loaded || error ? (
-        <>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="admin" options={{ headerShown: false }} />
-          </Stack>
-          <LandingAuthModal />
-        </>
-      ) : null}
-    </CartProvider>
-  </UserProvider>
-</AuthUIProvider>
+    <AuthUIProvider>
+      <UserProvider>
+        <CartProvider>
+          {Platform.OS === 'web' && (
+            <style dangerouslySetInnerHTML={{
+              __html: `
+              * { font-family: 'Inter_400Regular', sans-serif; }
+              h1, h2, h3, h4, h5, h6, b, strong { font-family: 'Montserrat_700Bold', sans-serif; }
+            `}} />
+          )}
+          {loaded || error ? (
+            <>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="admin" options={{ headerShown: false }} />
+              </Stack>
+              <LandingAuthModal />
+            </>
+          ) : null}
+        </CartProvider>
+      </UserProvider>
+    </AuthUIProvider>
   );
 }

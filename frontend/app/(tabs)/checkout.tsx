@@ -13,7 +13,7 @@ import { useCart } from '@/contexts/CartContext';
 import { Fonts, Palette } from '@/constants/theme';
 import axios from 'axios';
 import { useUser } from '@/contexts/UserContext';
-
+import { useNavigation } from '@react-navigation/native';
 
 export default function Checkout() {
   const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
@@ -23,6 +23,7 @@ export default function Checkout() {
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [receiptData, setReceiptData] = React.useState<any>(null);
   const [showConfirm, setShowConfirm] = React.useState(false);
+  const navigation = useNavigation();
   
   if (userLoading) {
     return (
@@ -135,14 +136,14 @@ export default function Checkout() {
           <Text style={styles.total}>Total: ₱{total}</Text>
 
           <TouchableOpacity
-  onPress={() => setShowConfirm(true)} // Just open the confirm box!
-  style={[styles.payButton, { backgroundColor: Palette.warmCopper }]}
-  disabled={loading}
->
-  <Text style={styles.payButtonText}>
-    {loading ? "Processing..." : "Pay Now"}
-  </Text>
-</TouchableOpacity>
+            onPress={() => (navigation as any).navigate('AddressInput')}
+            style={[styles.payButton, { backgroundColor: Palette.warmCopper }]} 
+            disabled={loading}
+          >
+            <Text style={styles.payButtonText}>
+              {loading ? "Processing..." : "Pay Now"}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 

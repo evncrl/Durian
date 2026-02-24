@@ -7,7 +7,6 @@ export default function TabsLayout() {
   return (
     <View style={styles.container}>
       <UniversalTopbar />
-
       <View style={styles.content}>
         <Slot />
       </View>

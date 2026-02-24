@@ -174,6 +174,7 @@ export default function LandingAuthModal({ }: LandingAuthModalProps) {
             await storeData('user_id', userData.id);
             await storeData('name', userData.name);
             await storeData('photoProfile', userData.photoProfile);
+            await storeData('email', userData.email); // Ensure 'email' key is set
             Alert.alert('Success', 'Account created!');
             await refreshUser();
             // Redirect to admin dashboard if admin after signup
@@ -205,7 +206,7 @@ export default function LandingAuthModal({ }: LandingAuthModalProps) {
         await storeData('jwt_token', loginRes.data.token);
         await storeData('user_role', userRole);
         await storeData('user_id', userData.id);
-        await storeData('userEmail', email);
+        await storeData('email', userData.email); // Use 'email' key for consistency
         await storeData('name', userData.name);
         await storeData('photoProfile', userData.photoProfile);
         await refreshUser();
