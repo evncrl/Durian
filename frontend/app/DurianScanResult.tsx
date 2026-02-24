@@ -32,12 +32,14 @@ export default function DurianScanResult() {
   // Data from merged response (UNCHANGED)
   // --------------------------------------------------
   const color = result?.color;
+  const size = result?.size;
   const detection = result?.detection || {};
   const analysis = result?.analysis || {};
   const objects = detection.objects || [];
 
   const disease = result?.disease || 'healthy';
   const diseaseDetections = result?.detections || [];
+  
 
   const getQualityColor = (score: number) => {
     if (score >= 80) return '#27AE60';
@@ -246,6 +248,43 @@ export default function DurianScanResult() {
                   </View>
                 </View>
               )}
+              {/* Size Classification */}
+
+              {size && size.success && (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Size Classification</Text>
+
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <Ionicons
+                      name="resize-outline"
+                      size={18}
+                      color="#666"
+                    />
+                    <Text style={styles.detailLabel}>Size</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {size.size_class || 'N/A'}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <View style={styles.detailLeft}>
+                    <Ionicons
+                      name="trending-up-outline"
+                      size={18}
+                      color="#666"
+                    />
+                    <Text style={styles.detailLabel}>Confidence</Text>
+                  </View>
+                  <Text style={styles.detailValue}>
+                    {size.confidence
+                      ? `${(size.confidence * 100).toFixed(1)}%`
+                      : 'N/A'}
+                  </Text>
+                </View>
+              </View>
+            )}
 
               {/* Disease Detection */}
               <View style={styles.card}>

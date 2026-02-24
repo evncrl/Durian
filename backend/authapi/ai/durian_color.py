@@ -13,13 +13,13 @@ import numpy as np
 from torchvision import transforms
 from PIL import Image
 
-COLOR_CLASSES = ["green", "brown", "yellow"]  # Match your training classes
+COLOR_CLASSES = ['Brownish', 'Greenish']  # Match your training classes
 
 _color_model = None
 
 BASE_DIR = Path(__file__).parent.parent.parent
 MODELS_DIR = BASE_DIR / "models"
-DEFAULT_MODEL = MODELS_DIR / "durian_color_b0_best.pth"  # Update with your model filename
+DEFAULT_MODEL = MODELS_DIR / "durian_color_binary_best.pth"  # Update with your model filename
 
 def load_color_model(model_path: Optional[str] = None):
 	global _color_model

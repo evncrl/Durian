@@ -10,6 +10,7 @@ import uuid
 from ai.yolo_detector import get_yolo_detector
 from ai.durian_color import get_durian_color
 from ai.durian_desease import get_durian_disease
+from ai.durian_size import get_durian_size
 from handlers.cloudinary_handler import CloudinaryScan
 from db import (
     save_scan, get_user_scans, get_scan_by_id, delete_scan,
@@ -114,6 +115,10 @@ def detect_durians():
         print("[DEBUG] Calling get_durian_color with:", temp_path)
         result["color"] = get_durian_color(temp_path)
         
+        
+        # -- Durian Size --
+        result["size"] = get_durian_size(temp_path)
+        
         # -- Cloudinary Save if needed --
         if result.get("success") and user_id and save_to_history:
             try:
@@ -158,6 +163,7 @@ def detect_durians():
 # ---------------------------
 # Disease Routes
 # ---------------------------
+
 @scanner_bp.route("/classify/disease", methods=["POST", "OPTIONS"])
 @cross_origin(origin="*", headers=["Content-Type", "Authorization", "X-Requested-With", "ngrok-skip-browser-warning", "X-User-Id"])
 def classify_disease():
@@ -191,7 +197,7 @@ def classify_disease():
             image_file.save(tmp.name)
             temp_path = tmp.name
 
-        # 🔥 Run your disease model
+        # Run your disease model
         result = get_durian_disease(temp_path)
 
         os.unlink(temp_path)
