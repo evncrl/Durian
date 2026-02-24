@@ -45,15 +45,30 @@ export const styles = StyleSheet.create({
 
   // Profile Card
   profileCard: {
-    backgroundColor: 'transparent',
-    padding: 0,
-    marginBottom: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  borderRadius: 32, 
+  padding: 24,
+  width: '100%',
+  maxWidth: 500, 
+  alignSelf: 'center',
+  marginTop: 20,
+  
+  borderWidth: 1,
+  borderColor: 'rgba(255, 255, 255, 0.08)',
+  
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.3,
+  shadowRadius: 20,
+  
+  elevation: 8,
   },
 
   // Avatar Section
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 20,
+    marginTop: -60, 
     position: 'relative',
   },
   avatarWrapper: {
@@ -334,8 +349,9 @@ export const styles = StyleSheet.create({
     marginBottom: 24,
   },
   statItem: {
-    alignItems: 'center',
-  },
+  alignItems: 'center',
+  flex: 1,
+},
   statValue: {
     fontSize: 24,
     fontFamily: Fonts.bold,
@@ -349,6 +365,7 @@ export const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginTop: 4,
   },
 
   // Divider
@@ -403,4 +420,29 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Fonts.regular,
   },
+
+statsRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-around',
+  backgroundColor: 'rgba(255, 255, 255, 0.05)', // Subtle card effect
+  borderRadius: 16,
+  paddingVertical: 15,
+  marginVertical: 20,
+  width: '100%',
+},
+
+statNumber: {
+  fontFamily: Fonts.bold,
+  fontSize: 18,
+  color: Palette.warmCopper,
+},
+
+statDivider: {
+  width: 1,
+  height: 30,
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+},
+
 });
+

@@ -585,7 +585,22 @@ export default function Profile() {
                 <Text style={styles.email}>{email || 'user@example.com'}</Text>
 
 
-
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>12</Text>
+                    <Text style={styles.statLabel}>Scans</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>89%</Text>
+                    <Text style={styles.statLabel}>Avg Quality</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>5</Text>
+                    <Text style={styles.statLabel}>Posts</Text>
+                  </View>
+                </View>
 
 
                 {/* Edit Button */}

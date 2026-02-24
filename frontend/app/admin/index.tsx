@@ -363,7 +363,7 @@ export default function Admin() {
           )}
 
           <View style={styles.header}>
-            <Text style={styles.title}>Dashboard</Text>
+            <Text style={styles.title}>Admin Dashboard</Text>
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
               <Text style={styles.logoutBtnText}>Logout</Text>
             </TouchableOpacity>

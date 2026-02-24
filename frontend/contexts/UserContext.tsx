@@ -29,30 +29,23 @@ export function UserProvider({ children }: UserProviderProps) {
 
   const loadUser = async () => {
     try {
-      const storedId = await AsyncStorage.getItem('user_id');
-      const storedName = await AsyncStorage.getItem('name');
-      const storedEmail = await AsyncStorage.getItem('email');
-      const storedPhoto = await AsyncStorage.getItem('photoProfile');
-      const storedPublicId = await AsyncStorage.getItem('photoPublicId');
-      const storedRole = await AsyncStorage.getItem('user_role');
-
-      console.log('[UserContext] Loaded from AsyncStorage:', {
-        storedId,
-        storedName,
-        storedEmail,
-        storedPhoto,
-        storedPublicId,
-        storedRole,
+      const keys = ['user_id', 'name', 'email', 'photoProfile', 'photoPublicId', 'user_role'];
+      const stores = await AsyncStorage.multiGet(keys);
+      
+      // Convert array of pairs to an object
+      const data: any = {};
+      stores.forEach(([key, value]) => {
+        data[key] = value;
       });
 
-      if (storedId) {
+      if (data.user_id) {
         setUser({
-          id: storedId,
-          name: storedName || '',
-          email: storedEmail || '',
-          photoProfile: storedPhoto || '',
-          photoPublicId: storedPublicId || '',
-          role: storedRole || 'user',
+          id: data.user_id,
+          name: data.name || '',
+          email: data.email || '',
+          photoProfile: data.photoProfile || '',
+          photoPublicId: data.photoPublicId || '',
+          role: data.user_role || 'user',
         });
       }
     } catch (error) {

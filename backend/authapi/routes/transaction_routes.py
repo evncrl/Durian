@@ -3,11 +3,15 @@ from flask_mail import Message
 from utils.pdf_utils import generate_receipt_pdf  # returns BytesIO
 import uuid
 
+# Do NOT import mail from app here. It causes the crash.
+
 bp = Blueprint('transaction', __name__)
 
 @bp.route("/checkout", methods=["POST"])
 def checkout():
+
     data = request.json
+    print(f"DEBUG: Received data -> {data}")
     email = data.get('email')
     items = data.get('items')
     total = data.get('total')
@@ -18,9 +22,12 @@ def checkout():
     try:
         # 1️⃣ Generate a unique transaction ID
         transaction_id = str(uuid.uuid4())
-
+    
         # 2️⃣ Generate PDF
         pdf_buffer = generate_receipt_pdf(items, total, transaction_id)
+        
+        # IMPORTANT: Ensure buffer is at the start before reading
+        pdf_buffer.seek(0)
 
         # 3️⃣ Prepare email
         msg = Message(
@@ -30,12 +37,16 @@ def checkout():
         )
 
         # 4️⃣ Attach PDF
-        msg.attach("receipt.pdf", "application/pdf", pdf_buffer.read())
+        msg.attach("receipt.pdf", "application/pdf", pdf_buffer.getvalue())
 
-        # 5️⃣ Send email
-        current_app.extensions["mail"].send(msg)
+        # 5️⃣ Send email using the mail extension registered to the app
+        mail = current_app.extensions.get("mail")
+        if not mail:
+            raise Exception("Mail extension not initialized on the app")
+        
+        mail.send(msg)
 
-        # 6️⃣ Return success + transaction ID to frontend
+        # 6️⃣ Return success
         return jsonify({
             "success": True,
             "transaction_id": transaction_id,
@@ -44,5 +55,5 @@ def checkout():
         })
 
     except Exception as e:
-        print("Checkout error:", e)
-        return jsonify({"success": False, "message": "Server error"}), 500
+        print("Checkout error:", str(e))
+        return jsonify({"success": False, "message": str(e)}), 500

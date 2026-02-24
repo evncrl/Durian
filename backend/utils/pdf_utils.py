@@ -1,44 +1,53 @@
-# backend/authapi/utils/pdf_utils.py
 from fpdf import FPDF
 from io import BytesIO
 
-def generate_receipt_pdf(items, subtotal, total, transaction_id):
+def generate_receipt_pdf(items, total, transaction_id):
     """
-    Generate a PDF receipt and return it as a BytesIO buffer.
-    Includes transaction_id at the top.
+    Generates a PDF receipt using fpdf2.
+    Matches the 3 arguments sent by transaction_routes.py
     """
+    # Create the PDF object
     pdf = FPDF()
     pdf.add_page()
     
-    # Title
-    pdf.set_font("Arial", "B", 16)
+    # 1. Title
+    pdf.set_font("helvetica", "B", 16)
     pdf.cell(0, 10, "Durian App Receipt", ln=True, align="C")
-    pdf.ln(5)
+    pdf.ln(10)
     
-    # Transaction ID
-    pdf.set_font("Arial", "B", 12)
+    # 2. Transaction Info
+    pdf.set_font("helvetica", "", 10)
     pdf.cell(0, 10, f"Transaction ID: {transaction_id}", ln=True)
-    
-    # Subtotal
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(0, 10, f"Subtotal: ₱{subtotal}", ln=True)
     pdf.ln(5)
     
-    # Items
-    pdf.cell(0, 10, "Items:", ln=True)
+    # 3. Table Header
+    pdf.set_font("helvetica", "B", 12)
+    pdf.set_fill_color(240, 240, 240)  # Light gray background for header
+    pdf.cell(90, 10, "Item", 1, 0, "C", True)
+    pdf.cell(30, 10, "Qty", 1, 0, "C", True)
+    pdf.cell(70, 10, "Total", 1, 1, "C", True)
+    
+    # 4. Table Rows
+    pdf.set_font("helvetica", "", 12)
     for item in items:
-        pdf.cell(
-            0,
-            10,
-            f"{item['name']} x {item['quantity']} - ₱{item['price']*item['quantity']}",
-            ln=True
-        )
+        name = item.get('name', 'Unknown Product')
+        qty = item.get('quantity', 1)
+        price = item.get('price', 0)
+        
+        pdf.cell(90, 10, f" {name}", 1)
+        pdf.cell(30, 10, str(qty), 1, 0, "C")
+        pdf.cell(70, 10, f"P{price * qty}", 1, 1, "R")
     
-    pdf.ln(5)
-    pdf.cell(0, 10, f"Grand Total: ₱{total}", ln=True)
+    # 5. Grand Total
+    pdf.ln(10)
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 10, f"Grand Total: P{total}  ", ln=True, align="R")
     
-    # Save to buffer
+    # 6. Output to BytesIO
     buffer = BytesIO()
-    pdf.output(buffer)
+    # fpdf2's output() can return bytes directly
+    pdf_bytes = pdf.output() 
+    buffer.write(pdf_bytes)
     buffer.seek(0)
+    
     return buffer

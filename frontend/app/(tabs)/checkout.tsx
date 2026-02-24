@@ -17,11 +17,21 @@ import { useUser } from '@/contexts/UserContext';
 
 export default function Checkout() {
   const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
+  const { user, loading: userLoading } = useUser(); // 1. Grab 'loading' from context
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const { user } = useUser();
   const [loading, setLoading] = React.useState(false);
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [receiptData, setReceiptData] = React.useState<any>(null);
+  const [showConfirm, setShowConfirm] = React.useState(false);
+  
+  if (userLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: Palette.linenWhite }}>Loading user profile...</Text>
+      </View>
+    );
+  }
+
   const renderItem = ({ item }: any) => (
     <View style={styles.card}>
       <Image source={item.image} style={styles.image} />
@@ -57,6 +67,54 @@ export default function Checkout() {
     </View>
   );
 
+  const handleProcessPayment = async () => {
+    if (loading) return;
+
+    // 1. Validate email locally first
+  // 1. Validate email locally first
+  if (!user || !user.email) {
+    Alert.alert("Login Required", "Please ensure you are logged in with a valid email before checking out.");
+    return;
+  }
+
+  setLoading(true);
+
+  const payload = {
+    email: user.email, // We now know this isn't empty because of the check above
+    items: cart.map(item => ({
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    })),
+    total: total,
+  };
+
+    console.log("Sending to Flask:", payload); 
+
+    try {
+      console.log("About to send checkout request");
+      const response = await axios.post('http://192.168.100.242:8000/api/checkout', payload);
+
+      if (response.data.success) {
+        setReceiptData({ 
+          items: [...cart], 
+          total, 
+          transaction_id: response.data.transaction_id 
+        });
+        
+        setShowConfirm(false);
+        setShowReceipt(true);
+        clearCart();
+      }
+    } catch (err: any) {
+  // This will reveal if it's "Missing data", "Argument mismatch", etc.
+  console.log("ACTUAL SERVER ERROR:", err.response?.data);
+  Alert.alert('Error', err.response?.data?.error || 'Checkout failed.');
+} finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: Palette.deepObsidian }]}>
       <Text style={styles.heading}>Checkout</Text>
@@ -77,50 +135,7 @@ export default function Checkout() {
           <Text style={styles.total}>Total: ₱{total}</Text>
 
           <TouchableOpacity
-  onPress={async () => {
-  if (loading) return; // prevent double-clicks
-  setLoading(true);
-
-  if (!user?.email) {
-    Alert.alert('Error', 'You must be logged in to checkout.');
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const response = await axios.post('http://localhost:8000/checkout', {
-      email: user.email,
-      items: cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
-      total: total,
-    });
-
-    if (response.data.success) {
-  const receiptSnapshot = [...cart];
-
-  // ✅ Include transaction_id from backend
-  setReceiptData({ 
-    items: receiptSnapshot, 
-    total, 
-    transaction_id: response.data.transaction_id 
-  });
-
-  setShowReceipt(true);
-  clearCart();
-} else {
-  Alert.alert('Error', 'Checkout failed.');
-}
-  } catch (err) {
-    console.error(err);
-    Alert.alert('Error', 'Failed to process checkout.');
-  } finally {
-    setLoading(false);
-  }
-}}
+  onPress={() => setShowConfirm(true)} // Just open the confirm box!
   style={[styles.payButton, { backgroundColor: Palette.warmCopper }]}
   disabled={loading}
 >
@@ -130,6 +145,37 @@ export default function Checkout() {
 </TouchableOpacity>
         </View>
       )}
+
+{/* --- STEP 4: The Confirmation Modal --- */}
+{showConfirm && (
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContainer}>
+      <Text style={styles.modalTitle}>Confirm Your Order</Text>
+      <Text style={styles.modalItemText}>You are about to pay ₱{total}. Proceed?</Text>
+      
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+        <TouchableOpacity 
+          onPress={() => setShowConfirm(false)} 
+          style={[styles.payButton, { flex: 1, marginRight: 8, backgroundColor: Palette.slate }]}
+        >
+          <Text style={styles.payButtonText}>Cancel</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+  onPress={() => {
+    console.log("🔥 CONFIRM BUTTON CLICKED");
+    handleProcessPayment();
+  }}
+  style={[styles.payButton, { flex: 1, backgroundColor: Palette.warmCopper }]}
+>
+  <Text style={styles.payButtonText}>
+    {loading ? "Processing..." : "Confirm"}
+  </Text>
+</TouchableOpacity>
+      </View>
+    </View>
+  </View>
+)}
 
 {showReceipt && receiptData && (
   <View style={styles.modalOverlay}>
@@ -154,6 +200,7 @@ export default function Checkout() {
       <TouchableOpacity
         style={[styles.payButton, { marginTop: 12 }]}
         onPress={() => setShowReceipt(false)}
+        
       >
         <Text style={styles.payButtonText}>Close</Text>
       </TouchableOpacity>
@@ -276,7 +323,7 @@ quantityText: {
     fontSize: 16,
   },
   modalOverlay: {
-  position: 'absolute',
+  position: 'fixed', // 🔥 change from absolute
   top: 0,
   left: 0,
   right: 0,
@@ -284,9 +331,10 @@ quantityText: {
   backgroundColor: 'rgba(0,0,0,0.6)',
   justifyContent: 'center',
   alignItems: 'center',
-  zIndex: 999,
+  zIndex: 9999,
 },
 modalContainer: {
+  pointerEvents: 'auto',
   width: '85%',
   maxHeight: '80%',
   backgroundColor: Palette.charcoalEspresso,

@@ -337,7 +337,7 @@ export default function DurianScanResult() {
 
             <TouchableOpacity
               style={styles.homeButton}
-              onPress={() => router.push('/LandingScreen')}
+              onPress={() => router.replace('/(tabs)')}
               activeOpacity={0.8}
             >
               <Ionicons name="home-outline" size={18} color="#27AE60" />

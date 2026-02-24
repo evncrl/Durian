@@ -17,6 +17,9 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Fonts, Colors, Palette } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUser } from '@/contexts/UserContext';
 
 interface AuthModalProps {
   visible: boolean;
@@ -33,6 +36,7 @@ export default function AuthModal({ visible, mode, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const { refreshUser } = useUser();
 
   const clearImage = () => {
     setSelectedImage(null);
@@ -85,9 +89,58 @@ export default function AuthModal({ visible, mode, onClose }: AuthModalProps) {
   };
 
   const onSubmit = async () => {
+    // 1. Basic Validation
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    if (authMode === 'signup' && password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
     setLoading(true);
-    // TODO: Implement login/signup logic here (copy from LandingScreen if needed)
-    setTimeout(() => { setLoading(false); onClose(); }, 1000); // Placeholder
+
+    try {
+      // 2. Define the URL based on the mode
+      const endpoint = authMode === 'login' ? '/auth/login' : '/auth/signup';
+      const url = `http://192.168.100.242:8000${endpoint}`;
+
+      // 3. THIS DEFINES 'response' - The actual API call
+      const response = await axios.post(url, {
+        email,
+        password,
+        name: authMode === 'signup' ? name : undefined,
+      });
+
+      // 4. Handle the success
+      if (response.data.success) {
+        const { user, token } = response.data;
+
+        // PERMANENT FIX: Store the email and other user data
+        await AsyncStorage.multiSet([
+          ['jwt_token', token],
+          ['user_id', user.id.toString()],
+          ['name', user.name],
+          ['email', user.email], // This is the piece that was missing!
+          ['user_role', user.role || 'user'],
+        ]);
+
+        // Update the context state
+        await refreshUser();
+        
+        Alert.alert('Success', `Welcome, ${user.name}!`);
+        onClose();
+      }
+    } catch (error: any) {
+      console.error("Auth Error:", error.response?.data);
+      Alert.alert(
+        'Authentication Failed', 
+        error.response?.data?.message || 'Check your credentials and try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

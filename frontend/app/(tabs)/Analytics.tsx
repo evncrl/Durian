@@ -156,12 +156,6 @@ export default function Analytics() {
           <Text style={styles.headerTitle}>Analytics</Text>
           <Text style={styles.headerSubtitle}>Durian Quality Insights</Text>
         </View>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.replace('/LandingScreen')}
-        >
-          <Ionicons name="close" size={24} color="#fff" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView

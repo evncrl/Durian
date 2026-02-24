@@ -36,25 +36,36 @@ def get_products_collection():
 
 @shop_bp.route('/products', methods=['GET'])
 def get_products():
-    products_col = get_products_collection()
-    products = list(products_col.find())
-    for p in products:
-        p['_id'] = str(p['_id'])
-    return jsonify(products)
+    try:
+        products_col = get_products_collection()
+        products = list(products_col.find())
+        
+        for p in products:
+            p['_id'] = str(p['_id'])
+            if 'image' in p:
+                p['image_url'] = p.pop('image')
 
+        return jsonify({
+            "success": True, 
+            "products": products
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 @shop_bp.route('/products', methods=['POST'])
 def add_product():
     data = request.get_json()
-    required = ['name', 'category', 'price', 'description', 'image']
+    required = ['name', 'category', 'price', 'description', 'image_url']
     if not all(k in data for k in required):
         return jsonify({'success': False, 'error': 'Missing fields'}), 400
+        
     products_col = get_products_collection()
     product = {
         'name': data['name'],
         'category': data['category'],
         'price': data['price'],
         'description': data['description'],
-        'image': data['image'],
+        'image': data['image_url'], 
         'isNew': data.get('isNew', False)
     }
     result = products_col.insert_one(product)

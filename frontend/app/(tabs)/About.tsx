@@ -47,7 +47,7 @@ export default function About() {
       role: 'Member 1',
       description: 'Creative designer focused on intuitive interfaces. Specializes in cross-platform design systems and accessibility.',
       avatar: require('../../assets/images/evan.jpg'),
-      github: 'https://github.com',
+      github: 'https://github.com/evncrl',
       linkedin: 'https://linkedin.com',
       dribbble: 'https://dribbble.com',
       gradient: ['#4ECDC4', '#44A08D'],

@@ -85,12 +85,21 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { cart } = useCart();
 
+    const visibleNavItems = NAV_ITEMS.filter(item => {
+        const restrictedTabs = ['Scanner', 'Chatbot', 'Analytics'];
+        if (restrictedTabs.includes(item.label) && !user) {
+            return false;
+        }
+        return true;
+    });
+
     const isCompact = width < 768;
 
     const handleNav = (path: string) => {
         router.push(path as any);
         setMobileMenuOpen(false);
     };
+    
 
     return (
         <View style={[styles.wrapper, { paddingTop: Platform.OS === 'web' ? 0 : insets.top, backgroundColor: Palette.deepObsidian }]}>
@@ -111,7 +120,7 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.navItems}
                     >
-                        {NAV_ITEMS.map((item) => {
+                        {visibleNavItems.map((item) => {
                             const isActive = pathname === item.path || (item.path === '/(tabs)' && pathname === '/');
                             return (
                                 <NavItem
@@ -189,7 +198,7 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
             {/* Mobile dropdown menu */}
             {isCompact && mobileMenuOpen && (
                 <View style={styles.mobileMenu}>
-                    {NAV_ITEMS.map((item) => {
+                    {visibleNavItems.map((item) => {
                         const isActive = pathname === item.path || (item.path === '/(tabs)' && pathname === '/');
                         return (
                             <NavItem
