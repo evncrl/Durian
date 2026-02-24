@@ -136,7 +136,7 @@ export default function Checkout() {
           <Text style={styles.total}>Total: ₱{total}</Text>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('AddressInput')}
+            onPress={() => (navigation as any).navigate('AddressInput')}
             style={[styles.payButton, { backgroundColor: Palette.warmCopper }]} 
             disabled={loading}
           >

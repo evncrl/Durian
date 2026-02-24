@@ -1,6 +1,9 @@
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.header import Header
 import os
 from dotenv import load_dotenv
 
@@ -14,6 +17,92 @@ MAILTRAP_USERNAME = os.getenv("MAIL_USERNAME", "")
 MAILTRAP_PASSWORD = os.getenv("MAIL_PASSWORD", "")
 FROM_EMAIL = os.getenv("MAIL_FROM_ADDRESS", "noreply@durianostics.com")
 FROM_NAME = os.getenv("MAIL_FROM_NAME", "Durianostics Admin")
+
+
+def send_checkout_email(
+    user_email: str,
+    user_name: str,
+    items,
+    total,
+    transaction_id,
+    pdf_bytes,
+    address=None,
+    phone=None,
+    payment_method=None
+) -> bool:
+    """
+    Send order confirmation email with attached PDF receipt via Mailtrap
+    Fully UTF-8 safe to support characters like ₱.
+    """
+    try:
+        # Ensure pdf_bytes is bytes
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode("latin1")
+
+        # Create multipart message
+        msg = MIMEMultipart("alternative")
+        msg.set_charset("utf-8")
+        msg["Subject"] = Header(
+            f"Your DurianApp Order Receipt (Transaction ID: {transaction_id})",
+            "utf-8"
+        )
+        msg["From"] = Header(f"{FROM_NAME} <{FROM_EMAIL}>", "utf-8")
+        msg["To"] = Header(user_email, "utf-8")
+
+        # Build order summary
+        item_lines = "".join(
+            [f"<li>{item['name']} x{item['quantity']} - P{item['price']}</li>" for item in items]
+        )
+
+        html_content = f"""
+        <html>
+        <body>
+            <h2>Thank you for your purchase, {user_name}!</h2>
+            <p>Transaction ID: <b>{transaction_id}</b></p>
+            <p><b>Delivery Address:</b> {address or 'N/A'}<br>
+               <b>Phone:</b> {phone or 'N/A'}<br>
+               <b>Payment Method:</b> {payment_method or 'N/A'}</p>
+            <h3>Order Summary:</h3>
+            <ul>{item_lines}</ul>
+            <p><b>Total:</b> P{total}</p>
+            <p>Your receipt is attached as a PDF.</p>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+Thank you for your purchase, {user_name}!
+Transaction ID: {transaction_id}
+Delivery Address: {address or 'N/A'}
+Phone: {phone or 'N/A'}
+Payment Method: {payment_method or 'N/A'}
+Total: P{total}
+Your receipt is attached as a PDF.
+        """
+
+        # Attach plain text and HTML (both UTF-8)
+        part1 = MIMEText(text_content, "plain", "utf-8")
+        part2 = MIMEText(html_content, "html", "utf-8")
+        msg.attach(part1)
+        msg.attach(part2)
+
+        # Attach PDF
+        pdf_part = MIMEApplication(pdf_bytes, _subtype="pdf")
+        pdf_part.add_header('Content-Disposition', 'attachment', filename="receipt.pdf")
+        msg.attach(pdf_part)
+
+        # Send email via Mailtrap
+        with smtplib.SMTP(MAILTRAP_HOST, MAILTRAP_PORT) as server:
+            server.starttls()
+            server.login(MAILTRAP_USERNAME, MAILTRAP_PASSWORD)
+            server.sendmail(FROM_EMAIL, user_email, msg.as_string())
+
+        print(f"Checkout email sent successfully to {user_email}")
+        return True
+
+    except Exception as e:
+        print(f"Failed to send checkout email to {user_email}: {str(e)}")
+        return False
 
 
 def send_deactivation_email(user_email: str, user_name: str, reason: str) -> bool:
