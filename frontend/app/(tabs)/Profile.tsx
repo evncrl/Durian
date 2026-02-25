@@ -484,10 +484,10 @@ export default function Profile() {
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#fafafa" />
       {isLargeScreen ? (
-        <View style={{ flex: 1, flexDirection: 'row', backgroundColor: Palette.warmCopper }}>
+        <View style={{ flex: 1, flexDirection: 'row', backgroundColor: Palette.deepObsidian }}>
           {/* LEFT - PROFILE */}
           <ScrollView
-            style={{ flex: 0.4, backgroundColor: Palette.warmCopper }}
+            style={{ flex: 0.4, backgroundColor: Palette.deepObsidian }}
             contentContainerStyle={{ padding: 24 }}
             showsVerticalScrollIndicator={false}
           >
@@ -495,12 +495,12 @@ export default function Profile() {
           </ScrollView>
 
           {/* RIGHT - ANALYTICS */}
-          <View style={{ flex: 0.6, backgroundColor: Palette.warmCopper }}>
+          <View style={{ flex: 0.6, backgroundColor: Palette.deepObsidian }}>
             <Analytics />
           </View>
         </View>
       ) : (
-        <ScrollView style={[styles.container, { backgroundColor: Palette.warmCopper }]} showsVerticalScrollIndicator={false}>
+        <ScrollView style={[styles.container, { backgroundColor: Palette.charcoalEspresso }]} showsVerticalScrollIndicator={false}>
           <ProfileContent />
         </ScrollView>
       )}
@@ -518,7 +518,7 @@ export default function Profile() {
             </View>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: Palette.warmCopper }]} onPress={pickImageFromGallery} disabled={uploadingPhoto}>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: Palette.charcoalEspresso }]} onPress={pickImageFromGallery} disabled={uploadingPhoto}>
                 {uploadingPhoto ? <ActivityIndicator color="#fff" /> : <>
                   <Ionicons name="image-outline" size={22} color={Palette.white} />
                   <Text style={styles.buttonText}>Choose from Gallery</Text>
