@@ -1,4 +1,3 @@
-// app/(tabs)/Profile.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -23,11 +22,11 @@ import {
   Ionicons,
   MaterialIcons,
   Feather,
-  FontAwesome5
 } from '@expo/vector-icons';
 import { styles } from '@/styles/Profile.styles';
 import { Fonts, Palette } from '@/constants/theme';
 import { useUser } from '@/contexts/UserContext';
+import Analytics from './Analytics';
 
 export default function Profile() {
   const { user, loading: userLoading, refreshUser, logout } = useUser();
@@ -46,7 +45,7 @@ export default function Profile() {
 
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
-  const isSmallScreen = width < 375;
+  const isLargeScreen = isWeb && width > 1024;
 
   // Request permissions on mount
   useEffect(() => {
@@ -67,6 +66,7 @@ export default function Profile() {
     }
   };
 
+  // Load user profile
   useEffect(() => {
     loadUserProfile();
   }, []);
@@ -81,7 +81,6 @@ export default function Profile() {
         return;
       }
 
-      // Get stored data first
       const storedName = await AsyncStorage.getItem('name');
       const storedPhoto = await AsyncStorage.getItem('photoProfile');
       const storedPublicId = await AsyncStorage.getItem('photoPublicId');
@@ -90,7 +89,6 @@ export default function Profile() {
       if (storedPhoto) setPhotoUri(storedPhoto);
       if (storedPublicId) setPhotoPublicId(storedPublicId);
 
-      // Try to fetch from API
       try {
         const res = await axios.get(`${API_URL}/profile/${storedId}`, {
           headers: { Authorization: `Bearer ${storedToken}` },
@@ -125,9 +123,7 @@ export default function Profile() {
       const token = await AsyncStorage.getItem('jwt_token');
       const userId = await AsyncStorage.getItem('user_id');
 
-      if (!token || !userId) {
-        throw new Error('Not authenticated');
-      }
+      if (!token || !userId) throw new Error('Not authenticated');
 
       const formData = new FormData();
 
@@ -135,13 +131,8 @@ export default function Profile() {
         const filename = imageUri.split('/').pop() || 'profile.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
-
         // @ts-ignore
-        formData.append('photo', {
-          uri: imageUri,
-          name: filename,
-          type,
-        });
+        formData.append('photo', { uri: imageUri, name: filename, type });
       } else {
         const response = await fetch(imageUri);
         const blob = await response.blob();
@@ -155,14 +146,13 @@ export default function Profile() {
         formData,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
           },
         }
       );
 
       return response.data;
-
     } catch (error) {
       console.error('Cloudinary upload error:', error);
       throw error;
@@ -172,12 +162,10 @@ export default function Profile() {
   const pickImageFromGallery = async () => {
     try {
       setUploadingPhoto(true);
-
       if (isWeb) {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-
         input.onchange = async (event: any) => {
           const file = event.target.files[0];
           if (file) {
@@ -186,13 +174,10 @@ export default function Profile() {
               const result = e.target?.result as string;
               try {
                 const uploadResult = await uploadPhotoToCloudinary(result);
-
                 setPhotoUri(uploadResult.photoProfile);
                 setPhotoPublicId(uploadResult.photoPublicId);
-
                 await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
                 await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
-
                 Alert.alert('Success', 'Profile photo updated!');
               } catch (error) {
                 Alert.alert('Error', 'Failed to upload photo');
@@ -201,7 +186,6 @@ export default function Profile() {
             reader.readAsDataURL(file);
           }
         };
-
         input.click();
       } else {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -212,19 +196,12 @@ export default function Profile() {
         });
 
         if (!result.canceled && result.assets[0].uri) {
-          try {
-            const uploadResult = await uploadPhotoToCloudinary(result.assets[0].uri);
-
-            setPhotoUri(uploadResult.photoProfile);
-            setPhotoPublicId(uploadResult.photoPublicId);
-
-            await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
-            await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
-
-            Alert.alert('Success', 'Profile photo updated!');
-          } catch (error) {
-            Alert.alert('Error', 'Failed to upload photo');
-          }
+          const uploadResult = await uploadPhotoToCloudinary(result.assets[0].uri);
+          setPhotoUri(uploadResult.photoProfile);
+          setPhotoPublicId(uploadResult.photoPublicId);
+          await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
+          await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
+          Alert.alert('Success', 'Profile photo updated!');
         }
       }
     } catch (error) {
@@ -239,12 +216,10 @@ export default function Profile() {
   const takePhotoWithCamera = async () => {
     try {
       setUploadingPhoto(true);
-
       if (isWeb) {
         Alert.alert('Info', 'Camera access is limited on web. Please use "Choose from Gallery" instead.');
         return;
       }
-
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -253,19 +228,12 @@ export default function Profile() {
       });
 
       if (!result.canceled && result.assets[0].uri) {
-        try {
-          const uploadResult = await uploadPhotoToCloudinary(result.assets[0].uri);
-
-          setPhotoUri(uploadResult.photoProfile);
-          setPhotoPublicId(uploadResult.photoPublicId);
-
-          await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
-          await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
-
-          Alert.alert('Success', 'Profile photo updated!');
-        } catch (error) {
-          Alert.alert('Error', 'Failed to upload photo');
-        }
+        const uploadResult = await uploadPhotoToCloudinary(result.assets[0].uri);
+        setPhotoUri(uploadResult.photoProfile);
+        setPhotoPublicId(uploadResult.photoPublicId);
+        await AsyncStorage.setItem('photoProfile', uploadResult.photoProfile);
+        await AsyncStorage.setItem('photoPublicId', uploadResult.photoPublicId);
+        Alert.alert('Success', 'Profile photo updated!');
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -300,51 +268,34 @@ export default function Profile() {
       setSaving(true);
       const storedToken = await AsyncStorage.getItem('jwt_token');
       const storedId = await AsyncStorage.getItem('user_id');
-
       if (!storedToken || !storedId) {
         router.replace('/');
         return;
       }
 
-      const updateData: any = {
-        name: name.trim(),
-        email: email.trim(),
-      };
+      const updateData: any = { name: name.trim(), email: email.trim() };
+      if (password) updateData.password = password;
+      if (photoPublicId) updateData.photoPublicId = photoPublicId;
 
-      if (password) {
-        updateData.password = password;
-      }
-
-      if (photoPublicId) {
-        updateData.photoPublicId = photoPublicId;
-      }
-
-      await axios.put(
-        `${API_URL}/profile/${storedId}`,
-        updateData,
-        { headers: { Authorization: `Bearer ${storedToken}` } }
-      );
+      await axios.put(`${API_URL}/profile/${storedId}`, updateData, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
 
       await AsyncStorage.setItem('name', name.trim());
-      await refreshUser(); // Update global state
-
+      await refreshUser();
       Alert.alert('Success', 'Profile updated successfully!');
       setIsEditing(false);
       setPassword('');
       setConfirmPassword('');
     } catch (error: any) {
       console.error('Update error:', error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to update profile'
-      );
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
   };
 
   const handleLogout = async () => {
-    console.log('handleLogout called');
     try {
       setPhotoModalVisible(false);
       await logout();
@@ -355,27 +306,16 @@ export default function Profile() {
   };
 
   const getInitials = () => {
-    if (!name || name.trim().length === 0) {
-      return 'US';
-    }
-    const parts = name.split(' ').filter(part => part.length > 0);
-    if (parts.length === 0) return 'US';
-
-    return parts
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    if (!name || name.trim().length === 0) return 'US';
+    const parts = name.split(' ').filter(p => p.length > 0);
+    return parts.map(p => p[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const getCloudinaryUrl = () => {
     if (!photoUri) return '';
-
-    if (photoUri.includes('cloudinary.com')) {
-      return photoUri.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto,f_auto/');
-    }
-
-    return photoUri;
+    return photoUri.includes('cloudinary.com')
+      ? photoUri.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto,f_auto/')
+      : photoUri;
   };
 
   if (loading || userLoading) {
@@ -388,262 +328,189 @@ export default function Profile() {
     );
   }
 
-  return (
-    <>
-      <StatusBar barStyle="dark-content" backgroundColor="#fafafa" />
-      <ScrollView
-        style={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.scrollContent}>
-          {/* Header */}
-          <View style={styles.header}>
-            {!isWeb && (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.back()}
-              >
-                <Ionicons name="arrow-back" size={22} color={Palette.charcoalEspresso} />
-              </TouchableOpacity>
-            )}
-            <Text style={styles.title}>My Profile</Text>
-            {!isWeb && <View style={{ width: 40 }} />}
-          </View>
+  // ===== MAIN CONTENT COMPONENT =====
+  const ProfileContent = () => (
+    <View style={styles.scrollContent}>
+      {/* Header */}
+      <View style={styles.header}>
+        {!isWeb && (
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color={Palette.charcoalEspresso} />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.title}>My Profile</Text>
+        {!isWeb && <View style={{ width: 40 }} />}
+      </View>
 
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            {/* Avatar Section */}
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatarWrapper}>
-                {photoUri ? (
-                  <Image
-                    source={{ uri: getCloudinaryUrl() }}
-                    style={styles.avatar}
-                    onError={() => {
-                      // Fallback to initials if image fails to load
-                      console.log('Image failed to load, using initials');
-                    }}
-                  />
-                ) : (
-                  <Text style={styles.avatarPlaceholder}>{getInitials()}</Text>
-                )}
-              </View>
-              <TouchableOpacity
-                style={styles.cameraButton}
-                onPress={() => setPhotoModalVisible(true)}
-                disabled={uploadingPhoto}
-              >
-                <View style={styles.cameraButtonInner}>
-                  {uploadingPhoto ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Ionicons name="camera" size={20} color="#fff" />
-                  )}
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {isEditing ? (
-              <View style={styles.formContainer}>
-                {/* Name Input */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Full Name</Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Enter your full name"
-                      placeholderTextColor="#94a3b8"
-                      style={[
-                        styles.input,
-                        focusedInput === 'name' && styles.inputFocused
-                      ]}
-                      onFocus={() => setFocusedInput('name')}
-                      onBlur={() => setFocusedInput(null)}
-                      autoCapitalize="words"
-                      editable={!saving}
-                    />
-                    {focusedInput === 'name' && (
-                      <View style={styles.inputIcon}>
-                        <Feather name="user" size={20} color="#1b5e20" />
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Email Input */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Email Address</Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      value={email}
-                      onChangeText={setEmail}
-                      placeholder="your.email@example.com"
-                      placeholderTextColor="#94a3b8"
-                      style={[
-                        styles.input,
-                        focusedInput === 'email' && styles.inputFocused
-                      ]}
-                      onFocus={() => setFocusedInput('email')}
-                      onBlur={() => setFocusedInput(null)}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      editable={!saving}
-                    />
-                    {focusedInput === 'email' && (
-                      <View style={styles.inputIcon}>
-                        <MaterialIcons name="email" size={20} color="#1b5e20" />
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Password Input */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>New Password (Optional)</Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      value={password}
-                      onChangeText={setPassword}
-                      placeholder="Enter new password"
-                      placeholderTextColor="#94a3b8"
-                      style={[
-                        styles.input,
-                        focusedInput === 'password' && styles.inputFocused
-                      ]}
-                      onFocus={() => setFocusedInput('password')}
-                      onBlur={() => setFocusedInput(null)}
-                      secureTextEntry
-                      editable={!saving}
-                    />
-                    {focusedInput === 'password' && (
-                      <View style={styles.inputIcon}>
-                        <Feather name="lock" size={20} color="#1b5e20" />
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Confirm Password Input */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Confirm Password</Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      placeholder="Confirm new password"
-                      placeholderTextColor="#94a3b8"
-                      style={[
-                        styles.input,
-                        focusedInput === 'confirmPassword' && styles.inputFocused
-                      ]}
-                      onFocus={() => setFocusedInput('confirmPassword')}
-                      onBlur={() => setFocusedInput(null)}
-                      secureTextEntry
-                      editable={!saving}
-                    />
-                    {focusedInput === 'confirmPassword' && (
-                      <View style={styles.inputIcon}>
-                        <Feather name="shield" size={20} color="#1b5e20" />
-                      </View>
-                    )}
-                  </View>
-                </View>
-
-                {/* Action Buttons */}
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    onPress={handleSave}
-                    style={[styles.button, styles.saveButton]}
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                        <Text style={styles.buttonText}>Save Changes</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setIsEditing(false);
-                      setPassword('');
-                      setConfirmPassword('');
-                    }}
-                    style={[styles.button, styles.cancelButton]}
-                    disabled={saving}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+      {/* Profile Card (full mobile content) */}
+      <View style={styles.profileCard}>
+        {/* Avatar & Editing Section */}
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatarWrapper}>
+            {photoUri ? (
+              <Image source={{ uri: getCloudinaryUrl() }} style={styles.avatar} />
             ) : (
-              <View style={styles.infoContainer}>
-                <Text style={styles.name}>{name || 'User Name'}</Text>
-                <Text style={styles.email}>{email || 'user@example.com'}</Text>
-
-
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>12</Text>
-                    <Text style={styles.statLabel}>Scans</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>89%</Text>
-                    <Text style={styles.statLabel}>Avg Quality</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>5</Text>
-                    <Text style={styles.statLabel}>Posts</Text>
-                  </View>
-                </View>
-
-
-                {/* Edit Button */}
-                <TouchableOpacity
-                  onPress={() => setIsEditing(true)}
-                  style={styles.editButton}
-                >
-                  <Ionicons name="create-outline" size={20} color={Palette.white} />
-                  <Text style={styles.buttonText}>Edit Profile</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.avatarPlaceholder}>{getInitials()}</Text>
             )}
           </View>
-
-          {/* Logout Button */}
-          <TouchableOpacity
-            onPress={() => {
-              console.log('Logout button pressed');
-              handleLogout();
-            }}
-            style={styles.logoutButton}
-          >
-            <Ionicons name="log-out-outline" size={20} color={Palette.white} />
-            <Text style={styles.buttonText}>Logout Account</Text>
+          <TouchableOpacity style={styles.cameraButton} onPress={() => setPhotoModalVisible(true)} disabled={uploadingPhoto}>
+            <View style={styles.cameraButtonInner}>
+              {uploadingPhoto ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="camera" size={20} color="#fff" />}
+            </View>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        {isEditing ? (
+          <View style={styles.formContainer}>
+            {/* Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Full Name</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter your full name"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.input, focusedInput === 'name' && styles.inputFocused]}
+                  onFocus={() => setFocusedInput('name')}
+                  onBlur={() => setFocusedInput(null)}
+                  autoCapitalize="words"
+                  editable={!saving}
+                />
+                {focusedInput === 'name' && <View style={styles.inputIcon}><Feather name="user" size={20} color="#1b5e20" /></View>}
+              </View>
+            </View>
+
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="your.email@example.com"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.input, focusedInput === 'email' && styles.inputFocused]}
+                  onFocus={() => setFocusedInput('email')}
+                  onBlur={() => setFocusedInput(null)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!saving}
+                />
+                {focusedInput === 'email' && <View style={styles.inputIcon}><MaterialIcons name="email" size={20} color="#1b5e20" /></View>}
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>New Password (Optional)</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter new password"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.input, focusedInput === 'password' && styles.inputFocused]}
+                  onFocus={() => setFocusedInput('password')}
+                  onBlur={() => setFocusedInput(null)}
+                  secureTextEntry
+                  editable={!saving}
+                />
+                {focusedInput === 'password' && <View style={styles.inputIcon}><Feather name="lock" size={20} color="#1b5e20" /></View>}
+              </View>
+            </View>
+
+            {/* Confirm Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Confirm new password"
+                  placeholderTextColor="#94a3b8"
+                  style={[styles.input, focusedInput === 'confirmPassword' && styles.inputFocused]}
+                  onFocus={() => setFocusedInput('confirmPassword')}
+                  onBlur={() => setFocusedInput(null)}
+                  secureTextEntry
+                  editable={!saving}
+                />
+                {focusedInput === 'confirmPassword' && <View style={styles.inputIcon}><Feather name="shield" size={20} color="#1b5e20" /></View>}
+              </View>
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity onPress={handleSave} style={[styles.button, styles.saveButton]} disabled={saving}>
+                {saving ? <ActivityIndicator color="#fff" /> : <>
+                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={styles.buttonText}>Save Changes</Text>
+                </>}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setIsEditing(false); setPassword(''); setConfirmPassword(''); }} style={[styles.button, styles.cancelButton]} disabled={saving}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.infoContainer}>
+            <Text style={styles.name}>{name || 'User Name'}</Text>
+            <Text style={styles.email}>{email || 'user@example.com'}</Text>
+            {/* Stats Row */}
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}><Text style={styles.statNumber}>12</Text><Text style={styles.statLabel}>Scans</Text></View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}><Text style={styles.statNumber}>89%</Text><Text style={styles.statLabel}>Avg Quality</Text></View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}><Text style={styles.statNumber}>5</Text><Text style={styles.statLabel}>Posts</Text></View>
+            </View>
+            <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editButton}>
+              <Ionicons name="create-outline" size={20} color={Palette.white} />
+              <Text style={styles.buttonText}>Edit Profile</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Logout Button */}
+      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+        <Ionicons name="log-out-outline" size={20} color={Palette.white} />
+        <Text style={styles.buttonText}>Logout Account</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor="#025110" />
+      {isLargeScreen ? (
+        <View style={{ flex: 1, flexDirection: 'row', backgroundColor: Palette.warmCopper }}>
+          {/* LEFT - PROFILE */}
+          <ScrollView
+            style={{ flex: 0.4, backgroundColor: Palette.warmCopper }}
+            contentContainerStyle={{ padding: 24 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <ProfileContent />
+          </ScrollView>
+
+          {/* RIGHT - ANALYTICS */}
+          <View style={{ flex: 0.6, backgroundColor: Palette.warmCopper }}>
+            <Analytics />
+          </View>
+        </View>
+      ) : (
+        <ScrollView style={[styles.container, { backgroundColor: Palette.warmCopper }]} showsVerticalScrollIndicator={false}>
+          <ProfileContent />
+        </ScrollView>
+      )}
 
       {/* Photo Upload Modal */}
-      <Modal
-        visible={photoModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPhotoModalVisible(false)}
-      >
+      <Modal visible={photoModalVisible} transparent animationType="slide" onRequestClose={() => setPhotoModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setPhotoModalVisible(false)}
-                disabled={uploadingPhoto}
-              >
+              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setPhotoModalVisible(false)} disabled={uploadingPhoto}>
                 <Ionicons name="close" size={26} color={Palette.slate} />
               </TouchableOpacity>
               <Text style={[styles.modalTitle, { fontFamily: Fonts.bold }]}>Change Profile Photo</Text>
@@ -651,48 +518,26 @@ export default function Profile() {
             </View>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: Palette.warmCopper }]}
-                onPress={pickImageFromGallery}
-                disabled={uploadingPhoto}
-              >
-                {uploadingPhoto ? (
-                  <ActivityIndicator color={Palette.white} />
-                ) : (
-                  <>
-                    <Ionicons name="image-outline" size={22} color={Palette.white} />
-                    <Text style={styles.buttonText}>Choose from Gallery</Text>
-                  </>
-                )}
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: Palette.warmCopper }]} onPress={pickImageFromGallery} disabled={uploadingPhoto}>
+                {uploadingPhoto ? <ActivityIndicator color="#fff" /> : <>
+                  <Ionicons name="image-outline" size={22} color={Palette.white} />
+                  <Text style={styles.buttonText}>Choose from Gallery</Text>
+                </>}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: Palette.charcoalEspresso }]}
-                onPress={takePhotoWithCamera}
-                disabled={uploadingPhoto || isWeb}
-              >
-                {isWeb ? (
-                  <>
-                    <Ionicons name="camera-outline" size={22} color={Palette.white} />
-                    <Text style={styles.buttonText}>Camera Not Available</Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="camera-outline" size={22} color={Palette.white} />
-                    <Text style={styles.buttonText}>Take Photo</Text>
-                  </>
-                )}
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: Palette.charcoalEspresso }]} onPress={takePhotoWithCamera} disabled={uploadingPhoto || isWeb}>
+                {isWeb ? <>
+                  <Ionicons name="camera-outline" size={22} color={Palette.white} />
+                  <Text style={styles.buttonText}>Camera Not Available</Text>
+                </> : <>
+                  <Ionicons name="camera-outline" size={22} color={Palette.white} />
+                  <Text style={styles.buttonText}>Take Photo</Text>
+                </>}
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => setPhotoModalVisible(false)}
-              disabled={uploadingPhoto}
-            >
-              <Text style={{ color: Palette.slate, fontSize: 16, fontFamily: Fonts.bold }}>
-                Cancel
-              </Text>
+            <TouchableOpacity style={styles.modalCancelButton} onPress={() => setPhotoModalVisible(false)} disabled={uploadingPhoto}>
+              <Text style={{ color: Palette.slate, fontSize: 16, fontFamily: Fonts.bold }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>

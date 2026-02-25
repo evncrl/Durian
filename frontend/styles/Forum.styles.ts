@@ -2,7 +2,7 @@ import { StyleSheet, Dimensions, Platform } from 'react-native';
 import { Fonts, Palette } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
+ 
 // Modern Earthy 2.0 - Dark Community Theme
 const colors = {
   // Primary - Warm Copper
@@ -250,32 +250,27 @@ const styles = StyleSheet.create({
 
   // ========== POSTS CONTAINER ==========
   postsContainer: {
-    paddingHorizontal: scale(20),
+    alignItems: 'center',          // center the post cards horizontally
     paddingTop: 12,
     paddingBottom: 20,
+    paddingHorizontal: 0,          // remove extra padding to let card width control spacing
   },
 
   // ========== POST CARD ==========
   postCard: {
+    minHeight: 150,
     backgroundColor: colors.cardBg,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    paddingHorizontal: 25,
+    marginVertical: 8,             // smaller vertical spacing
+    width: SCREEN_WIDTH > 650 ? 750 : '94%',   // fixed max width like Facebook/IG
     borderWidth: 1,
     borderColor: colors.gray200,
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-      web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-      },
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 12 },
+      android: { elevation: 5 },
+      web: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' },
     }),
   },
 
@@ -451,8 +446,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    justifyContent: 'center', // center vertically
+    alignItems: 'center',     // center horizontally
+    paddingHorizontal: 16,    // optional padding for smaller screens
   },
 
   modalContent: {
@@ -463,7 +459,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 24,
 
 
-    width: SCREEN_WIDTH > 500 ? 450 : '94%',
+    width: SCREEN_WIDTH > 650 ? 750 : '94%',
     marginBottom: Platform.OS === 'ios' ? 40 : 20,
 
     maxHeight: '85%',

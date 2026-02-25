@@ -32,17 +32,6 @@ export default function About() {
   const developers = [
     {
       id: 1,
-      name: 'Aia A. Garcia',
-      role: 'Group Leader',
-      description: 'Full-stack engineer with 8+ years of experience in mobile and web development. Passionate about creating seamless user experiences.',
-      //avatar: require('../../assets/images/aia.jpg'),
-      github: 'https://github.com/towppy',
-      linkedin: 'https://linkedin.com',
-      twitter: 'https://twitter.com',
-      gradient: ['#FF6B6B', '#FF8E53'],
-    },
-    {
-      id: 2,
       name: 'Carl Evan T. Piad',
       role: 'Member 1',
       description: 'Creative designer focused on intuitive interfaces. Specializes in cross-platform design systems and accessibility.',
@@ -53,7 +42,7 @@ export default function About() {
       gradient: ['#4ECDC4', '#44A08D'],
     },
     {
-      id: 3,
+      id: 2,
       name: 'Kathleen Mae R. Priol',
       role: 'Member 2',
       description: 'Systems architect with expertise in scalable cloud infrastructure and API development. Loves solving complex problems.',
@@ -64,7 +53,7 @@ export default function About() {
       gradient: ['#A8E6CF', '#3DDC84'],
     },
     {
-      id: 4,
+      id: 3,
       name: 'Kevin R. Ofracio',
       role: 'Member 3',
       description: 'React Native specialist with a keen eye for performance optimization. Committed to delivering native-quality experiences.',
@@ -75,7 +64,7 @@ export default function About() {
       gradient: ['#A890FE', '#8E54E9'],
     },
     {
-      id: 5,
+      id: 4,
       name: 'Prof. Pops V. Madriaga',
       role: 'Professor',
       description: 'Product strategist bridging user needs with technical solutions. Drives innovation through data-driven decisions.',

@@ -659,23 +659,23 @@ export default function Forum({ embedded = false }: ForumProps) {
         transparent={true}
         onRequestClose={() => setShowCommentsModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {selectedPost?.replies || 0} {selectedPost?.replies === 1 ? 'Reply' : 'Replies'}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setShowCommentsModal(false)}
-                style={styles.closeButton}
-              >
-                <Ionicons name="close-outline" size={24} color="#64748b" />
-              </TouchableOpacity>
-            </View>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {selectedPost?.replies || 0} {selectedPost?.replies === 1 ? 'Reply' : 'Replies'}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowCommentsModal(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close-outline" size={24} color="#64748b" />
+            </TouchableOpacity>
+          </View>
 
-            {/* Comments List */}
-            <ScrollView style={styles.commentsList}>
+          {/* Comments List */}
+          <ScrollView style={styles.commentsList}>
               {loadingComments ? (
                 <ActivityIndicator size="large" color="#16a34a" style={{ marginTop: 20 }} />
               ) : comments.length === 0 ? (
