@@ -11,6 +11,7 @@ from ai.yolo_detector import get_yolo_detector
 from ai.durian_color import get_durian_color
 from ai.durian_desease import get_durian_disease
 from ai.durian_size import get_durian_size
+from ai.durian_shape import get_durian_shape
 from handlers.cloudinary_handler import CloudinaryScan
 from db import (
     save_scan, get_user_scans, get_scan_by_id, delete_scan,
@@ -114,6 +115,10 @@ def detect_durians():
         # -- Durian Color --
         print("[DEBUG] Calling get_durian_color with:", temp_path)
         result["color"] = get_durian_color(temp_path)
+        
+        # -- Durian Shape --
+        print("[DEBUG] Calling get_durian_shape with:", temp_path)
+        result["shape"] = get_durian_shape(temp_path)
         
         
         # -- Durian Size --

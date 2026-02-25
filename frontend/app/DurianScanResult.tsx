@@ -33,13 +33,14 @@ export default function DurianScanResult() {
   // --------------------------------------------------
   const color = result?.color;
   const size = result?.size;
+  const shape = result?.shape;
   const detection = result?.detection || {};
   const analysis = result?.analysis || {};
   const objects = detection.objects || [];
 
   const disease = result?.disease || 'healthy';
   const diseaseDetections = result?.detections || [];
-  
+
 
   const getQualityColor = (score: number) => {
     if (score >= 80) return '#27AE60';
@@ -248,43 +249,81 @@ export default function DurianScanResult() {
                   </View>
                 </View>
               )}
+
               {/* Size Classification */}
 
               {size && size.success && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Size Classification</Text>
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Size Classification</Text>
 
-                <View style={styles.detailRow}>
-                  <View style={styles.detailLeft}>
-                    <Ionicons
-                      name="resize-outline"
-                      size={18}
-                      color="#666"
-                    />
-                    <Text style={styles.detailLabel}>Size</Text>
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailLeft}>
+                      <Ionicons
+                        name="resize-outline"
+                        size={18}
+                        color="#666"
+                      />
+                      <Text style={styles.detailLabel}>Size</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {size.size_class || 'N/A'}
+                    </Text>
                   </View>
-                  <Text style={styles.detailValue}>
-                    {size.size_class || 'N/A'}
-                  </Text>
-                </View>
 
-                <View style={styles.detailRow}>
-                  <View style={styles.detailLeft}>
-                    <Ionicons
-                      name="trending-up-outline"
-                      size={18}
-                      color="#666"
-                    />
-                    <Text style={styles.detailLabel}>Confidence</Text>
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailLeft}>
+                      <Ionicons
+                        name="trending-up-outline"
+                        size={18}
+                        color="#666"
+                      />
+                      <Text style={styles.detailLabel}>Confidence</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {size.confidence
+                        ? `${(size.confidence * 100).toFixed(1)}%`
+                        : 'N/A'}
+                    </Text>
                   </View>
-                  <Text style={styles.detailValue}>
-                    {size.confidence
-                      ? `${(size.confidence * 100).toFixed(1)}%`
-                      : 'N/A'}
-                  </Text>
                 </View>
-              </View>
-            )}
+              )}
+
+              {/* Shape Classification */}
+              {shape && shape.success && (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Shape Classification</Text>
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailLeft}>
+                      <Ionicons
+                        name="ellipse-outline"
+                        size={18}
+                        color="#666"
+                      />
+                      <Text style={styles.detailLabel}>Shape</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {shape.shape_class || 'N/A'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailLeft}>
+                      <Ionicons
+                        name="trending-up-outline"
+                        size={18}
+                        color="#666"
+                      />
+                      <Text style={styles.detailLabel}>Confidence</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {shape.confidence
+                        ? `${(shape.confidence * 100).toFixed(1)}%`
+                        : 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
               {/* Disease Detection */}
               <View style={styles.card}>
@@ -367,7 +406,7 @@ export default function DurianScanResult() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={styles.scanAgainButton}
-              onPress={() => router.back()}
+              onPress={() => router.replace('/(tabs)/Scanner')}
               activeOpacity={0.8}
             >
               <Ionicons name="camera-outline" size={18} color="#fff" />
