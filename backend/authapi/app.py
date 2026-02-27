@@ -7,6 +7,7 @@ import datetime
 from flask_mail import Mail
 import os
 from dotenv import load_dotenv
+from routes.analytics_pdf_routes import analytics_pdf_bp
 
 load_dotenv()
 
@@ -51,6 +52,8 @@ app.register_blueprint(scanner_bp, url_prefix='/scanner')
 app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
 app.register_blueprint(shop_bp, url_prefix='/shop')
 app.register_blueprint(transaction_bp, url_prefix='/api')   
+app.register_blueprint(analytics_pdf_bp)
+
 
 
 

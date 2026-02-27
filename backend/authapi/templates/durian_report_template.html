@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Durian Analytics Report</title>
+
+<style>
+body { font-family: Helvetica, Arial, sans-serif; color: #2c3e50; margin: 0; padding: 0; }
+.page { page-break-after: always; padding: 30px; }
+
+.page-title {
+    font-size: 24px;
+    color: #27AE60;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.subtext {
+    font-size: 12px;
+    text-align: center;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+/* KPI Cards */
+.kpi-container { display: flex; flex-wrap: wrap; justify-content: space-between; }
+.card {
+    flex: 1 1 30%;
+    margin: 10px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #ffffff;
+    border-top: 6px solid #27AE60;
+}
+
+.card h3 { margin: 5px 0; font-size: 16px; }
+
+.card .value {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Green Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+th {
+    background-color: #27AE60;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+td {
+    border: 1px solid #d4f5e1;
+    padding: 10px;
+    text-align: center;
+}
+
+tr:nth-child(even) { background-color: #f2fbf6; }
+
+.chart-container { text-align: center; margin: 15px 0; }
+.chart-container img { width: 90%; }
+
+.footer {
+    font-size: 10px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- PAGE 1 -->
+<div class="page">
+<div class="page-title">Key Metrics</div>
+<div class="subtext">Summary of your durian scans</div>
+
+<div class="kpi-container"> 
+{% for key, value in data.stats.items() %}
+<div class="card">
+    <div class="value">
+        {% if key.endswith('_percent') or key == 'weekly_growth' %}
+            {{ value }}%
+        {% else %}
+            {{ value }}
+        {% endif %}
+    </div>
+    <h3>{{ key.replace('_',' ').title() }}</h3>
+</div>
+{% endfor %}
+</div>
+
+<div class="footer">Confidential Durian Analytics Report - Page 1</div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+<div class="page-title">Weekly Activity</div>
+<div class="subtext">Number of scans per day</div>
+
+<div class="chart-container">
+{% if data.weekly_chart %}
+<img src="data:image/png;base64,{{ data.weekly_chart }}">
+{% endif %}
+</div>
+
+{% if data.weekly_data %}
+<table>
+<thead>
+<tr><th>Date</th><th>Day</th><th>Scans</th><th>Avg Quality</th></tr>
+</thead>
+<tbody>
+{% for item in data.weekly_data %}
+<tr>
+<td>{{ item.date }}</td>
+<td>{{ item.day }}</td>
+<td>{{ item.scans }}</td>
+<td>{{ item.quality }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+<div class="footer">Confidential Durian Analytics Report - Page 2</div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page">
+<div class="page-title">Quality Distribution</div>
+
+<div class="chart-container">
+{% if data.dist_chart %}
+<img src="data:image/png;base64,{{ data.dist_chart }}">
+{% endif %}
+</div>
+
+{% if data.quality_distribution %}
+<table>
+<thead>
+<tr><th>Range</th><th>Count</th><th>Percentage</th></tr>
+</thead>
+<tbody>
+{% for item in data.quality_distribution %}
+<tr>
+<td>{{ item.range }}</td>
+<td>{{ item.count }}</td>
+<td>{{ item.percentage }}%</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+<div class="footer">Confidential Durian Analytics Report - Page 3</div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page">
+<div class="page-title">Recent Scans</div>
+
+<div class="chart-container">
+{% if data.recent_chart %}
+<img src="data:image/png;base64,{{ data.recent_chart }}">
+{% endif %}
+</div>
+
+{% if data.recent_scans %}
+<table>
+<thead>
+<tr><th>Date</th><th>Variety</th><th>Quality</th><th>Status</th></tr>
+</thead>
+<tbody>
+{% for scan in data.recent_scans %}
+<tr>
+<td>{{ scan.formatted_date }}</td>
+<td>{{ scan.variety }}</td>
+<td>{{ scan.quality }}%</td>
+<td>{{ scan.status }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+
+<div class="footer">Confidential Durian Analytics Report - Page 4</div>
+</div>
+
+</body>
+</html>
