@@ -6,7 +6,7 @@ const { width, height } = Dimensions.get('window');
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Palette.deepObsidian, // Updated background color
+    backgroundColor: Palette.deepObsidian, 
   },
   scrollContent: {
     flexGrow: 1,
@@ -39,22 +39,22 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontFamily: Fonts.bold,
-    color: Palette.linenWhite, // Updated text color for dark background
+    color: Palette.linenWhite, 
     letterSpacing: -0.5,
   },
 
   // Profile Card
   profileCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-  borderRadius: 32, 
+  backgroundColor: '#1A291A',
+  borderWidth: 1,
+  borderColor: Palette.deepObsidian,
+
+  borderRadius: 16, 
   padding: 24,
   width: '100%',
   maxWidth: 500, 
   alignSelf: 'center',
   marginTop: 20,
-  
-  borderWidth: 1,
-  borderColor: 'rgba(255, 255, 255, 0.08)',
   
   shadowColor: '#000',
   shadowOffset: { width: 0, height: 10 },
@@ -171,7 +171,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     backgroundColor: Palette.linenWhite,
-    color: Palette.charcoalEspresso,
+    color: Palette.deepObsidian,
     fontFamily: Fonts.regular,
   },
   inputFocused: {
@@ -269,21 +269,23 @@ export const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: Palette.linenWhite, // Light text for dark bg
+    color: Palette.linenWhite, 
     fontFamily: Fonts.medium,
   },
 
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: '#1A291A',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
+    backgroundColor: '#1A291A',
+    borderWidth: 1,
+    borderColor: Palette.deepObsidian,
+    borderRadius: 16,
     padding: 28,
     width: '100%',
     maxWidth: 400,
@@ -343,7 +345,7 @@ export const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: Palette.deepObsidian,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
