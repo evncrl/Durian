@@ -125,7 +125,6 @@ export default function ProductManagement() {
       isNew: product.isNew ?? false
     });
     setEditId(product._id);
-    // Scroll to top on web for convenience
     if (isWeb) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -146,7 +145,6 @@ export default function ProductManagement() {
     ]);
   };
 
-  // ✅ SUB-COMPONENT: Table Header
   const TableHeader = () => (
     <View style={localStyles.tableHeader}>
       <Text style={[localStyles.columnHeader, { flex: 1.5 }]}>PRODUCT</Text>
@@ -173,7 +171,6 @@ export default function ProductManagement() {
           contentContainerStyle={(isSmallScreen || !isWeb) ? undefined : { paddingBottom: 40, paddingHorizontal: 24 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Mobile Header Toggle */}
           {(isSmallScreen || !isWeb) && (
             <View style={localStyles.mobileHeader}>
               <TouchableOpacity onPress={() => setSidebarVisible(true)}>
@@ -188,9 +185,8 @@ export default function ProductManagement() {
             <Text style={styles.title}>Shop Management</Text>
           </View>
 
-          {/* Form Card */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>{editId ? '📝 Edit Existing Item' : '✨ Add New Inventory Item'}</Text>
+            <Text style={styles.cardTitle}>{editId ? '📝 Edit Existing Item' : 'Add New Product Item'}</Text>
             <View style={localStyles.formGrid}>
               <TextInput
                 placeholder="Product Name*"
@@ -205,7 +201,7 @@ export default function ProductManagement() {
                 </Picker>
               </View>
               <TextInput
-                placeholder="Price (USD)"
+                placeholder="Price (₱)"
                 value={form.price}
                 onChangeText={v => setForm(f => ({ ...f, price: v }))}
                 keyboardType="numeric"
@@ -229,7 +225,6 @@ export default function ProductManagement() {
             </View>
           </View>
 
-          {/* ✅ DATA TABLE SECTION */}
           <View style={[styles.card, { marginTop: 10 }]}>
             <Text style={styles.cardTitle}>Live Inventory Dashboard</Text>
             
@@ -241,7 +236,6 @@ export default function ProductManagement() {
                 ) : (
                   products.map((item) => (
                     <View key={item._id} style={localStyles.tableRow}>
-                      {/* Product Name Column */}
                       <View style={{ flex: 1.5, flexDirection: 'row', alignItems: 'center' }}>
                          <View style={localStyles.tableImgPlaceholder}>
                             <Ionicons name="cube-outline" size={18} color={Palette.slate} />
@@ -249,16 +243,12 @@ export default function ProductManagement() {
                          <Text style={localStyles.tableCellName}>{item.name}</Text>
                       </View>
 
-                      {/* Category Column */}
                       <Text style={[localStyles.tableCellText, { flex: 1 }]}>{item.category}</Text>
 
-                      {/* Price Column */}
-                      <Text style={[localStyles.tableCellPrice, { flex: 0.8 }]}>${item.price}</Text>
+                      <Text style={[localStyles.tableCellPrice, { flex: 0.8 }]}>₱{item.price}</Text>
 
-                      {/* Description Column */}
                       <Text style={[localStyles.tableCellText, { flex: 2 }]} numberOfLines={1}>{item.description}</Text>
 
-                      {/* Actions Column */}
                       <View style={[localStyles.tableCellActions, { flex: 1 }]}>
                         <TouchableOpacity onPress={() => handleEdit(item)} style={localStyles.iconBtn}>
                           <Ionicons name="pencil" size={18} color="#2196f3" />
@@ -272,12 +262,11 @@ export default function ProductManagement() {
                 )}
               </View>
             ) : (
-              // MOBILE VIEW: Keep Card Style for better UX
               products.map((item) => (
                 <View key={item._id} style={styles.userRow}>
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>{item.name}</Text>
-                    <Text style={styles.userEmail}>{item.category} • ${item.price}</Text>
+                    <Text style={styles.userEmail}>{item.category} • ₱{item.price}</Text>
                   </View>
                   <View style={styles.userActions}>
                     <TouchableOpacity onPress={() => handleEdit(item)} style={localStyles.editBtn}>
