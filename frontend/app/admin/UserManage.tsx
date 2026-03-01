@@ -19,7 +19,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Fonts, Palette } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
-// List of Pre-defined Reasons
+// ✅ Pre-defined Reasons for Deactivation Email
 const DEACTIVATION_REASONS = [
     "Violation of Terms of Service",
     "Spamming or Suspicious Activity",
@@ -52,7 +52,7 @@ export default function UserManage() {
     const [showDeactivated, setShowDeactivated] = useState(false);
     const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
     
-    // ✅ Updated: default value is the first reason in the list
+    // Default to the first reason in the list
     const [deactivateReason, setDeactivateReason] = useState(DEACTIVATION_REASONS[0]);
     
     const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
@@ -113,7 +113,7 @@ export default function UserManage() {
     // Deactivate Logic
     const openDeactivateModal = (user: User) => {
         setUserToDeactivate(user);
-        setDeactivateReason(DEACTIVATION_REASONS[0]); // Reset to first option
+        setDeactivateReason(DEACTIVATION_REASONS[0]); 
         setDeactivateModalVisible(true);
     };
 
@@ -127,6 +127,7 @@ export default function UserManage() {
         if (!userToDeactivate) return;
         
         setDeactivating(true);
+        // ✅ Ipapadala ang 'reason' sa backend para maisama sa email
         fetch(`${API_URL}/admin/users/${userToDeactivate._id}/deactivate`, {
             method: 'PUT',
             headers: {
@@ -138,7 +139,11 @@ export default function UserManage() {
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
-                    Alert.alert('Success', 'User deactivated and notified via email.');
+                    // Magpapakita ng alert kung naging success ang email sending base sa backend response
+                    const statusMsg = data.emailSent 
+                        ? 'User deactivated and notification email sent successfully.' 
+                        : 'User deactivated, but there was an issue sending the notification email.';
+                    Alert.alert('Account Status Updated', statusMsg);
                     closeDeactivateModal();
                     fetchUsers();
                 } else {
@@ -147,7 +152,7 @@ export default function UserManage() {
             })
             .catch((err) => {
                 console.error('Deactivate User Error:', err);
-                Alert.alert('Error', 'Failed to deactivate user.');
+                Alert.alert('Error', 'Failed to connect to the server.');
             })
             .finally(() => setDeactivating(false));
     };
@@ -163,7 +168,10 @@ export default function UserManage() {
             .then((res) => res.json())
             .then((data) => {
                 if (data.success) {
-                    Alert.alert('Success', 'User reactivated.');
+                    const statusMsg = data.emailSent 
+                        ? 'User reactivated and notified via email.' 
+                        : 'User reactivated, but notification email failed.';
+                    Alert.alert('Account Status Updated', statusMsg);
                     fetchUsers();
                 } else {
                     Alert.alert('Error', data.error || 'Failed to reactivate user.');
@@ -171,7 +179,7 @@ export default function UserManage() {
             })
             .catch((err) => {
                 console.error('Reactivate User Error:', err);
-                Alert.alert('Error', 'Failed to reactivate user.');
+                Alert.alert('Error', 'Failed to connect to the server.');
             });
     };
 
@@ -297,7 +305,7 @@ export default function UserManage() {
                     </View>
                 </ScrollView>
 
-                {/* ✅ UPDATED: Deactivation Modal with Picker */}
+                {/* ✅ Deactivation Modal with Automatic Email Reason Picker */}
                 <Modal
                     visible={deactivateModalVisible}
                     transparent={true}
@@ -306,16 +314,15 @@ export default function UserManage() {
                 >
                     <View style={modalStyles.overlay}>
                         <View style={modalStyles.modalContainer}>
-                            <Text style={modalStyles.modalTitle}>Deactivate User</Text>
+                            <Text style={modalStyles.modalTitle}>Deactivate Account</Text>
                             {userToDeactivate && (
                                 <Text style={modalStyles.userInfo}>
-                                    Target: {userToDeactivate.name}
+                                    Target: {userToDeactivate.name} ({userToDeactivate.email})
                                 </Text>
                             )}
                             
                             <Text style={modalStyles.label}>Select deactivation reason:</Text>
                             
-                            {/* ✅ Reason Selection Dropdown */}
                             <View style={localPickerStyles.pickerContainer}>
                                 <Picker
                                     selectedValue={deactivateReason}
@@ -328,9 +335,11 @@ export default function UserManage() {
                                 </Picker>
                             </View>
 
-                            <Text style={{fontSize: 12, color: '#888', fontStyle: 'italic', marginBottom: 20, textAlign: 'center'}}>
-                                Note: This reason will be included in the email notification sent to the user.
-                            </Text>
+                            <View style={{backgroundColor: '#fffbeb', padding: 12, borderRadius: 8, marginBottom: 20}}>
+                                <Text style={{fontSize: 11, color: '#92400e', fontFamily: Fonts.medium}}>
+                                    📧 An automated notice will be sent via Mailtrap to the user's registered email address.
+                                </Text>
+                            </View>
 
                             <View style={modalStyles.buttonRow}>
                                 <TouchableOpacity style={modalStyles.cancelBtn} onPress={closeDeactivateModal}>
@@ -342,7 +351,7 @@ export default function UserManage() {
                                     disabled={deactivating}
                                 >
                                     <Text style={modalStyles.confirmBtnText}>
-                                        {deactivating ? 'Wait...' : 'Confirm'}
+                                        {deactivating ? 'Notifying...' : 'Confirm'}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -354,7 +363,7 @@ export default function UserManage() {
     );
 }
 
-// ✅ New styles for the Picker in Modal
+// Local Styles
 const localPickerStyles = RNStyleSheet.create({
     pickerContainer: {
         borderWidth: 1,
@@ -370,11 +379,10 @@ const localPickerStyles = RNStyleSheet.create({
     }
 });
 
-// Local Modal and Header Styles
 const modalStyles = RNStyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
@@ -385,7 +393,7 @@ const modalStyles = RNStyleSheet.create({
         padding: 24,
         width: '100%',
         maxWidth: 400,
-        elevation: 10,
+        elevation: 15,
     },
     modalTitle: {
         fontSize: 20,
@@ -395,7 +403,7 @@ const modalStyles = RNStyleSheet.create({
         textAlign: 'center',
     },
     userInfo: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#666',
         marginBottom: 16,
         textAlign: 'center',
