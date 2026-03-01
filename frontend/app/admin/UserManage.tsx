@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -19,6 +18,17 @@ import { useAdminStyles } from '@/styles/admin_styles/index.styles';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Fonts, Palette } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+
+// List of Pre-defined Reasons
+const DEACTIVATION_REASONS = [
+    "Violation of Terms of Service",
+    "Spamming or Suspicious Activity",
+    "Inappropriate Content/Harassment",
+    "Account Requested for Deletion",
+    "Security Breach/Compromised Account",
+    "Policy Violation - Multi-accounting",
+    "Administrative Maintenance"
+];
 
 // Interface for User Data
 interface User {
@@ -41,7 +51,10 @@ export default function UserManage() {
     const [loading, setLoading] = useState(true);
     const [showDeactivated, setShowDeactivated] = useState(false);
     const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
-    const [deactivateReason, setDeactivateReason] = useState('');
+    
+    // ✅ Updated: default value is the first reason in the list
+    const [deactivateReason, setDeactivateReason] = useState(DEACTIVATION_REASONS[0]);
+    
     const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
     const [deactivating, setDeactivating] = useState(false);
 
@@ -100,22 +113,19 @@ export default function UserManage() {
     // Deactivate Logic
     const openDeactivateModal = (user: User) => {
         setUserToDeactivate(user);
-        setDeactivateReason('');
+        setDeactivateReason(DEACTIVATION_REASONS[0]); // Reset to first option
         setDeactivateModalVisible(true);
     };
 
     const closeDeactivateModal = () => {
         setDeactivateModalVisible(false);
         setUserToDeactivate(null);
-        setDeactivateReason('');
+        setDeactivateReason(DEACTIVATION_REASONS[0]);
     };
 
     const confirmDeactivateUser = () => {
         if (!userToDeactivate) return;
-        if (!deactivateReason.trim()) {
-            Alert.alert('Error', 'Please provide a reason for deactivation.');
-            return;
-        }
+        
         setDeactivating(true);
         fetch(`${API_URL}/admin/users/${userToDeactivate._id}/deactivate`, {
             method: 'PUT',
@@ -123,7 +133,7 @@ export default function UserManage() {
                 'Content-Type': 'application/json',
                 'ngrok-skip-browser-warning': 'true',
             },
-            body: JSON.stringify({ reason: deactivateReason.trim() }),
+            body: JSON.stringify({ reason: deactivateReason }),
         })
             .then((res) => res.json())
             .then((data) => {
@@ -182,7 +192,6 @@ export default function UserManage() {
         <View style={{ flex: 1, flexDirection: (isSmallScreen || !isWeb) ? 'column' : 'row', backgroundColor: Palette.linenWhite }}>
             <AdminSidebar isVisible={sidebarVisible} onClose={() => setSidebarVisible(false)} />
 
-            {/* Mobile Overlay */}
             {sidebarVisible && (isSmallScreen || !isWeb) && (
                 <TouchableOpacity
                     style={overlayStyles.overlay}
@@ -288,7 +297,7 @@ export default function UserManage() {
                     </View>
                 </ScrollView>
 
-                {/* Deactivation Modal */}
+                {/* ✅ UPDATED: Deactivation Modal with Picker */}
                 <Modal
                     visible={deactivateModalVisible}
                     transparent={true}
@@ -300,20 +309,29 @@ export default function UserManage() {
                             <Text style={modalStyles.modalTitle}>Deactivate User</Text>
                             {userToDeactivate && (
                                 <Text style={modalStyles.userInfo}>
-                                    {userToDeactivate.name} ({userToDeactivate.email})
+                                    Target: {userToDeactivate.name}
                                 </Text>
                             )}
-                            <Text style={modalStyles.label}>Reason for deactivation:</Text>
-                            <TextInput
-                                style={modalStyles.textInput}
-                                placeholder="Enter reason..."
-                                placeholderTextColor="#999"
-                                multiline
-                                numberOfLines={4}
-                                value={deactivateReason}
-                                onChangeText={setDeactivateReason}
-                                textAlignVertical="top"
-                            />
+                            
+                            <Text style={modalStyles.label}>Select deactivation reason:</Text>
+                            
+                            {/* ✅ Reason Selection Dropdown */}
+                            <View style={localPickerStyles.pickerContainer}>
+                                <Picker
+                                    selectedValue={deactivateReason}
+                                    onValueChange={(itemValue) => setDeactivateReason(itemValue)}
+                                    style={localPickerStyles.picker}
+                                >
+                                    {DEACTIVATION_REASONS.map((reason, index) => (
+                                        <Picker.Item key={index} label={reason} value={reason} />
+                                    ))}
+                                </Picker>
+                            </View>
+
+                            <Text style={{fontSize: 12, color: '#888', fontStyle: 'italic', marginBottom: 20, textAlign: 'center'}}>
+                                Note: This reason will be included in the email notification sent to the user.
+                            </Text>
+
                             <View style={modalStyles.buttonRow}>
                                 <TouchableOpacity style={modalStyles.cancelBtn} onPress={closeDeactivateModal}>
                                     <Text style={modalStyles.cancelBtnText}>Cancel</Text>
@@ -335,6 +353,22 @@ export default function UserManage() {
         </View>
     );
 }
+
+// ✅ New styles for the Picker in Modal
+const localPickerStyles = RNStyleSheet.create({
+    pickerContainer: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 12,
+        backgroundColor: '#f9f9f9',
+        marginBottom: 15,
+        overflow: 'hidden',
+    },
+    picker: {
+        height: 50,
+        width: '100%',
+    }
+});
 
 // Local Modal and Header Styles
 const modalStyles = RNStyleSheet.create({
@@ -365,20 +399,13 @@ const modalStyles = RNStyleSheet.create({
         color: '#666',
         marginBottom: 16,
         textAlign: 'center',
+        fontFamily: Fonts.medium,
     },
     label: {
         fontSize: 14,
         fontFamily: Fonts.semiBold,
-        marginBottom: 8,
-    },
-    textInput: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        padding: 12,
-        minHeight: 80,
-        backgroundColor: '#f9f9f9',
-        marginBottom: 20,
+        marginBottom: 10,
+        color: '#333',
     },
     buttonRow: {
         flexDirection: 'row',
