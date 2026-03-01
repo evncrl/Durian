@@ -249,7 +249,7 @@ export const useAdminStyles = () => {
         },
         web: {
           border: 'none',
-          outline: 'none',
+          // outline: 'none',
           backgroundColor: 'transparent',
           cursor: 'pointer',
         },

@@ -125,6 +125,19 @@ export default function Admin() {
   const styles = useAdminStyles();
   const { user, loading: userLoading, refreshUser, logout } = useUser();
 
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const { isWeb, isSmallScreen } = useResponsive();
+
+  const [loading, setLoading] = useState(true);
+  const [statusData, setStatusData] = useState<{ message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [showDeactivated, setShowDeactivated] = useState(false);
+  const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [deactivating, setDeactivating] = useState(false);
+
   useEffect(() => {
     if (!userLoading && (!user || user.role !== 'admin')) {
       // Not admin, redirect to home
@@ -140,18 +153,7 @@ export default function Admin() {
       </View>
     );
   }
-  const [sidebarVisible, setSidebarVisible] = useState(false);
-  const { isWeb, isSmallScreen } = useResponsive();
 
-  const [loading, setLoading] = useState(true);
-  const [statusData, setStatusData] = useState<{ message: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [showDeactivated, setShowDeactivated] = useState(false);
-  const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
-  const [deactivateReason, setDeactivateReason] = useState('');
-  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
-  const [deactivating, setDeactivating] = useState(false);
 
   // Fetch backend status
   const fetchStatus = () => {

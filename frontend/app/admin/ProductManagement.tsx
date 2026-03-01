@@ -28,48 +28,68 @@ export default function ProductManagement() {
   const [editId, setEditId] = useState<string | null>(null);
 
   const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/products`);
-      const data = await res.json();
-      setProducts(data);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to fetch products');
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const res = await fetch(`${API_URL}/shop/products`, {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    const data = await res.json();
+    
+    if (data.success && data.products) {
+      setProducts(data.products);
     }
-  };
+  } catch (err) {
+    console.error('Fetch Error:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { fetchProducts(); }, []);
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) {
-      Alert.alert('Validation', 'Name is required');
-      return;
+  if (!form.name.trim()) {
+    Alert.alert('Validation', 'Name is required');
+    return;
+  }
+  setLoading(true);
+  try {
+    const method = editId ? 'PUT' : 'POST';
+    const url = editId ? `${API_URL}/shop/products/${editId}` : `${API_URL}/shop/products`;
+    
+    const payload = {
+      name: form.name,
+      category: form.category,
+      price: Number(form.price),
+      description: form.description,
+      image_url: form.image, 
+      isNew: form.isNew
+    };
+
+    const res = await fetch(url, {
+      method,
+      headers: { 
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true' 
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    const data = await res.json();
+    if (data.success || data.id) { 
+      fetchProducts();
+      setForm({ name: '', category: '', price: '', description: '', image: '', isNew: false });
+      setEditId(null);
+      Alert.alert('Success', 'Product saved!');
+    } else {
+      Alert.alert('Error', data.error || 'Failed to save product');
     }
-    setLoading(true);
-    try {
-      const method = editId ? 'PUT' : 'POST';
-      const url = editId ? `${API_URL}/products/${editId}` : `${API_URL}/products`;
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, price: Number(form.price) }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchProducts();
-        setForm({ name: '', category: '', price: '', description: '', image: '', isNew: false });
-        setEditId(null);
-      } else {
-        Alert.alert('Error', 'Failed to save product');
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to save product');
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    Alert.alert('Error', 'Failed to connect to server');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleEdit = (product: Product) => {
     setForm({
@@ -164,7 +184,7 @@ export default function ProductManagement() {
                       const formData = new FormData();
                       formData.append('file', file);
                       // Send to backend handler
-                      const res = await fetch(`${API_URL}/upload-image`, {
+                      const res = await fetch(`${API_URL}/shop/upload-image`, {
                         method: 'POST',
                         body: formData,
                       });
@@ -229,7 +249,6 @@ export default function ProductManagement() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: Platform.OS === 'web' ? 32 : 16,
     backgroundColor: '#fff',
   },
   title: {

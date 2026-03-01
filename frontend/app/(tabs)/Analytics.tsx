@@ -65,7 +65,6 @@ export default function Analytics() {
   const styles = useAnalyticsStyles();
   const { user } = useUser();
 
-  // Fetch analytics data from backend
   const fetchAnalytics = useCallback(async () => {
     if (!user?.id) {
       setError('Please log in to view your analytics');
@@ -110,6 +109,12 @@ export default function Analytics() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
+  const downloadPDF = () => {
+    if (!user?.id) return;
+    const pdfUrl = `${API_URL}/analytics/pdf/${user.id}`;
+    window.open(pdfUrl, '_blank'); // Avoids CORS fetch issue
+  };
+
   // Default values when no data
   const stats = analyticsData?.stats || {
     total_scans: 0,
@@ -126,7 +131,6 @@ export default function Analytics() {
 
   const maxScans = Math.max(...weeklyData.map(d => d.scans), 1);
 
-  // Format date for display
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -221,7 +225,9 @@ export default function Analytics() {
             </View>
             <Text style={styles.metricValue}>{stats.total_scans.toLocaleString()}</Text>
             <Text style={styles.metricLabel}>Total Scans</Text>
-            <Text style={styles.metricSubtext}>This {timeRange}</Text>
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
+              This represents total number of scans performed in this {timeRange}.
+            </Text>
           </View>
 
           {/* Export Quality */}
@@ -232,6 +238,9 @@ export default function Analytics() {
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${stats.export_ready_percent}%` }]} />
             </View>
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
+              This represents the percentage of scans meeting export quality standards.
+            </Text>
           </View>
 
           {/* Rejected */}
@@ -242,6 +251,9 @@ export default function Analytics() {
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, styles.progressFillWarning, { width: `${stats.rejected_percent}%` }]} />
             </View>
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
+              This represents the percentage of scans rejected due to low quality.
+            </Text>
           </View>
 
           {/* Avg Quality Score */}
@@ -249,7 +261,9 @@ export default function Analytics() {
             <Ionicons name="star" size={24} color="#F1C40F" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.avg_quality}/100</Text>
             <Text style={styles.metricLabel}>Avg Quality Score</Text>
-            <Text style={styles.metricSubtext}>Based on AI analysis</Text>
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
+              This represents average quality score of all scans in this period.
+            </Text>
           </View>
 
           {/* Top Variety */}
@@ -257,7 +271,9 @@ export default function Analytics() {
             <Ionicons name="ribbon" size={24} color="#E67E22" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.top_variety}</Text>
             <Text style={styles.metricLabel}>Top Variety</Text>
-            <Text style={styles.metricSubtext}>Most scanned</Text>
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
+              This represents the most scanned durian variety in this period.
+            </Text>
           </View>
         </View>
 
@@ -286,6 +302,9 @@ export default function Analytics() {
                 <Text style={styles.legendText}>Scans per day</Text>
               </View>
             </View>
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
+              This represents number of scans per day over the selected period.
+            </Text>
           </View>
         </View>
 
@@ -305,6 +324,11 @@ export default function Analytics() {
                 <Text style={styles.distributionPercentage}>{item.percentage}%</Text>
               </View>
             ))}
+            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
+              {qualityDistribution.length === 0
+                ? 'This represents no quality data available for this period.'
+                : `This represents distribution of scan quality; most scans fall in the ${qualityDistribution.reduce((prev, curr) => curr.count > prev.count ? curr : prev).range} range.`}
+            </Text>
           </View>
         </View>
 
@@ -336,7 +360,6 @@ export default function Analytics() {
                   style={[styles.scanItem, { alignItems: 'flex-start' }]}
                   activeOpacity={0.7}
                 >
-                  {/* Scan Image */}
                   {scan.thumbnail_url ? (
                     <Image
                       source={{ uri: scan.thumbnail_url }}
@@ -354,7 +377,6 @@ export default function Analytics() {
                     </View>
                   )}
 
-                  {/* Scan Details */}
                   <View style={[styles.scanInfo, { flex: 1, marginLeft: 12 }]}>
                     <Text style={styles.scanVariety}>{scan.variety}</Text>
                     <Text style={styles.scanTime}>{scan.time}</Text>
@@ -371,31 +393,21 @@ export default function Analytics() {
                         {(scan.confidence * 100).toFixed(0)}% conf.
                       </Text>
                     </View>
+                    <Text style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
+                      {scan.quality >= 70
+                        ? 'This represents high quality, suitable for export.'
+                        : scan.quality >= 50
+                        ? 'This represents moderate quality, good for local sales.'
+                        : 'This represents low quality, may need improvement.'}
+                    </Text>
                   </View>
 
-                  {/* Quality & Status */}
                   <View style={[styles.scanMetrics, { alignItems: 'flex-end' }]}>
-                    <Text style={[
-                      styles.scanQuality,
-                      {
-                        color: scan.quality >= 70 ? '#27AE60' :
-                          scan.quality >= 50 ? '#F39C12' : '#E74C3C',
-                        fontSize: 18,
-                        fontFamily: Fonts.bold
-                      }
-                    ]}>
+                    <Text style={[styles.scanQuality, { color: scan.quality >= 70 ? '#27AE60' : scan.quality >= 50 ? '#F39C12' : '#E74C3C', fontSize: 18, fontFamily: Fonts.bold }]}>
                       {Math.round(scan.quality)}%
                     </Text>
-                    <View style={[
-                      styles.scanStatusBadge,
-                      scan.status === 'Rejected' && styles.scanStatusBadgeRejected,
-                      scan.status === 'Local Sale' && { backgroundColor: 'rgba(245, 158, 11, 0.2)' },
-                    ]}>
-                      <Text style={[
-                        styles.scanStatusText,
-                        scan.status === 'Rejected' && styles.scanStatusTextRejected,
-                        scan.status === 'Local Sale' && { color: '#F39C12' },
-                      ]}>
+                    <View style={[styles.scanStatusBadge, scan.status === 'Rejected' && styles.scanStatusBadgeRejected, scan.status === 'Local Sale' && { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
+                      <Text style={[styles.scanStatusText, scan.status === 'Rejected' && styles.scanStatusTextRejected, scan.status === 'Local Sale' && { color: '#F39C12' }]}>
                         {scan.status}
                       </Text>
                     </View>
@@ -406,13 +418,11 @@ export default function Analytics() {
           )}
         </View>
 
-        {/* Export Button */}
-        <TouchableOpacity style={styles.exportButton} onPress={onRefresh}>
-          <Ionicons name="refresh" size={18} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.exportButtonText}>Refresh Data</Text>
+        <TouchableOpacity style={styles.exportButton} onPress={downloadPDF}>
+          <Ionicons name="download" size={18} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.exportButtonText}>Download PDF Report</Text>
         </TouchableOpacity>
 
-        {/* Bottom Spacing */}
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
