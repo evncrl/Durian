@@ -5,6 +5,8 @@ from handlers.email_handler import send_deactivation_email, send_reactivation_em
 from db import users_collection, get_global_analytics
 from db import get_all_scans_data
 import datetime
+from handlers.report_handler import generate_analytics_pdf
+from flask import send_file
 
 # Create Blueprint
 admin_bp = Blueprint('admin', __name__)
@@ -232,3 +234,22 @@ def get_all_scans():
     if result["success"]:
         return jsonify(result), 200
     return jsonify(result), 500 
+
+@admin_bp.route("/analytics/report", methods=["GET"])
+def download_analytics_report():
+    """Route remains clean by calling the external handler"""
+    try:
+        analytics_result = get_global_analytics() 
+        if not analytics_result["success"]:
+            return jsonify({"error": "Failed to fetch data"}), 500
+        
+        pdf_buffer = generate_analytics_pdf(analytics_result["stats"])
+        
+        return send_file(
+            pdf_buffer, 
+            as_attachment=True, 
+            download_name=f"Durianostics_Report_{datetime.date.today()}.pdf", 
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

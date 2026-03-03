@@ -29,15 +29,13 @@ interface Product {
   isNew?: boolean;
 }
 
-const API_URL = 'http://localhost:8000'; 
+const API_URL = 'https://unacademic-amusingly-vernie.ngrok-free.dev'; // Update with your actual API URL
 
 export default function ProductManagement() {
-  // 🎨 UI Hooks & State
   const styles = useAdminStyles();
   const { isWeb, isSmallScreen } = useResponsive();
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
-  // 📦 Data State
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -52,7 +50,6 @@ export default function ProductManagement() {
 
   const categories = ["Jams", "Candy", "Chips", "Cookies"];
 
-  // 🔍 Fetch Data Logic
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -72,7 +69,6 @@ export default function ProductManagement() {
 
   useEffect(() => { fetchProducts(); }, []);
 
-  // 📝 Submission Logic
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.category) {
       Alert.alert('Validation', 'Name and Category are required');

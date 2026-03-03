@@ -1,35 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Platform, StatusBar } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { Fonts, Palette } from '@/constants/theme';
 import { API_URL } from '@/config/appconf';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function GenAnalytics() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
 
     const fetchAnalytics = async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_URL}/admin/analytics/overview`, {
-                headers: { 
-                    'ngrok-skip-browser-warning': 'true',
-                    'Accept': 'application/json'
-                }
+                headers: { 'ngrok-skip-browser-warning': 'true', 'Accept': 'application/json' }
             });
             const json = await res.json();
-            if (json.success) {
-                setData(json.stats);
-            }
-        } catch (err) {
-            console.error("Analytics Fetch Error:", err);
-        } finally {
-            setLoading(false);
+            if (json.success) setData(json.stats);
+        } catch (err) { 
+            console.error("Analytics Fetch Error:", err); 
+        } finally { 
+            setLoading(false); 
         }
     };
 
     useEffect(() => { fetchAnalytics(); }, []);
+
+    const handleDownloadReport = async () => {
+        setExporting(true);
+        const reportUrl = `${API_URL}/admin/analytics/report`;
+        
+        try {
+            if (Platform.OS === 'web') {
+                // BYPASS NGROK WARNING: Fetch as blob with skip header
+                const response = await fetch(reportUrl, {
+                    headers: { 'ngrok-skip-browser-warning': 'true' }
+                });
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'Durianostics_Admin_Report.pdf');
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode?.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } else {
+                // MOBILE LOGIC: Use cacheDirectory if documentDirectory has issues
+                const directory = FileSystem.documentDirectory || FileSystem.cacheDirectory;
+                const fileUri = directory + 'Durianostics_Report.pdf';
+                
+                const downloadRes = await FileSystem.downloadAsync(reportUrl, fileUri, {
+                    headers: { 'ngrok-skip-browser-warning': 'true' }
+                });
+                
+                if (downloadRes.status === 200) {
+                    await Sharing.shareAsync(fileUri);
+                }
+            }
+        } catch (error) {
+            console.error("Download Error:", error);
+            alert("Failed to export report. Please try again.");
+        } finally {
+            setExporting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -42,9 +80,7 @@ export default function GenAnalytics() {
 
     const StatCard = ({ title, value, icon, color }: any) => (
         <View style={localStyles.statCard}>
-            <View style={[localStyles.iconCircle, { backgroundColor: color + '15' }]}>
-                {icon}
-            </View>
+            <View style={[localStyles.iconCircle, { backgroundColor: color + '15' }]}>{icon}</View>
             <View style={{ flex: 1 }}>
                 <Text style={localStyles.statTitle}>{title}</Text>
                 <Text style={localStyles.statValue}>{value ?? '0'}</Text>
@@ -67,14 +103,9 @@ export default function GenAnalytics() {
 
     const LeaderboardItem = ({ name, count, index, iconColor }: any) => (
         <View style={localStyles.leaderboardRow}>
-            <View style={localStyles.leaderboardRank}>
-                <Text style={localStyles.rankText}>#{index + 1}</Text>
-            </View>
+            <View style={localStyles.leaderboardRank}><Text style={localStyles.rankText}>#{index + 1}</Text></View>
             <Text style={localStyles.leaderboardName} numberOfLines={1}>{name}</Text>
-            <div style={{ flex: 1 }} />
-            <View style={[localStyles.countBadge, { backgroundColor: iconColor + '15' }]}>
-                <Text style={[localStyles.countText, { color: iconColor }]}>{count}</Text>
-            </View>
+            <View style={[localStyles.countBadge, { backgroundColor: iconColor + '15' }]}><Text style={[localStyles.countText, { color: iconColor }]}>{count}</Text></View>
         </View>
     );
 
@@ -84,9 +115,24 @@ export default function GenAnalytics() {
             <AdminSidebar />
             
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 30 }}>
-                <View style={localStyles.header}>
-                    <Text style={localStyles.title}>Analytics Dashboard</Text>
-                    <Text style={localStyles.subtitle}>Real-time monitoring of AI distributions and community activity.</Text>
+                <View style={localStyles.headerRow}>
+                    <View>
+                        <Text style={localStyles.title}>Analytics Dashboard</Text>
+                        <Text style={localStyles.subtitle}>Real-time monitoring of AI distributions and community activity.</Text>
+                    </View>
+                    {/* ✅ Export PDF Button based on classmate's report feature */}
+                    <TouchableOpacity 
+                        style={[localStyles.downloadBtn, exporting && { opacity: 0.7 }]} 
+                        onPress={handleDownloadReport}
+                        disabled={exporting}
+                    >
+                        {exporting ? (
+                            <ActivityIndicator color={Palette.white} size="small" />
+                        ) : (
+                            <Ionicons name="download-outline" size={20} color={Palette.white} />
+                        )}
+                        <Text style={localStyles.downloadBtnText}>{exporting ? 'Generating...' : 'Export PDF'}</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* 📊 Summary Stats Grid */}
@@ -98,10 +144,8 @@ export default function GenAnalytics() {
                     <StatCard title="Avg Confidence" value={`${data?.avgConfidence ?? 0}%`} color="#9c27b0" icon={<Ionicons name="analytics" size={22} color="#9c27b0" />} />
                 </View>
 
-                {/* 📉 Main Analytics Wrapper */}
+                {/* 📉 Main Content Charts Wrapper */}
                 <View style={localStyles.chartsWrapper}>
-                    
-                    {/* BOX 1: COLOR */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Color Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -110,7 +154,6 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* BOX 2: HEALTH */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Health & Diseases</Text>
                         <View style={{ marginTop: 20 }}>
@@ -120,7 +163,6 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* BOX 3: SIZE */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Size Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -130,7 +172,6 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* BOX 4: SHAPE */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Shape Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -140,7 +181,7 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* BOX 5: TOP SCANNERS */}
+                    {/* 🏆 Leaderboards Section */}
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="trophy" size={20} color="#FFD700" /><Text style={localStyles.leaderboardTitle}>Top Scanners</Text></View>
                         <View style={{ marginTop: 15 }}>
@@ -148,7 +189,6 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* BOX 6: TOP POSTERS */}
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="megaphone" size={20} color="#ff9800" /><Text style={localStyles.leaderboardTitle}>Top Posters</Text></View>
                         <View style={{ marginTop: 15 }}>
@@ -156,12 +196,9 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* ✅ BOX 7: RECENT SCANS (Full Width Table) */}
+                    {/* ✅ Recent Activity Table */}
                     <View style={[localStyles.chartCard, { width: '100%' }]}>
-                        <View style={localStyles.leaderboardHeader}>
-                            <MaterialCommunityIcons name="history" size={22} color={Palette.warmCopper} />
-                            <Text style={localStyles.leaderboardTitle}>Recent System Activity</Text>
-                        </View>
+                        <View style={localStyles.leaderboardHeader}><MaterialCommunityIcons name="history" size={22} color={Palette.warmCopper} /><Text style={localStyles.leaderboardTitle}>Recent System Activity</Text></View>
                         <View style={localStyles.recentTable}>
                             <View style={localStyles.tableHeader}>
                                 <Text style={[localStyles.tableHeadText, { flex: 2 }]}>User</Text>
@@ -185,7 +222,6 @@ export default function GenAnalytics() {
                             ))}
                         </View>
                     </View>
-
                 </View>
             </ScrollView>
         </View>
@@ -194,9 +230,11 @@ export default function GenAnalytics() {
 
 const localStyles = StyleSheet.create({
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Palette.linenWhite },
-    header: { marginBottom: 30 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 },
     title: { fontSize: 26, fontFamily: Fonts.bold, color: Palette.charcoalEspresso },
     subtitle: { fontSize: 13, color: Palette.slate, fontFamily: Fonts.medium, marginTop: 4 },
+    downloadBtn: { flexDirection: 'row', backgroundColor: Palette.warmCopper, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10, alignItems: 'center', gap: 8 },
+    downloadBtnText: { color: Palette.white, fontFamily: Fonts.bold, fontSize: 14 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 15, marginBottom: 25 },
     statCard: { backgroundColor: '#fff', padding: 16, borderRadius: 12, width: Platform.OS === 'web' ? '18.5%' : '47%', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
     iconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
