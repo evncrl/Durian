@@ -866,12 +866,24 @@ def get_global_analytics():
             {"$sort": {"count": -1}}, {"$limit": 5}
         ]))
 
+        recent_scans_raw = list(scans_collection.find().sort("created_at", -1).limit(10))
+        recent_scans = []
+        for s in recent_scans_raw:
+            recent_scans.append({
+                "username": s.get("username", "Unknown"),
+                "variety": s.get("variety", "Durian"),
+                "status": s.get("status", "Unknown"),
+                "confidence": round(s.get("confidence", 0) * 100, 1),
+                "time": s.get("created_at").isoformat() if s.get("created_at") else ""
+            })
+            
         return {
             "success": True,
             "stats": {
                 "totalUsers": total_users,
                 "totalScans": total_scans,
                 "totalPosts": total_posts,
+                "recentScans": recent_scans,
                 "successRate": round(success_rate, 1),
                 "avgConfidence": round(avg_confidence, 1),
                 "distribution": distribution,

@@ -71,6 +71,7 @@ export default function GenAnalytics() {
                 <Text style={localStyles.rankText}>#{index + 1}</Text>
             </View>
             <Text style={localStyles.leaderboardName} numberOfLines={1}>{name}</Text>
+            <div style={{ flex: 1 }} />
             <View style={[localStyles.countBadge, { backgroundColor: iconColor + '15' }]}>
                 <Text style={[localStyles.countText, { color: iconColor }]}>{count}</Text>
             </View>
@@ -100,7 +101,7 @@ export default function GenAnalytics() {
                 {/* 📉 Main Analytics Wrapper */}
                 <View style={localStyles.chartsWrapper}>
                     
-                    {/* 1. COLOR CLASSIFICATION */}
+                    {/* BOX 1: COLOR */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Color Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -109,17 +110,7 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* 2. SIZE CLASSIFICATION */}
-                    <View style={localStyles.chartCard}>
-                        <Text style={localStyles.chartTitle}>Size Classification</Text>
-                        <View style={{ marginTop: 20 }}>
-                            <RenderBar label="Large" count={data?.distribution?.size?.Large || 0} total={data?.totalScans} color="#3f51b5" />
-                            <RenderBar label="Medium" count={data?.distribution?.size?.Medium || 0} total={data?.totalScans} color="#5c6bc0" />
-                            <RenderBar label="Small" count={data?.distribution?.size?.Small || 0} total={data?.totalScans} color="#9fa8da" />
-                        </View>
-                    </View>
-
-                    {/* 3. HEALTH & DISEASES */}
+                    {/* BOX 2: HEALTH */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Health & Diseases</Text>
                         <View style={{ marginTop: 20 }}>
@@ -129,7 +120,17 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* 4. SHAPE CLASSIFICATION */}
+                    {/* BOX 3: SIZE */}
+                    <View style={localStyles.chartCard}>
+                        <Text style={localStyles.chartTitle}>Size Classification</Text>
+                        <View style={{ marginTop: 20 }}>
+                            <RenderBar label="Large" count={data?.distribution?.size?.Large || 0} total={data?.totalScans} color="#3f51b5" />
+                            <RenderBar label="Medium" count={data?.distribution?.size?.Medium || 0} total={data?.totalScans} color="#5c6bc0" />
+                            <RenderBar label="Small" count={data?.distribution?.size?.Small || 0} total={data?.totalScans} color="#9fa8da" />
+                        </View>
+                    </View>
+
+                    {/* BOX 4: SHAPE */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Shape Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -139,28 +140,48 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* 🏆 TOP SCANNERS */}
+                    {/* BOX 5: TOP SCANNERS */}
                     <View style={localStyles.chartCard}>
-                        <View style={localStyles.leaderboardHeader}>
-                            <Ionicons name="trophy" size={20} color="#FFD700" />
-                            <Text style={localStyles.leaderboardTitle}>Top Scanners</Text>
-                        </View>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="trophy" size={20} color="#FFD700" /><Text style={localStyles.leaderboardTitle}>Top Scanners</Text></View>
                         <View style={{ marginTop: 15 }}>
-                            {data?.topScanners?.map((user: any, i: number) => (
-                                <LeaderboardItem key={i} index={i} name={user.name} count={user.count} iconColor="#4caf50" />
-                            ))}
+                            {data?.topScanners?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} iconColor="#4caf50" />)}
                         </View>
                     </View>
 
-                    {/* 🏆 TOP POSTERS */}
+                    {/* BOX 6: TOP POSTERS */}
                     <View style={localStyles.chartCard}>
-                        <View style={localStyles.leaderboardHeader}>
-                            <Ionicons name="megaphone" size={20} color="#ff9800" />
-                            <Text style={localStyles.leaderboardTitle}>Top Posters</Text>
-                        </View>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="megaphone" size={20} color="#ff9800" /><Text style={localStyles.leaderboardTitle}>Top Posters</Text></View>
                         <View style={{ marginTop: 15 }}>
-                            {data?.topPosters?.map((user: any, i: number) => (
-                                <LeaderboardItem key={i} index={i} name={user.name} count={user.count} iconColor="#ff9800" />
+                            {data?.topPosters?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} iconColor="#ff9800" />)}
+                        </View>
+                    </View>
+
+                    {/* ✅ BOX 7: RECENT SCANS (Full Width Table) */}
+                    <View style={[localStyles.chartCard, { width: '100%' }]}>
+                        <View style={localStyles.leaderboardHeader}>
+                            <MaterialCommunityIcons name="history" size={22} color={Palette.warmCopper} />
+                            <Text style={localStyles.leaderboardTitle}>Recent System Activity</Text>
+                        </View>
+                        <View style={localStyles.recentTable}>
+                            <View style={localStyles.tableHeader}>
+                                <Text style={[localStyles.tableHeadText, { flex: 2 }]}>User</Text>
+                                <Text style={[localStyles.tableHeadText, { flex: 1.5 }]}>Variety</Text>
+                                <Text style={[localStyles.tableHeadText, { flex: 1.5 }]}>Status</Text>
+                                <Text style={[localStyles.tableHeadText, { flex: 1 }]}>Conf.</Text>
+                                <Text style={[localStyles.tableHeadText, { flex: 2, textAlign: 'right' }]}>Date/Time</Text>
+                            </View>
+                            {data?.recentScans?.map((scan: any, i: number) => (
+                                <View key={i} style={localStyles.tableRow}>
+                                    <Text style={[localStyles.tableCellText, { flex: 2, fontFamily: Fonts.bold }]}>{scan.username}</Text>
+                                    <Text style={[localStyles.tableCellText, { flex: 1.5 }]}>{scan.variety}</Text>
+                                    <View style={{ flex: 1.5 }}>
+                                        <View style={[localStyles.statusBadge, { backgroundColor: scan.status === 'Export Ready' ? '#dcfce7' : scan.status === 'Rejected' ? '#fee2e2' : '#fef3c7' }]}>
+                                            <Text style={[localStyles.statusText, { color: scan.status === 'Export Ready' ? '#166534' : scan.status === 'Rejected' ? '#991b1b' : '#854d0e' }]}>{scan.status}</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={[localStyles.tableCellText, { flex: 1 }]}>{scan.confidence}%</Text>
+                                    <Text style={[localStyles.tableCellText, { flex: 2, textAlign: 'right', fontSize: 11 }]}>{new Date(scan.time).toLocaleString()}</Text>
+                                </View>
                             ))}
                         </View>
                     </View>
@@ -177,23 +198,12 @@ const localStyles = StyleSheet.create({
     title: { fontSize: 26, fontFamily: Fonts.bold, color: Palette.charcoalEspresso },
     subtitle: { fontSize: 13, color: Palette.slate, fontFamily: Fonts.medium, marginTop: 4 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 15, marginBottom: 25 },
-    statCard: { 
-        backgroundColor: '#fff', padding: 16, borderRadius: 12, 
-        width: Platform.OS === 'web' ? '18.5%' : '47%', 
-        flexDirection: 'row', alignItems: 'center', gap: 12,
-        shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2
-    },
+    statCard: { backgroundColor: '#fff', padding: 16, borderRadius: 12, width: Platform.OS === 'web' ? '18.5%' : '47%', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
     iconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
     statTitle: { fontSize: 10, fontFamily: Fonts.bold, color: Palette.slate, textTransform: 'uppercase' },
     statValue: { fontSize: 18, fontFamily: Fonts.bold, color: Palette.deepObsidian },
-    chartsWrapper: { 
-        flexDirection: 'row', flexWrap: 'wrap', gap: 20, justifyContent: 'space-between' 
-    },
-    chartCard: { 
-        backgroundColor: '#fff', padding: 24, borderRadius: 18, 
-        width: Platform.OS === 'web' ? '48.5%' : '100%', // Fixed side-by-side layout
-        shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, elevation: 1, marginBottom: 10
-    },
+    chartsWrapper: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, justifyContent: 'space-between' },
+    chartCard: { backgroundColor: '#fff', padding: 24, borderRadius: 18, width: Platform.OS === 'web' ? '48.5%' : '100%', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, elevation: 1, marginBottom: 10 },
     chartTitle: { fontSize: 16, fontFamily: Fonts.bold, color: Palette.charcoalEspresso, borderLeftWidth: 4, borderLeftColor: Palette.warmCopper, paddingLeft: 10 },
     leaderboardTitle: { fontSize: 16, fontFamily: Fonts.bold, color: Palette.charcoalEspresso, marginLeft: 8 },
     barRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 12 },
@@ -207,5 +217,12 @@ const localStyles = StyleSheet.create({
     rankText: { fontSize: 12, fontFamily: Fonts.bold, color: Palette.warmCopper },
     leaderboardName: { flex: 1, fontSize: 14, fontFamily: Fonts.medium, color: Palette.deepObsidian },
     countBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-    countText: { fontSize: 12, fontFamily: Fonts.bold }
+    countText: { fontSize: 12, fontFamily: Fonts.bold },
+    recentTable: { marginTop: 15, width: '100%' },
+    tableHeader: { flexDirection: 'row', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
+    tableHeadText: { fontSize: 12, fontFamily: Fonts.bold, color: Palette.slate, textTransform: 'uppercase' },
+    tableRow: { flexDirection: 'row', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f8f9fa', alignItems: 'center' },
+    tableCellText: { fontSize: 13, color: Palette.deepObsidian, fontFamily: Fonts.medium },
+    statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, alignSelf: 'flex-start' },
+    statusText: { fontSize: 11, fontFamily: Fonts.bold }
 });
