@@ -212,7 +212,7 @@ export default function LandingAuthModal({ }: LandingAuthModalProps) {
         await refreshUser();
         // Redirect to admin dashboard if admin
         if (userRole === 'admin') {
-          router.replace('/admin');
+          router.replace('/admin/GenAnalytics');
         } else {
           router.replace('/');
         }
