@@ -29,7 +29,7 @@ const NAV_ITEMS = [
     { label: 'Scanner', path: '/Scanner', icon: 'scan-outline', activeIcon: 'scan' },
     { label: 'Shop', path: '/Shop', icon: 'cart-outline', activeIcon: 'cart' },
     { label: 'Chatbot', path: '/Chatbot', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
-    { label: 'Analytics', path: '/Analytics', icon: 'analytics-outline', activeIcon: 'analytics' },
+    // { label: 'Analytics', path: '/Analytics', icon: 'analytics-outline', activeIcon: 'analytics' },
     { label: 'Forum', path: '/Forum', icon: 'people-outline', activeIcon: 'people' },
     { label: 'About', path: '/About', icon: 'information-circle-outline', activeIcon: 'information-circle' },
 ];
