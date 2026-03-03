@@ -90,7 +90,7 @@ def get_durian_disease(image_path: str, model_path: Optional[str] = None) -> Dic
 
         return {
             "success": True,
-            "disease": final_disease,  # 👈 IMPORTANT for frontend
+            "disease": final_disease,  # IMPORTANT for frontend
             "confidence": final_confidence,
             "total_detections": len(detections),
             "detections": detections

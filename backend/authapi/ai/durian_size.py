@@ -13,7 +13,7 @@ from torchvision import transforms
 from PIL import Image
 
 # Must match training folder order (alphabetical)
-SIZE_CLASSES = ['large', 'medium', 'small']
+SIZE_CLASSES = ['Large', 'Medium', 'Small']
 
 _size_model = None
 

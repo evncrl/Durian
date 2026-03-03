@@ -817,3 +817,68 @@ def get_quality_distribution(user_id: str, time_range: str = "month") -> List[Di
     except Exception as e:
         print(f"[DB] Error getting quality distribution: {e}")
         return []
+    
+def get_global_analytics():
+    try:
+        total_users = users_collection.count_documents({})
+        total_posts = posts_collection.count_documents({})
+        all_scans = list(scans_collection.find({}))
+        total_scans = len(all_scans)
+
+        avg_confidence = 0
+        success_rate = 0
+        if total_scans > 0:
+            total_conf = sum(s.get("confidence", 0) for s in all_scans)
+            avg_confidence = (total_conf / total_scans) * 100
+            success_count = sum(1 for s in all_scans if s.get("confidence", 0) >= 0.7)
+            success_rate = (success_count / total_scans) * 100
+
+        # Classification Distributions
+        distribution = {
+            "color": {
+                "Greenish": scans_collection.count_documents({"status": "Export Ready"}),
+                "Brownish": scans_collection.count_documents({"status": "Local Sale"})
+            },
+            "size": {
+                "Large": scans_collection.count_documents({"analysis.size": {"$regex": "^large", "$options": "i"}}),
+                "Medium": scans_collection.count_documents({"analysis.size": {"$regex": "^medium", "$options": "i"}}),
+                "Small": scans_collection.count_documents({"analysis.size": {"$regex": "^small", "$options": "i"}})
+            },
+            "shape": {
+                "Elongated": scans_collection.count_documents({"analysis.shape": {"$regex": "^elongated", "$options": "i"}}),
+                "Irregular": scans_collection.count_documents({"analysis.shape": {"$regex": "^irregular", "$options": "i"}}),
+                "Round": scans_collection.count_documents({"analysis.shape": {"$regex": "^round", "$options": "i"}})
+            },
+            "diseases": {
+                "Mold": scans_collection.count_documents({"variety": {"$regex": "mold", "$options": "i"}}),
+                "Rot": scans_collection.count_documents({"status": "Rejected"}),
+                "Healthy": scans_collection.count_documents({"status": "Export Ready"})
+            }
+        }
+
+        # Leaderboards logic
+        top_scanners = list(scans_collection.aggregate([
+            {"$group": {"_id": "$username", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}, {"$limit": 5}
+        ]))
+        top_posters = list(posts_collection.aggregate([
+            {"$group": {"_id": "$username", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}, {"$limit": 5}
+        ]))
+
+        return {
+            "success": True,
+            "stats": {
+                "totalUsers": total_users,
+                "totalScans": total_scans,
+                "totalPosts": total_posts,
+                "successRate": round(success_rate, 1),
+                "avgConfidence": round(avg_confidence, 1),
+                "distribution": distribution,
+                "topScanners": [{"name": s["_id"] or "Unknown", "count": s["count"]} for s in top_scanners],
+                "topPosters": [{"name": p["_id"] or "Unknown", "count": p["count"]} for p in top_posters]
+            }
+        }
+    except Exception as e:
+        print(f"[DB] Analytics Error: {e}")
+        return {"success": False, "error": str(e)}

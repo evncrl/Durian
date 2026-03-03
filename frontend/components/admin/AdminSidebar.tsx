@@ -6,9 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 const sidebarItems = [
 	{ label: 'Dashboard', route: '/admin' as const, icon: 'grid-outline' as const },
+	{ label: 'Analytics', route: '/admin/GenAnalytics' as const, icon: 'analytics-outline' as const },
 	{ label: 'Users', route: '/admin/UserManage' as const, icon: 'people-outline' as const },
 	{ label: 'Shop Management', route: '/admin/ProductManagement' as const, icon: 'pricetags-outline' as const },
-	{ label: 'Analytics', route: '/admin/GenAnalytics' as const, icon: 'analytics-outline' as const },
+	
 ];
 
 import { useResponsive } from '@/utils/platform';

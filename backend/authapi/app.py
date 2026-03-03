@@ -14,7 +14,11 @@ app = Flask(__name__)
 
 # Allow ALL origins for ngrok testing
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "ngrok-skip-browser-warning", "X-User-Id", "Accept"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}})
 
 # 1. CONFIGURE MAIL FIRST
 app.config['MAIL_SERVER'] = os.getenv("MAIL_HOST")
@@ -91,19 +95,14 @@ def health():
 # Handle CORS preflight requests
 
 @app.after_request
-
 def after_request(response):
-
-    # Only add CORS headers if not already set by flask-cors
-
-    if 'Access-Control-Allow-Origin' not in response.headers:
-
-        response.headers.add('Access-Control-Allow-Origin', '*')
-
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning,X-User-Id'
-
+    
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning,X-User-Id,Accept'
+    
     response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-
+    
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    
     return response
 
 

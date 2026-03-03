@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from bson.objectid import ObjectId
 from db import users_collection
 from handlers.email_handler import send_deactivation_email, send_reactivation_email
+from db import users_collection, get_global_analytics
 import datetime
 
 # Create Blueprint
@@ -208,3 +209,14 @@ def get_admin_stats():
         
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route("/analytics/overview", methods=["GET", "OPTIONS"])
+def get_analytics_overview():
+    """Get overall AI model and system analytics"""
+    if request.method == "OPTIONS":
+        return '', 200
+    
+    result = get_global_analytics()
+    if result.get("success"):
+        return jsonify(result), 200
+    return jsonify(result), 500
