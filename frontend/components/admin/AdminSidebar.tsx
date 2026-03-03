@@ -5,7 +5,6 @@ import { Fonts, Palette } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 const sidebarItems = [
-	{ label: 'Dashboard', route: '/admin' as const, icon: 'grid-outline' as const },
 	{ label: 'Analytics', route: '/admin/GenAnalytics' as const, icon: 'analytics-outline' as const },
 	{ label: 'Users', route: '/admin/UserManage' as const, icon: 'people-outline' as const },
 	{ label: 'Shop Management', route: '/admin/ProductManagement' as const, icon: 'pricetags-outline' as const },
@@ -70,13 +69,7 @@ const AdminSidebar = ({ isVisible, onClose }: AdminSidebarProps) => {
 					);
 				})}
 			</View>
-			<TouchableOpacity
-				style={styles.backButton}
-				onPress={() => router.replace('/')}
-			>
-				<Ionicons name="arrow-back" size={20} color={Palette.slate} />
-				<Text style={styles.backText}>View Site</Text>
-			</TouchableOpacity>
+			
 		</View>
 	);
 };
