@@ -894,3 +894,22 @@ def get_global_analytics():
     except Exception as e:
         print(f"[DB] Analytics Error: {e}")
         return {"success": False, "error": str(e)}
+    
+def get_all_scans_data():
+    """Helper function para makuha ang raw data ng scans"""
+    try:
+        scans = list(scans_collection.find().sort("created_at", -1))
+        scans_data = []
+        for s in scans:
+            scans_data.append({
+                "id": str(s["_id"]),
+                "username": s.get("username", "Unknown"),
+                "variety": s.get("variety", "Durian"),
+                "status": s.get("status", "Unknown"),
+                "confidence": round(s.get("confidence", 0) * 100, 1),
+                "image_url": s.get("image_url", ""),
+                "createdAt": s.get("created_at").isoformat() if s.get("created_at") else ""
+            })
+        return {"success": True, "scans": scans_data}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

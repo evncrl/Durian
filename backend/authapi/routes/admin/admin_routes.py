@@ -3,6 +3,7 @@ from bson.objectid import ObjectId
 from db import users_collection
 from handlers.email_handler import send_deactivation_email, send_reactivation_email
 from db import users_collection, get_global_analytics
+from db import get_all_scans_data
 import datetime
 
 # Create Blueprint
@@ -220,3 +221,14 @@ def get_analytics_overview():
     if result.get("success"):
         return jsonify(result), 200
     return jsonify(result), 500
+
+@admin_bp.route("/scans/all", methods=["GET", "OPTIONS"])
+def get_all_scans():
+    """Fetch all scan records for admin management"""
+    if request.method == "OPTIONS":
+        return '', 200
+    
+    result = get_all_scans_data()
+    if result["success"]:
+        return jsonify(result), 200
+    return jsonify(result), 500 
