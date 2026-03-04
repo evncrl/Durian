@@ -364,3 +364,82 @@ The Durianostics Team
     except Exception as e:
         print(f"Failed to send reactivation email to {user_email}: {str(e)}")
         return False
+
+# handlers/email_handler.py
+
+def send_order_status_email(user_email: str, status: str, transaction_id: str) -> bool:
+    """
+    Sends an automated email notification to the user when their order status is updated.
+    """
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Update on your Durianostics Order: {status}"
+        msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+        msg["To"] = user_email
+
+        # Logic for status specific messages
+        status_note = ""
+        if status == "Shipped":
+            status_note = "Your durian is now on its way to your location! Please keep your lines open."
+        elif status == "Delivered":
+            status_note = "Order received! Thank you for choosing Durianostics. Enjoy your premium selection!"
+        else:
+            status_note = f"Your order status has been updated to: {status}."
+
+        text_content = f"""
+Hello,
+
+Your order with Transaction ID: {transaction_id} has a new update.
+Current Status: {status}
+
+{status_note}
+
+Best regards,
+The Durianostics Team
+        """
+
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #A0522D; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }}
+        .status-box {{ background-color: #fff3e0; border-left: 4px solid #A0522D; padding: 15px; margin: 20px 0; border-radius: 4px; }}
+        .footer {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class="header"><h1>Durianostics Order Update</h1></div>
+    <div class="content">
+        <p>Hello,</p>
+        <p>There is an update regarding your order with Transaction ID: <strong>{transaction_id}</strong></p>
+        <div class="status-box">
+            <h3 style="margin:0; color: #A0522D;">Order Status: {status}</h3>
+            <p style="margin: 10px 0 0 0;">{status_note}</p>
+        </div>
+        <p>If you have any questions, feel free to contact our support team.</p>
+        <p>Best regards,<br><strong>The Durianostics Team</strong></p>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+            <p>&copy; 2026 Durianostics. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+        """
+
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        with smtplib.SMTP(MAILTRAP_HOST, MAILTRAP_PORT) as server:
+            server.starttls()
+            server.login(MAILTRAP_USERNAME, MAILTRAP_PASSWORD)
+            server.sendmail(FROM_EMAIL, user_email, msg.as_string())
+        
+        print(f"Status update email sent to {user_email}")
+        return True
+    except Exception as e:
+        print(f"Failed to send status email: {str(e)}")
+        return False

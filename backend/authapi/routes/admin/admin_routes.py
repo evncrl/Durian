@@ -8,6 +8,7 @@ import datetime
 from handlers.report_handler import generate_analytics_pdf
 from flask import send_file
 from db import users_collection, get_global_analytics, get_all_scans_data, orders_collection
+from handlers.email_handler import send_deactivation_email, send_reactivation_email, send_order_status_email
 
 # Create Blueprint
 admin_bp = Blueprint('admin', __name__)
@@ -286,7 +287,7 @@ def get_all_orders():
 
 @admin_bp.route("/orders/<order_id>/status", methods=["PUT", "OPTIONS"])
 def update_order_status(order_id):
-    """Update order status (e.g., Pending -> Shipped)"""
+    """Update order status and notify user via email"""
     if request.method == "OPTIONS":
         return '', 200
     try:
@@ -295,12 +296,24 @@ def update_order_status(order_id):
         if not new_status:
             return jsonify({"success": False, "error": "Status required"}), 400
 
+        order = orders_collection.find_one({"_id": ObjectId(order_id)})
+        if not order:
+            return jsonify({"success": False, "error": "Order not found"}), 404
+
         result = orders_collection.update_one(
             {"_id": ObjectId(order_id)},
             {"$set": {"status": new_status, "updatedAt": datetime.datetime.utcnow().isoformat()}}
         )
+
         if result.modified_count > 0:
+            user_email = order.get("email")
+            txn_id = order.get("transaction_id", "N/A")
+            
+            if user_email:
+                send_order_status_email(user_email, new_status, txn_id)
+
             return jsonify({"success": True, "message": f"Order marked as {new_status}"}), 200
-        return jsonify({"success": False, "error": "Order not found"}), 404
+        
+        return jsonify({"success": False, "error": "Status was not changed"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

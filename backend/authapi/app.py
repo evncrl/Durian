@@ -97,6 +97,12 @@ def health():
 @app.after_request
 def after_request(response):
     
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        response.headers['Access-Control-Allow-Origin'] = '*'
+    
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning,X-User-Id,Accept'
     
     response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
