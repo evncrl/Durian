@@ -145,7 +145,9 @@ export default function Shop() {
                   <View style={shopStyles.priceRow}>
                     <View style={shopStyles.priceContainer}>
                       <Text style={shopStyles.priceLabel}>Price</Text>
-                      <Text style={shopStyles.price}>₱{typeof product.price === 'number' ? product.price.toLocaleString() : product.price ? String(product.price) : '0'}</Text>
+                      <Text style={[shopStyles.price, { color: colors.primary, fontFamily: Fonts.bold }]}>
+                        ₱{typeof product.price === 'number' ? product.price.toLocaleString() : product.price ? String(product.price) : '0'}
+                      </Text>
                     </View>
 
                     <TouchableOpacity
