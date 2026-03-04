@@ -140,7 +140,7 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
 {user && (
   <TouchableOpacity
     style={{ marginRight: 12 }}
-    onPress={() => router.push('/checkout')} // Navigate to checkout page
+    onPress={() => router.push('/cart')} // Navigate to checkout page
     activeOpacity={0.7}
   >
     <Ionicons name="cart-outline" size={28} color={Palette.warmCopper} />
