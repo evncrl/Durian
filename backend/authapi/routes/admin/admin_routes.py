@@ -322,7 +322,6 @@ def get_all_reviews():
         return '', 200
     try:
         db = get_db()
-        # Kunin lahat ng reviews at i-sort sa pinaka-bago (descending)
         reviews = list(db.reviews.find().sort("created_at", -1))
         
         reviews_data = []
@@ -341,5 +340,20 @@ def get_all_reviews():
             "reviews": reviews_data,
             "total": len(reviews_data)
         }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@admin_bp.route("/reviews/<review_id>", methods=["DELETE", "OPTIONS"])
+def delete_review(review_id):
+    """Admin can delete a specific product review"""
+    if request.method == "OPTIONS": 
+        return '', 200
+    try:
+        db = get_db()
+        result = db.reviews.delete_one({"_id": ObjectId(review_id)})
+        
+        if result.deleted_count > 0:
+            return jsonify({"success": True, "message": "Review deleted successfully"}), 200
+        return jsonify({"success": False, "error": "Review not found"}), 404
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
