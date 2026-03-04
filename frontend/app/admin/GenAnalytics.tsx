@@ -22,9 +22,7 @@ export default function GenAnalytics() {
             if (json.success) setData(json.stats);
         } catch (err) { 
             console.error("Analytics Fetch Error:", err); 
-        } finally { 
-            setLoading(false); 
-        }
+        } finally { setLoading(false); }
     };
 
     useEffect(() => { fetchAnalytics(); }, []);
@@ -32,48 +30,27 @@ export default function GenAnalytics() {
     const handleDownloadReport = async () => {
         setExporting(true);
         const reportUrl = `${API_URL}/admin/analytics/report`;
-        
         try {
+            const response = await fetch(reportUrl, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+            const blob = await response.blob();
             if (Platform.OS === 'web') {
-                // BYPASS NGROK WARNING: Fetch as blob with skip header
-                const response = await fetch(reportUrl, {
-                    headers: { 'ngrok-skip-browser-warning': 'true' }
-                });
-                const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', 'Durianostics_Admin_Report.pdf');
-                document.body.appendChild(link);
-                link.click();
-                link.parentNode?.removeChild(link);
-                window.URL.revokeObjectURL(url);
+                link.href = url; link.setAttribute('download', 'Durianostics_Report.pdf');
+                document.body.appendChild(link); link.click(); link.parentNode?.removeChild(link);
             } else {
-                // MOBILE LOGIC: Use cacheDirectory if documentDirectory has issues
                 const directory = FileSystem.documentDirectory || FileSystem.cacheDirectory;
                 const fileUri = directory + 'Durianostics_Report.pdf';
-                
-                const downloadRes = await FileSystem.downloadAsync(reportUrl, fileUri, {
-                    headers: { 'ngrok-skip-browser-warning': 'true' }
-                });
-                
-                if (downloadRes.status === 200) {
-                    await Sharing.shareAsync(fileUri);
-                }
+                await Sharing.shareAsync(fileUri);
             }
-        } catch (error) {
-            console.error("Download Error:", error);
-            alert("Failed to export report. Please try again.");
-        } finally {
-            setExporting(false);
-        }
+        } catch (error) { alert("Failed to export report."); } finally { setExporting(false); }
     };
 
     if (loading) {
         return (
             <View style={localStyles.centered}>
                 <ActivityIndicator size="large" color={Palette.warmCopper} />
-                <Text style={{fontFamily: Fonts.medium, marginTop: 10, color: Palette.slate}}>Syncing Global Data...</Text>
+                <Text style={{fontFamily: Fonts.medium, marginTop: 10, color: Palette.slate}}>Compiling System Data...</Text>
             </View>
         );
     }
@@ -101,11 +78,21 @@ export default function GenAnalytics() {
         );
     };
 
-    const LeaderboardItem = ({ name, count, index, iconColor }: any) => (
+    const LeaderboardItem = ({ name, count, index, iconColor, rating, unit = 'Scans' }: any) => (
         <View style={localStyles.leaderboardRow}>
             <View style={localStyles.leaderboardRank}><Text style={localStyles.rankText}>#{index + 1}</Text></View>
-            <Text style={localStyles.leaderboardName} numberOfLines={1}>{name}</Text>
-            <View style={[localStyles.countBadge, { backgroundColor: iconColor + '15' }]}><Text style={[localStyles.countText, { color: iconColor }]}>{count}</Text></View>
+            <View style={{ flex: 1 }}>
+                <Text style={localStyles.leaderboardName} numberOfLines={1}>{name || "Unknown"}</Text>
+                {rating !== undefined && (
+                    <View style={localStyles.ratingRow}>
+                        <Ionicons name="star" size={10} color={Palette.warmCopper} />
+                        <Text style={localStyles.ratingText}>{rating} Rating</Text>
+                    </View>
+                )}
+            </View>
+            <View style={[localStyles.countBadge, { backgroundColor: iconColor + '15' }]}>
+                <Text style={[localStyles.countText, { color: iconColor }]}>{count} {unit}</Text>
+            </View>
         </View>
     );
 
@@ -118,24 +105,15 @@ export default function GenAnalytics() {
                 <View style={localStyles.headerRow}>
                     <View>
                         <Text style={localStyles.title}>Analytics Dashboard</Text>
-                        <Text style={localStyles.subtitle}>Real-time monitoring of AI distributions and community activity.</Text>
+                        <Text style={localStyles.subtitle}>Real-time monitoring of AI performance, sales, and community activity.</Text>
                     </View>
-                    {/* ✅ Export PDF Button based on classmate's report feature */}
-                    <TouchableOpacity 
-                        style={[localStyles.downloadBtn, exporting && { opacity: 0.7 }]} 
-                        onPress={handleDownloadReport}
-                        disabled={exporting}
-                    >
-                        {exporting ? (
-                            <ActivityIndicator color={Palette.white} size="small" />
-                        ) : (
-                            <Ionicons name="download-outline" size={20} color={Palette.white} />
-                        )}
+                    <TouchableOpacity style={localStyles.downloadBtn} onPress={handleDownloadReport} disabled={exporting}>
+                        {exporting ? <ActivityIndicator color={Palette.white} size="small" /> : <Ionicons name="download-outline" size={20} color={Palette.white} />}
                         <Text style={localStyles.downloadBtnText}>{exporting ? 'Generating...' : 'Export PDF'}</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* 📊 Summary Stats Grid */}
+                {/* 📊 Summary Stats */}
                 <View style={localStyles.grid}>
                     <StatCard title="Total Users" value={data?.totalUsers} color="#2196f3" icon={<Ionicons name="people" size={22} color="#2196f3" />} />
                     <StatCard title="Total Scans" value={data?.totalScans} color="#4caf50" icon={<MaterialCommunityIcons name="barcode-scan" size={22} color="#4caf50" />} />
@@ -144,8 +122,8 @@ export default function GenAnalytics() {
                     <StatCard title="Avg Confidence" value={`${data?.avgConfidence ?? 0}%`} color="#9c27b0" icon={<Ionicons name="analytics" size={22} color="#9c27b0" />} />
                 </View>
 
-                {/* 📉 Main Content Charts Wrapper */}
                 <View style={localStyles.chartsWrapper}>
+                    {/* 🟢 Bar Charts (Distributions) */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Color Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -153,7 +131,6 @@ export default function GenAnalytics() {
                             <RenderBar label="Brownish" count={data?.distribution?.color?.Brownish || 0} total={data?.totalScans} color="#8d6e63" />
                         </View>
                     </View>
-
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Health & Diseases</Text>
                         <View style={{ marginTop: 20 }}>
@@ -162,7 +139,6 @@ export default function GenAnalytics() {
                             <RenderBar label="Rot" count={data?.distribution?.diseases?.Rot || 0} total={data?.totalScans} color="#d32f2f" />
                         </View>
                     </View>
-
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Size Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -171,7 +147,6 @@ export default function GenAnalytics() {
                             <RenderBar label="Small" count={data?.distribution?.size?.Small || 0} total={data?.totalScans} color="#9fa8da" />
                         </View>
                     </View>
-
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Shape Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -181,22 +156,35 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* 🏆 Leaderboards Section */}
+                    {/* 🥇 1st Layer Leaderboards: Engagement */}
                     <View style={localStyles.chartCard}>
-                        <View style={localStyles.leaderboardHeader}><Ionicons name="trophy" size={20} color="#FFD700" /><Text style={localStyles.leaderboardTitle}>Top Scanners</Text></View>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="medal" size={20} color="#4caf50" /><Text style={localStyles.leaderboardTitle}>Top Scanners</Text></View>
                         <View style={{ marginTop: 15 }}>
-                            {data?.topScanners?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} iconColor="#4caf50" />)}
+                            {data?.topScanners?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} unit="Scans" iconColor="#4caf50" />)}
                         </View>
                     </View>
-
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="megaphone" size={20} color="#ff9800" /><Text style={localStyles.leaderboardTitle}>Top Posters</Text></View>
                         <View style={{ marginTop: 15 }}>
-                            {data?.topPosters?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} iconColor="#ff9800" />)}
+                            {data?.topPosters?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} unit="Posts" iconColor="#ff9800" />)}
                         </View>
                     </View>
 
-                    {/* ✅ Recent Activity Table */}
+                    {/* 🏆 2nd Layer Leaderboards: Sales (NOW BELOW) */}
+                    <View style={localStyles.chartCard}>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="trophy" size={20} color="#FFD700" /><Text style={localStyles.leaderboardTitle}>Most Sold Product</Text></View>
+                        <View style={{ marginTop: 15 }}>
+                            {data?.topProducts?.map((p: any, i: number) => <LeaderboardItem key={i} index={i} name={p.name} count={p.sold} rating={p.rating} unit="Sold" iconColor={Palette.warmCopper} />)}
+                        </View>
+                    </View>
+                    <View style={localStyles.chartCard}>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="cart" size={20} color="#2196f3" /><Text style={localStyles.leaderboardTitle}>Top Buyers</Text></View>
+                        <View style={{ marginTop: 15 }}>
+                            {data?.topBuyers?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} unit="Orders" iconColor="#2196f3" />)}
+                        </View>
+                    </View>
+
+                    {/* 📋 Recent Activity Table */}
                     <View style={[localStyles.chartCard, { width: '100%' }]}>
                         <View style={localStyles.leaderboardHeader}><MaterialCommunityIcons name="history" size={22} color={Palette.warmCopper} /><Text style={localStyles.leaderboardTitle}>Recent System Activity</Text></View>
                         <View style={localStyles.recentTable}>
@@ -254,8 +242,10 @@ const localStyles = StyleSheet.create({
     leaderboardRank: { width: 30 },
     rankText: { fontSize: 12, fontFamily: Fonts.bold, color: Palette.warmCopper },
     leaderboardName: { flex: 1, fontSize: 14, fontFamily: Fonts.medium, color: Palette.deepObsidian },
+    ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+    ratingText: { fontSize: 10, color: Palette.slate, fontFamily: Fonts.bold },
     countBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-    countText: { fontSize: 12, fontFamily: Fonts.bold },
+    countText: { fontSize: 11, fontFamily: Fonts.bold },
     recentTable: { marginTop: 15, width: '100%' },
     tableHeader: { flexDirection: 'row', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
     tableHeadText: { fontSize: 12, fontFamily: Fonts.bold, color: Palette.slate, textTransform: 'uppercase' },

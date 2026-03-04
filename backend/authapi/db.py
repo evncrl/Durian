@@ -827,15 +827,24 @@ def get_global_analytics():
         all_scans = list(scans_collection.find({}))
         total_scans = len(all_scans)
 
-        avg_confidence = 0
-        success_rate = 0
-        if total_scans > 0:
-            total_conf = sum(s.get("confidence", 0) for s in all_scans)
-            avg_confidence = (total_conf / total_scans) * 100
-            success_count = sum(1 for s in all_scans if s.get("confidence", 0) >= 0.7)
-            success_rate = (success_count / total_scans) * 100
+        # 1. SALES LOGIC (Buyers & Sold Products)
+        top_buyers_raw = list(orders_collection.aggregate([
+            {"$group": {"_id": "$email", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}, {"$limit": 5}
+        ]))
+        top_sold_raw = list(orders_collection.aggregate([
+            {"$unwind": "$items"},
+            {"$group": {"_id": "$items.name", "sold": {"$sum": "$items.quantity"}}},
+            {"$sort": {"sold": -1}}, {"$limit": 5}
+        ]))
+        
+        # 2. RATINGS INTEGRATION
+        avg_ratings_raw = list(db.reviews.aggregate([
+            {"$group": {"_id": "$product_name", "avg_rating": {"$avg": "$rating"}}}
+        ]))
+        rating_map = {r['_id']: round(r['avg_rating'], 1) for r in avg_ratings_raw}
 
-        # Classification Distributions
+        # 3. DISTRIBUTION (Color, Size, Shape, Health)
         distribution = {
             "color": {
                 "Greenish": scans_collection.count_documents({"status": "Export Ready"}),
@@ -858,7 +867,7 @@ def get_global_analytics():
             }
         }
 
-        # Leaderboards logic
+        # 4. LEADERBOARDS (Scanners & Posters)
         top_scanners = list(scans_collection.aggregate([
             {"$group": {"_id": "$username", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}}, {"$limit": 5}
@@ -867,34 +876,38 @@ def get_global_analytics():
             {"$group": {"_id": "$username", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}}, {"$limit": 5}
         ]))
-
         recent_scans_raw = list(scans_collection.find().sort("created_at", -1).limit(10))
-        recent_scans = []
-        for s in recent_scans_raw:
-            recent_scans.append({
-                "username": s.get("username", "Unknown"),
-                "variety": s.get("variety", "Durian"),
-                "status": s.get("status", "Unknown"),
-                "confidence": round(s.get("confidence", 0) * 100, 1),
-                "time": s.get("created_at").isoformat() if s.get("created_at") else ""
-            })
-            
+
+        # 5. CONFIDENCE LOGIC
+        total_conf = sum(s.get("confidence", 0) for s in all_scans) if total_scans > 0 else 0
+        avg_confidence = (total_conf / total_scans) * 100 if total_scans > 0 else 0
+        success_count = sum(1 for s in all_scans if s.get("confidence", 0) >= 0.7)
+        success_rate = (success_count / total_scans) * 100 if total_scans > 0 else 0
+
         return {
             "success": True,
             "stats": {
                 "totalUsers": total_users,
                 "totalScans": total_scans,
                 "totalPosts": total_posts,
-                "recentScans": recent_scans,
                 "successRate": round(success_rate, 1),
                 "avgConfidence": round(avg_confidence, 1),
                 "distribution": distribution,
+                "topBuyers": [{"name": b["_id"] or "Anonymous", "count": b["count"]} for b in top_buyers_raw],
+                "topProducts": [{"name": p["_id"], "sold": p["sold"], "rating": rating_map.get(p['_id'], 0)} for p in top_sold_raw],
                 "topScanners": [{"name": s["_id"] or "Unknown", "count": s["count"]} for s in top_scanners],
-                "topPosters": [{"name": p["_id"] or "Unknown", "count": p["count"]} for p in top_posters]
+                "topPosters": [{"name": p["_id"] or "Unknown", "count": p["count"]} for p in top_posters],
+                "recentScans": [{
+                    "username": s.get("username", "Unknown"),
+                    "variety": s.get("variety", "Durian"),
+                    "status": s.get("status", "Unknown"),
+                    "confidence": round(s.get("confidence", 0) * 100, 1),
+                    "time": s.get("created_at").isoformat() if s.get("created_at") else ""
+                } for s in recent_scans_raw]
             }
         }
     except Exception as e:
-        print(f"[DB] Analytics Error: {e}")
+        print(f"[DB] Error: {e}")
         return {"success": False, "error": str(e)}
     
 def get_all_scans_data():
