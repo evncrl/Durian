@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     modalTitle: { fontSize: 20, fontFamily: Fonts.bold, color: Palette.charcoalEspresso, marginBottom: 20 },
     modalLabel: { fontSize: 14, color: '#666', marginBottom: 10, fontFamily: Fonts.medium },
     starRow: { flexDirection: 'row', gap: 8, marginBottom: 20, justifyContent: 'center' },
-    input: { backgroundColor: '#f8f9fa', borderRadius: 12, padding: 15, height: 100, textAlignVertical: 'top', fontSize: 14, borderOuterWidth: 1, borderColor: '#eee', marginBottom: 20 },
+    input: { backgroundColor: '#f8f9fa', borderRadius: 12, padding: 15, height: 100, textAlignVertical: 'top', fontSize: 14, borderWidth: 1, borderColor: '#eee', marginBottom: 20 },
     modalButtons: { flexDirection: 'row', gap: 12 },
     submitBtn: { flex: 2, backgroundColor: Palette.warmCopper, padding: 15, borderRadius: 12, alignItems: 'center' },
     submitBtnText: { color: '#fff', fontFamily: Fonts.bold, fontSize: 14 },
