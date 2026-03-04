@@ -99,7 +99,7 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
         router.push(path as any);
         setMobileMenuOpen(false);
     };
-    
+
 
     return (
         <View style={[styles.wrapper, { paddingTop: Platform.OS === 'web' ? 0 : insets.top, backgroundColor: Palette.deepObsidian }]}>
@@ -137,32 +137,33 @@ export default function UniversalTopbar({ }: UniversalTopbarProps) {
                 {/* Right side: auth / profile + hamburger */}
                 <View style={[styles.rightSection, isCompact && { marginLeft: 0 }]}>
                     {/* Cart icon */}
-{user && (
-  <TouchableOpacity
-    style={{ marginRight: 12 }}
-    onPress={() => router.push('/cart')} // Navigate to checkout page
-    activeOpacity={0.7}
-  >
-    <Ionicons name="cart-outline" size={28} color={Palette.warmCopper} />
-    {cart.length > 0 && (
-      <View style={{
-        position: 'absolute',
-        top: -4,
-        right: -4,
-        backgroundColor: 'red',
-        borderRadius: 8,
-        width: 16,
-        height: 16,
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <Text style={{ color: '#fff', fontSize: 10, fontFamily: Fonts.bold }}>
-          {cart.length}
-        </Text>
-      </View>
-    )}
-  </TouchableOpacity>
-)}
+                    
+                    {user && (
+                        <>
+                            {/* ✅ BAGONG BUTTON: My Orders Icon */}
+                            <TouchableOpacity
+                                style={{ marginRight: 15 }}
+                                onPress={() => router.push('/MyOrders')}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="receipt-outline" size={26} color={Palette.warmCopper} />
+                            </TouchableOpacity>
+
+                            {/* Cart icon */}
+                            <TouchableOpacity
+                                style={{ marginRight: 12 }}
+                                onPress={() => router.push('/cart')}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="cart-outline" size={28} color={Palette.warmCopper} />
+                                {cart.length > 0 && (
+                                    <View style={styles.cartBadge}>
+                                        <Text style={styles.cartBadgeText}>{cart.length}</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        </>
+                    )}
                     {!isCompact && !user && (
                         <TouchableOpacity style={styles.loginBtn} onPress={() => openAuthModal('login')}>
                             <Text style={styles.loginBtnText}>Sign In</Text>
@@ -423,5 +424,21 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: Fonts.semiBold,
         marginLeft: 12,
+    },
+    cartBadge: { 
+        position: 'absolute', 
+        top: -4, 
+        right: -4, 
+        backgroundColor: 'red', 
+        borderRadius: 8, 
+        width: 16, 
+        height: 16, 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+    },
+    cartBadgeText: { 
+        color: '#fff', 
+        fontSize: 10, 
+        fontFamily: Fonts.bold 
     },
 });

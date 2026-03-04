@@ -71,3 +71,23 @@ def checkout():
     except Exception as e:
         print("Checkout error:", str(e))
         return jsonify({"success": False, "message": str(e)}), 500
+    
+@bp.route("/orders/user/<email>", methods=["GET", "OPTIONS"])
+def get_user_orders(email):
+    """Fetch orders for a specific user to show status"""
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        # Kunin ang orders na tumutugma sa email ng user, pinakabago sa taas
+        orders = list(orders_collection.find({"email": email}).sort("created_at", -1))
+        
+        for o in orders:
+            o["_id"] = str(o["_id"]) # Convert ObjectId to string para sa JSON
+            
+        return jsonify({
+            "success": True, 
+            "orders": orders
+        }), 200
+    except Exception as e:
+        print(f"Error fetching user orders: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
