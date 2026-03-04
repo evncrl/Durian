@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.header import Header
+from email.message import EmailMessage
 import os
 from dotenv import load_dotenv
 
@@ -200,7 +201,7 @@ The Durianostics Team
 </head>
 <body>
     <div class="header">
-        <h1>🍈 Durianostics</h1>
+        <h1>Durianostics</h1>
     </div>
     <div class="content">
         <p>Hello <strong>{user_name}</strong>,</p>
@@ -324,13 +325,13 @@ The Durianostics Team
 </head>
 <body>
     <div class="header">
-        <h1>🍈 Durianostics</h1>
+        <h1>Durianostics</h1>
     </div>
     <div class="content">
         <p>Hello <strong>{user_name}</strong>,</p>
         
         <div class="success-box">
-            <p>✅ Great news! Your Durianostics account has been <strong>reactivated</strong>.</p>
+            <p>Great news! Your Durianostics account has been <strong>reactivated</strong>.</p>
         </div>
         
         <p>You can now log in and access all features of the platform.</p>
@@ -365,80 +366,77 @@ The Durianostics Team
         print(f"Failed to send reactivation email to {user_email}: {str(e)}")
         return False
 
+
+
 # handlers/email_handler.py
 
-def send_order_status_email(user_email: str, status: str, transaction_id: str) -> bool:
+def send_order_status_email(user_email: str, status: str, transaction_id: str, items: list, total: float) -> bool:
     """
-    Sends an automated email notification to the user when their order status is updated.
+    Sends a vibrant, color-coded email. Handles ₱ and emojis perfectly using EmailMessage.
     """
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Update on your Durianostics Order: {status}"
+        msg = EmailMessage()
+        msg["Subject"] = f"📦 Order Update: {status} (#{transaction_id[:8]})"
         msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
         msg["To"] = user_email
 
-        # Logic for status specific messages
-        status_note = ""
+        # --- 🎨 DYNAMIC THEME ---
         if status == "Shipped":
-            status_note = "Your durian is now on its way to your location! Please keep your lines open."
+            s_color, s_bg, s_note = "#1e40af", "#dbeafe", "ON THE WAY! Your durian treats are now with our courier."
         elif status == "Delivered":
-            status_note = "Order received! Thank you for choosing Durianostics. Enjoy your premium selection!"
-        else:
-            status_note = f"Your order status has been updated to: {status}."
+            s_color, s_bg, s_note = "#166534", "#dcfce7", "SUCCESS! Order has been delivered. Enjoy!"
+        else: # Pending
+            s_color, s_bg, s_note = "#854d0e", "#fef3c7", "We're now preparing your premium selection."
 
-        text_content = f"""
-Hello,
-
-Your order with Transaction ID: {transaction_id} has a new update.
-Current Status: {status}
-
-{status_note}
-
-Best regards,
-The Durianostics Team
-        """
+        # --- 🛒 BUILD TABLE ---
+        item_rows = ""
+        for i in items:
+            p = float(i.get('price', 0))
+            item_rows += f"""
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px; color: #444;">{i.get('name', 'Product')}</td>
+                <td style="padding: 12px; color: #444; text-align: center;">x{i.get('quantity', 1)}</td>
+                <td style="padding: 12px; color: #444; text-align: right;">₱{p:,.2f}</td>
+            </tr>"""
 
         html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background-color: #A0522D; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
-        .content {{ background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; }}
-        .status-box {{ background-color: #fff3e0; border-left: 4px solid #A0522D; padding: 15px; margin: 20px 0; border-radius: 4px; }}
-        .footer {{ margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center; }}
-    </style>
-</head>
-<body>
-    <div class="header"><h1>Durianostics Order Update</h1></div>
-    <div class="content">
-        <p>Hello,</p>
-        <p>There is an update regarding your order with Transaction ID: <strong>{transaction_id}</strong></p>
-        <div class="status-box">
-            <h3 style="margin:0; color: #A0522D;">Order Status: {status}</h3>
-            <p style="margin: 10px 0 0 0;">{status_note}</p>
-        </div>
-        <p>If you have any questions, feel free to contact our support team.</p>
-        <p>Best regards,<br><strong>The Durianostics Team</strong></p>
-        <div class="footer">
-            <p>This is an automated message. Please do not reply directly to this email.</p>
-            <p>&copy; 2026 Durianostics. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
+        <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <div style="background-color: #A0522D; padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 26px;">Durianostics Update</h1>
+                </div>
+                <div style="padding: 30px;">
+                    <p>Order ID: <strong>{transaction_id}</strong></p>
+                    <div style="background-color: {s_bg}; border-left: 6px solid {s_color}; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                        <h3 style="margin: 0; color: {s_color}; text-transform: uppercase;">Status: {status}</h3>
+                        <p style="margin: 8px 0 0 0; color: #444;">{s_note}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead><tr style="background-color: #fafafa;">
+                            <th style="text-align: left; padding: 12px; color: #999; font-size: 11px;">ITEM</th>
+                            <th style="text-align: center; padding: 12px; color: #999; font-size: 11px;">QTY</th>
+                            <th style="text-align: right; padding: 12px; color: #999; font-size: 11px;">PRICE</th>
+                        </tr></thead>
+                        <tbody>{item_rows}</tbody>
+                    </table>
+                    <div style="text-align: right; padding: 15px; background-color: #fafafa; border-radius: 8px;">
+                        <span style="color: #888;">Total Paid:</span>
+                        <div style="font-size: 20px; font-weight: bold; color: #A0522D;">₱{float(total):,.2f}</div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
         """
-
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
+        msg.set_content(html_content, subtype="html")
 
         with smtplib.SMTP(MAILTRAP_HOST, MAILTRAP_PORT) as server:
             server.starttls()
             server.login(MAILTRAP_USERNAME, MAILTRAP_PASSWORD)
-            server.sendmail(FROM_EMAIL, user_email, msg.as_string())
+            server.send_message(msg)
         
-        print(f"Status update email sent to {user_email}")
+        print(f"Vibrant status email sent to {user_email}")
         return True
     except Exception as e:
         print(f"Failed to send status email: {str(e)}")

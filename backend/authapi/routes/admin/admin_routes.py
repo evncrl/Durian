@@ -262,12 +262,9 @@ def download_analytics_report():
 
 @admin_bp.route("/orders", methods=["GET", "OPTIONS"])
 def get_all_orders():
-    """Fetch all customer orders for admin"""
-    if request.method == "OPTIONS":
-        return '', 200
+    if request.method == "OPTIONS": return '', 200
     try:
         orders = list(orders_collection.find().sort([("created_at", -1), ("createdAt", -1)]))
-        
         orders_data = []
         for o in orders:
             orders_data.append({
@@ -287,9 +284,7 @@ def get_all_orders():
 
 @admin_bp.route("/orders/<order_id>/status", methods=["PUT", "OPTIONS"])
 def update_order_status(order_id):
-    """Update order status and notify user via email"""
-    if request.method == "OPTIONS":
-        return '', 200
+    if request.method == "OPTIONS": return '', 200
     try:
         data = request.json
         new_status = data.get("status")
@@ -306,12 +301,13 @@ def update_order_status(order_id):
         )
 
         if result.modified_count > 0:
-            user_email = order.get("email")
-            txn_id = order.get("transaction_id", "N/A")
-            
-            if user_email:
-                send_order_status_email(user_email, new_status, txn_id)
-
+            send_order_status_email(
+                user_email=order.get("email"), 
+                status=new_status, 
+                transaction_id=order.get("transaction_id", "N/A"),
+                items=order.get("items", []), 
+                total=order.get("total", 0)
+            )
             return jsonify({"success": True, "message": f"Order marked as {new_status}"}), 200
         
         return jsonify({"success": False, "error": "Status was not changed"}), 400
