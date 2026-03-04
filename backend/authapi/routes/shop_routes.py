@@ -5,10 +5,10 @@ import cloudinary.uploader
 import os
 from db import get_db
 from bson.objectid import ObjectId
+from datetime import datetime
 
 shop_bp = Blueprint('shop', __name__)
 
-# Debug/test route to verify blueprint registration
 @shop_bp.route('/test', methods=['GET'])
 def test_route():
     return jsonify({'success': True, 'message': 'Shop blueprint is working'})
@@ -84,3 +84,29 @@ def delete_product(product_id):
     products_col = get_products_collection()
     result = products_col.delete_one({'_id': ObjectId(product_id)})
     return jsonify({'success': result.deleted_count > 0})
+
+
+@shop_bp.route('/reviews', methods=['POST'])
+def add_product_review():
+    """Submit a user review for a product"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        review_payload = {
+            "user_id": data.get("user_id"),
+            "user_name": data.get("user_name", "Anonymous"),
+            "product_name": data.get("product_name"),
+            "rating": int(data.get("rating", 5)),
+            "comment": data.get("comment", ""),
+            "created_at": datetime.utcnow()
+        }
+        
+        db = get_db()
+        db.reviews.insert_one(review_payload)
+        
+        return jsonify({"success": True, "message": "Review submitted! Thank you."}), 200
+    except Exception as e:
+        print(f"[ERROR] Review submission failed: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500

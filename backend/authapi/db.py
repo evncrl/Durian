@@ -22,6 +22,7 @@ db = client["durianapp"]
 users_collection = db["users"]
 orders_collection = db["orders"]
 comments_collection = db["comments"]
+reviews_collection = db["reviews"]
 
 # ---------------------------
 # Cloudinary setup
