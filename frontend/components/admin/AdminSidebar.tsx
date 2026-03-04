@@ -10,6 +10,7 @@ const sidebarItems = [
 	{ label: 'Users', route: '/admin/UserManage' as const, icon: 'people-outline' as const },
 	{ label: 'Product Management', route: '/admin/ProductManagement' as const, icon: 'pricetags-outline' as const },
 	{ label: 'Orders', route: '/admin/OrderManage' as const, icon: 'cart-outline' as const },
+	{ label: 'Reviews', route: '/admin/ReviewManage' as const, icon: 'star-outline' as const },
 ];
 
 import { useResponsive } from '@/utils/platform';

@@ -7,7 +7,7 @@ from db import get_all_scans_data
 import datetime
 from handlers.report_handler import generate_analytics_pdf
 from flask import send_file
-from db import users_collection, get_global_analytics, get_all_scans_data, orders_collection
+from db import users_collection, get_global_analytics, get_all_scans_data, orders_collection, get_db
 from handlers.email_handler import send_deactivation_email, send_reactivation_email, send_order_status_email
 
 # Create Blueprint
@@ -311,5 +311,35 @@ def update_order_status(order_id):
             return jsonify({"success": True, "message": f"Order marked as {new_status}"}), 200
         
         return jsonify({"success": False, "error": "Status was not changed"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+    
+@admin_bp.route("/reviews", methods=["GET", "OPTIONS"])
+def get_all_reviews():
+    """Fetch all product reviews for admin management"""
+    if request.method == "OPTIONS": 
+        return '', 200
+    try:
+        db = get_db()
+        # Kunin lahat ng reviews at i-sort sa pinaka-bago (descending)
+        reviews = list(db.reviews.find().sort("created_at", -1))
+        
+        reviews_data = []
+        for r in reviews:
+            reviews_data.append({
+                "id": str(r["_id"]),
+                "user_name": r.get("user_name", "Anonymous"),
+                "product_name": r.get("product_name", "Unknown Product"),
+                "rating": r.get("rating", 0),
+                "comment": r.get("comment", ""),
+                "createdAt": r.get("created_at").isoformat() if r.get("created_at") else ""
+            })
+            
+        return jsonify({
+            "success": True, 
+            "reviews": reviews_data,
+            "total": len(reviews_data)
+        }), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
