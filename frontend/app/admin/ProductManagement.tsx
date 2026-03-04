@@ -178,7 +178,7 @@ export default function ProductManagement() {
           )}
 
           <View style={styles.header}>
-            <Text style={styles.title}>Shop Management</Text>
+            <Text style={styles.title}>Product Management</Text>
           </View>
 
           <View style={styles.card}>

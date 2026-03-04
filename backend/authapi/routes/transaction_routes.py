@@ -1,14 +1,17 @@
 from flask import Blueprint, request, jsonify, current_app
-bp = Blueprint('transaction', __name__)
-
-from utils.pdf_utils import generate_receipt_pdf  # returns BytesIO
 import uuid
+import datetime # ✅ Import para sa timestamp
+from db import orders_collection # ✅ IMPORT MO ITO PARA MA-SAVE SA DB
+from utils.pdf_utils import generate_receipt_pdf
 from handlers.email_handler import send_checkout_email
+
+bp = Blueprint('transaction', __name__)
 
 @bp.route("/checkout", methods=["POST"])
 def checkout():
     data = request.json
     print(f"DEBUG: Received data -> {data}")
+    
     email = data.get('email')
     items = data.get('items')
     total = data.get('total')
@@ -21,9 +24,28 @@ def checkout():
 
     try:
         transaction_id = str(uuid.uuid4())
-        pdf_bytes = generate_receipt_pdf(items, total, transaction_id)
+        
+        # --- 💾 STEP 1: SAVE TO DATABASE ---
+        # Dito natin ilalagay sa MongoDB para makita sa Admin Panel
+        order_payload = {
+            "transaction_id": transaction_id,
+            "email": email,
+            "items": items,
+            "total": total,
+            "address": address,
+            "phone": phone,
+            "paymentMethod": payment_method,
+            "status": "Pending", # Default status para sa Admin Manage
+            "created_at": datetime.datetime.utcnow().isoformat() # ✅ Standard underscore format
+        }
+        
+        # Pagka-execute nito, automatic na gagawa si MongoDB ng "orders" collection
+        orders_collection.insert_one(order_payload)
+        print(f"[DB] Order saved successfully for: {email}")
 
-        # Send email via Mailtrap using custom handler
+        # --- 📧 STEP 2: GENERATE RECEIPT & SEND EMAIL ---
+        pdf_bytes = generate_receipt_pdf(items, total, transaction_id)
+        
         sent = send_checkout_email(
             user_email=email,
             user_name=email,
@@ -37,7 +59,7 @@ def checkout():
         )
 
         if not sent:
-            raise Exception("Failed to send checkout email")
+            print("Warning: Email notification failed, but order was saved to DB.")
 
         return jsonify({
             "success": True,

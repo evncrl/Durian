@@ -7,6 +7,7 @@ from db import get_all_scans_data
 import datetime
 from handlers.report_handler import generate_analytics_pdf
 from flask import send_file
+from db import users_collection, get_global_analytics, get_all_scans_data, orders_collection
 
 # Create Blueprint
 admin_bp = Blueprint('admin', __name__)
@@ -251,5 +252,55 @@ def download_analytics_report():
             download_name=f"Durianostics_Report_{datetime.date.today()}.pdf", 
             mimetype='application/pdf'
         )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# ---------------------------
+# Order Management
+# ---------------------------
+
+@admin_bp.route("/orders", methods=["GET", "OPTIONS"])
+def get_all_orders():
+    """Fetch all customer orders for admin"""
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        orders = list(orders_collection.find().sort([("created_at", -1), ("createdAt", -1)]))
+        
+        orders_data = []
+        for o in orders:
+            orders_data.append({
+                "id": str(o["_id"]),
+                "email": o.get("email", ""),
+                "items": o.get("items", []),
+                "total": o.get("total", 0),
+                "address": o.get("address", ""),
+                "phone": o.get("phone", ""),
+                "paymentMethod": o.get("paymentMethod", "COD"),
+                "status": o.get("status", "Pending"),
+                "createdAt": o.get("created_at") or o.get("createdAt") or ""
+            })
+        return jsonify({"success": True, "orders": orders_data}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@admin_bp.route("/orders/<order_id>/status", methods=["PUT", "OPTIONS"])
+def update_order_status(order_id):
+    """Update order status (e.g., Pending -> Shipped)"""
+    if request.method == "OPTIONS":
+        return '', 200
+    try:
+        data = request.json
+        new_status = data.get("status")
+        if not new_status:
+            return jsonify({"success": False, "error": "Status required"}), 400
+
+        result = orders_collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {"$set": {"status": new_status, "updatedAt": datetime.datetime.utcnow().isoformat()}}
+        )
+        if result.modified_count > 0:
+            return jsonify({"success": True, "message": f"Order marked as {new_status}"}), 200
+        return jsonify({"success": False, "error": "Order not found"}), 404
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
