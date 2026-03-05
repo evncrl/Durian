@@ -1,4 +1,3 @@
-
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -36,7 +35,7 @@ def send_checkout_email(
     Fully UTF-8 safe to support characters like ₱.
     """
     try:
-        # Ensure pdf_bytes is bytes
+        short_id = str(transaction_id)[:8].upper()
         if isinstance(pdf_bytes, str):
             pdf_bytes = pdf_bytes.encode("latin1")
 
@@ -44,7 +43,7 @@ def send_checkout_email(
         msg = MIMEMultipart("alternative")
         msg.set_charset("utf-8")
         msg["Subject"] = Header(
-            f"Your DurianApp Order Receipt (Transaction ID: {transaction_id})",
+            f"Your DurianApp Order Receipt (Transaction ID: {short_id})",
             "utf-8"
         )
         msg["From"] = Header(f"{FROM_NAME} <{FROM_EMAIL}>", "utf-8")
@@ -59,7 +58,7 @@ def send_checkout_email(
         <html>
         <body>
             <h2>Thank you for your purchase, {user_name}!</h2>
-            <p>Transaction ID: <b>{transaction_id}</b></p>
+            <p>Transaction ID: <b>{short_id}</b></p>
             <p><b>Delivery Address:</b> {address or 'N/A'}<br>
                <b>Phone:</b> {phone or 'N/A'}<br>
                <b>Payment Method:</b> {payment_method or 'N/A'}</p>
@@ -73,7 +72,7 @@ def send_checkout_email(
 
         text_content = f"""
 Thank you for your purchase, {user_name}!
-Transaction ID: {transaction_id}
+Transaction ID: {short_id}
 Delivery Address: {address or 'N/A'}
 Phone: {phone or 'N/A'}
 Payment Method: {payment_method or 'N/A'}
@@ -299,6 +298,10 @@ The Durianostics Team
             text-align: center;
             border-radius: 8px 8px 0 0;
         }}
+        .header h1 {{
+            margin: 0;
+            font-size: 24px;
+        }}
         .content {{
             background-color: #f9f9f9;
             padding: 30px;
@@ -375,8 +378,10 @@ def send_order_status_email(user_email: str, status: str, transaction_id: str, i
     Sends a vibrant, color-coded email. Handles ₱ and emojis perfectly using EmailMessage.
     """
     try:
+        short_id = str(transaction_id)[:8].upper()
+
         msg = EmailMessage()
-        msg["Subject"] = f"📦 Order Update: {status} (#{transaction_id[:8]})"
+        msg["Subject"] = f"📦 Order Update: {status} (ID: #{short_id})"
         msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
         msg["To"] = user_email
 
@@ -407,7 +412,7 @@ def send_order_status_email(user_email: str, status: str, transaction_id: str, i
                     <h1 style="color: white; margin: 0; font-size: 26px;">Durianostics Update</h1>
                 </div>
                 <div style="padding: 30px;">
-                    <p>Order ID: <strong>{transaction_id}</strong></p>
+                    <p>Order ID: <strong>{short_id}</strong></p>
                     <div style="background-color: {s_bg}; border-left: 6px solid {s_color}; padding: 20px; margin: 20px 0; border-radius: 8px;">
                         <h3 style="margin: 0; color: {s_color}; text-transform: uppercase;">Status: {status}</h3>
                         <p style="margin: 8px 0 0 0; color: #444;">{s_note}</p>
