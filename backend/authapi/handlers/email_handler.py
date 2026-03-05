@@ -31,71 +31,89 @@ def send_checkout_email(
     payment_method=None
 ) -> bool:
     """
-    Send order confirmation email with attached PDF receipt via Mailtrap
-    Fully UTF-8 safe to support characters like ₱.
+    Send order confirmation email with professional styling and attached PDF receipt.
+    Handles ₱ and emojis perfectly.
     """
     try:
         short_id = str(transaction_id)[:8].upper()
         if isinstance(pdf_bytes, str):
             pdf_bytes = pdf_bytes.encode("latin1")
 
-        # Create multipart message
-        msg = MIMEMultipart("alternative")
-        msg.set_charset("utf-8")
-        msg["Subject"] = Header(
-            f"Your DurianApp Order Receipt (Transaction ID: {short_id})",
-            "utf-8"
-        )
+        # Use MIMEMultipart("mixed") for attachments
+        msg = MIMEMultipart("mixed")
+        msg["Subject"] = Header(f"📦 Order Confirmed: #{short_id}", "utf-8")
         msg["From"] = Header(f"{FROM_NAME} <{FROM_EMAIL}>", "utf-8")
         msg["To"] = Header(user_email, "utf-8")
 
-        # Build order summary
-        item_lines = "".join(
-            [f"<li>{item['name']} x{item['quantity']} - P{item['price']}</li>" for item in items]
-        )
+        # Container for text and html
+        alt_part = MIMEMultipart("alternative")
+        msg.attach(alt_part)
+
+        item_rows = ""
+        for item in items:
+            p = float(item.get('price', 0))
+            item_rows += f"""
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px; color: #444;">{item['name']}</td>
+                <td style="padding: 12px; color: #444; text-align: center;">x{item['quantity']}</td>
+                <td style="padding: 12px; color: #444; text-align: right;">₱{p:,.2f}</td>
+            </tr>"""
 
         html_content = f"""
         <html>
-        <body>
-            <h2>Thank you for your purchase, {user_name}!</h2>
-            <p>Transaction ID: <b>{short_id}</b></p>
-            <p><b>Delivery Address:</b> {address or 'N/A'}<br>
-               <b>Phone:</b> {phone or 'N/A'}<br>
-               <b>Payment Method:</b> {payment_method or 'N/A'}</p>
-            <h3>Order Summary:</h3>
-            <ul>{item_lines}</ul>
-            <p><b>Total:</b> P{total}</p>
-            <p>Your receipt is attached as a PDF.</p>
+        <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <div style="background-color: #A0522D; padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 26px;">Durianostics Receipt</h1>
+                </div>
+                <div style="padding: 30px;">
+                    <h2 style="color: #333; margin-top: 0;">Thank you for your purchase!! {user_name}!</h2>
+                    <p style="color: #666;">Order ID: <strong style="color: #333;">#{short_id}</strong></p>
+                    
+                    <div style="background-color: #f8fafc; border-left: 6px solid #A0522D; padding: 15px; margin: 20px 0; border-radius: 8px;">
+                        <p style="margin: 0; color: #444; font-size: 14px;">
+                            <b>Delivery Address:</b> {address or 'N/A'}<br>
+                            <b>Phone:</b> {phone or 'N/A'}<br>
+                            <b>Payment Method:</b> {payment_method or 'N/A'}
+                        </p>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #fafafa;">
+                                <th style="text-align: left; padding: 12px; color: #999; font-size: 11px; text-transform: uppercase;">Item</th>
+                                <th style="text-align: center; padding: 12px; color: #999; font-size: 11px; text-transform: uppercase;">Qty</th>
+                                <th style="text-align: right; padding: 12px; color: #999; font-size: 11px; text-transform: uppercase;">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>{item_rows}</tbody>
+                    </table>
+
+                    <div style="text-align: right; padding: 15px; background-color: #fafafa; border-radius: 8px;">
+                        <span style="color: #888; font-size: 14px;">Total Paid:</span>
+                        <div style="font-size: 24px; font-weight: bold; color: #A0522D;">₱{float(total):,.2f}</div>
+                    </div>
+                    <p style="color: #888; font-size: 12px; margin-top: 20px; text-align: center;">Official receipt attached as PDF.</p>
+                </div>
+            </div>
         </body>
         </html>
         """
 
-        text_content = f"""
-Thank you for your purchase, {user_name}!
-Transaction ID: {short_id}
-Delivery Address: {address or 'N/A'}
-Phone: {phone or 'N/A'}
-Payment Method: {payment_method or 'N/A'}
-Total: P{total}
-Your receipt is attached as a PDF.
-        """
+        text_content = f"Thank you for your purchase, {user_name}!\nOrder ID: #{short_id}\nTotal: ₱{float(total):,.2f}"
 
-        # Attach plain text and HTML (both UTF-8)
-        part1 = MIMEText(text_content, "plain", "utf-8")
-        part2 = MIMEText(html_content, "html", "utf-8")
-        msg.attach(part1)
-        msg.attach(part2)
+        alt_part.attach(MIMEText(text_content, "plain", "utf-8"))
+        alt_part.attach(MIMEText(html_content, "html", "utf-8"))
 
-        # Attach PDF
         pdf_part = MIMEApplication(pdf_bytes, _subtype="pdf")
-        pdf_part.add_header('Content-Disposition', 'attachment', filename="receipt.pdf")
+        pdf_part.add_header('Content-Disposition', 'attachment', filename=f"receipt_{short_id}.pdf")
         msg.attach(pdf_part)
 
-        # Send email via Mailtrap
         with smtplib.SMTP(MAILTRAP_HOST, MAILTRAP_PORT) as server:
             server.starttls()
             server.login(MAILTRAP_USERNAME, MAILTRAP_PASSWORD)
-            server.sendmail(FROM_EMAIL, user_email, msg.as_string())
+            # Use send_message to automatically handle UTF-8/Peso sign
+            server.send_message(msg)
 
         print(f"Checkout email sent successfully to {user_email}")
         return True
@@ -103,6 +121,7 @@ Your receipt is attached as a PDF.
     except Exception as e:
         print(f"Failed to send checkout email to {user_email}: {str(e)}")
         return False
+
 
 
 def send_deactivation_email(user_email: str, user_name: str, reason: str) -> bool:
@@ -124,7 +143,6 @@ def send_deactivation_email(user_email: str, user_name: str, reason: str) -> boo
         msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
         msg["To"] = user_email
 
-        # Plain text version
         text_content = f"""
 Hello {user_name},
 
@@ -141,7 +159,6 @@ Best regards,
 The Durianostics Team
         """
 
-        # HTML version
         html_content = f"""
 <!DOCTYPE html>
 <html>
