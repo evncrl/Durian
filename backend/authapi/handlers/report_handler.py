@@ -7,8 +7,9 @@ import io
 import datetime
 
 def generate_analytics_pdf(data):
-    """Generates a professional PDF report with optimized page spacing"""
+    """Generates a professional PDF report with optimized page spacing and specific data insights"""
     buffer = io.BytesIO()
+    # Adjusted margins for better layout
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
     styles = getSampleStyleSheet()
     elements = []
@@ -24,6 +25,9 @@ def generate_analytics_pdf(data):
     section_title = ParagraphStyle('SectionTitle', parent=styles['Heading2'], fontSize=16, textColor=text_dark, spaceBefore=20, spaceAfter=5)
     desc_style = ParagraphStyle('DescStyle', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#666666"), italic=True, spaceAfter=12)
     card_value_style = ParagraphStyle('CardValue', parent=styles['Normal'], fontSize=16, textColor=text_dark, alignment=1, fontName='Helvetica-Bold')
+    
+    # Style for Analytical Insights
+    insight_style = ParagraphStyle('InsightStyle', parent=styles['Normal'], fontSize=10, textColor=text_dark, leading=14, spaceBefore=10, spaceAfter=10)
 
     # --- PAGE 1: HEADER & AI PERFORMANCE ---
     elements.append(Paragraph("DURIANOSTICS ANALYTICS REPORT", title_style))
@@ -85,10 +89,12 @@ def generate_analytics_pdf(data):
                 create_bar_table("Round", dist['shape']['Round'], total_s, "#b2dfdb")], colWidths=[0.8*inch, 1.6*inch, 0.4*inch])]
     ]
     elements.append(Table(class_grid_data, colWidths=[3.6*inch, 3.6*inch]))
+    
+    # AI Insight
+    elements.append(Paragraph("<b>AI Classification:</b> Distribution metrics identify harvest quality trends where 'Healthy' and 'Greenish' detections serve as the primary benchmarks for assessing export-grade durian standards.", insight_style))
 
     # --- PAGE 2: MARKETPLACE & COMMUNITY ENGAGEMENT ---
-    elements.append(PageBreak()) # ✅ NEW: Moves Marketplace to Page 2
-    
+    elements.append(PageBreak())
     elements.append(Paragraph("Marketplace Performance", section_title))
     elements.append(Paragraph("Sales data monitoring top-performing products and most frequent buyers.", desc_style))
 
@@ -101,18 +107,15 @@ def generate_analytics_pdf(data):
         sales_rows.append([prod['name'], prod['sold'], rating_str, "", buyer['name'], buyer['count']])
 
     elements.append(Table(sales_header + sales_rows, colWidths=[1.6*inch, 0.6*inch, 0.8*inch, 0.4*inch, 2.0*inch, 0.8*inch],
-                         style=[('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                                ('BACKGROUND', (0, 0), (2, 0), colors.HexColor("#F1F5F9")),
-                                ('BACKGROUND', (4, 0), (5, 0), colors.HexColor("#DCFCE7")),
-                                ('LINEBELOW', (0, 0), (-1, -1), 0.5, border_color),
-                                ('ALIGN', (1, 0), (2, -1), 'CENTER'),
-                                ('ALIGN', (5, 0), (5, -1), 'CENTER'),
-                                ('FONTSIZE', (0, 0), (-1, -1), 9)]))
-
-    elements.append(Spacer(1, 30)) # Extra space between sections
+                         style=[('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('BACKGROUND', (0, 0), (2, 0), colors.HexColor("#F1F5F9")),
+                                ('BACKGROUND', (4, 0), (5, 0), colors.HexColor("#DCFCE7")), ('LINEBELOW', (0, 0), (-1, -1), 0.5, border_color),
+                                ('ALIGN', (1, 0), (2, -1), 'CENTER'), ('ALIGN', (5, 0), (5, -1), 'CENTER'), ('FONTSIZE', (0, 0), (-1, -1), 9)]))
     
+    # Marketplace Insight
+    elements.append(Paragraph("<b>Marketplace Performance:</b> Sales volume and customer feedback identify high-demand products and verify market retention levels essential for platform inventory forecasting.", insight_style))
+
+    elements.append(Spacer(1, 30))
     elements.append(Paragraph("Community Engagement", section_title))
-    elements.append(Paragraph("Recognition of the most active community members in scanning and forum activity.", desc_style))
     
     lead_header = [["TOP SCANNERS", "SCANS", "", "TOP POSTERS", "POSTS"]]
     lead_rows = []
@@ -122,12 +125,12 @@ def generate_analytics_pdf(data):
         lead_rows.append([s['name'], s['count'], "", p['name'], p['count']])
     
     elements.append(Table(lead_header + lead_rows, colWidths=[2.0*inch, 0.7*inch, 0.4*inch, 2.0*inch, 0.7*inch],
-                         style=[('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                                ('BACKGROUND', (0, 0), (1, 0), colors.HexColor("#DCFCE7")),
-                                ('BACKGROUND', (3, 0), (4, 0), colors.HexColor("#FEF3C7")),
-                                ('LINEBELOW', (0, 0), (-1, -1), 0.5, border_color),
-                                ('ALIGN', (1, 0), (1, -1), 'CENTER'),
-                                ('ALIGN', (4, 0), (4, -1), 'CENTER')]))
+                         style=[('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('BACKGROUND', (0, 0), (1, 0), colors.HexColor("#DCFCE7")),
+                                ('BACKGROUND', (3, 0), (4, 0), colors.HexColor("#FEF3C7")), ('LINEBELOW', (0, 0), (-1, -1), 0.5, border_color),
+                                ('ALIGN', (1, 0), (1, -1), 'CENTER'), ('ALIGN', (4, 0), (4, -1), 'CENTER')]))
+    
+    # Community Insight
+    elements.append(Paragraph("<b>Community Engagement:</b> Platform activity reflects a robust knowledge-sharing ecosystem where active users contribute critical data points for continuous system improvement.", insight_style))
 
     # --- PAGE 3: SYSTEM ACTIVITY ---
     elements.append(PageBreak()) 
@@ -137,17 +140,14 @@ def generate_analytics_pdf(data):
     activity_header = [["USER", "VARIETY", "STATUS", "CONF.", "DATE/TIME"]]
     activity_rows = []
     for s in data['recentScans'][:15]: 
-        activity_rows.append([
-            s['username'], s['variety'], s['status'], f"{s['confidence']}%", 
-            datetime.datetime.fromisoformat(s['time']).strftime('%m/%d/%Y %I:%M %p')
-        ])
+        activity_rows.append([s['username'], s['variety'], s['status'], f"{s['confidence']}%", datetime.datetime.fromisoformat(s['time']).strftime('%m/%d/%Y %I:%M %p')])
     
     elements.append(Table(activity_header + activity_rows, colWidths=[1.6*inch, 1.2*inch, 1.2*inch, 0.8*inch, 2.4*inch],
-                         style=[('BACKGROUND', (0, 0), (-1, 0), text_dark),
-                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                                ('GRID', (0, 0), (-1, -1), 0.2, colors.lightgrey),
-                                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 8)]))
+                         style=[('BACKGROUND', (0, 0), (-1, 0), text_dark), ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                ('GRID', (0, 0), (-1, -1), 0.2, colors.lightgrey), ('FONTSIZE', (0, 0), (-1, -1), 8), ('BOTTOMPADDING', (0, 0), (-1, -1), 8)]))
+    
+    # ✅ FIXED Activity Insight (No mention of "high confidence")
+    elements.append(Paragraph("<b>Recent Scans:</b> The activity log provides a transparent audit trail used to monitor the operational consistency and field reliability of the durian classification engine.", insight_style))
 
     doc.build(elements)
     buffer.seek(0)
