@@ -6,16 +6,27 @@ from reportlab.lib.units import inch
 import io
 import datetime
 
+def draw_header(canvas, doc):
+    """Repeating header logic for every page"""
+    canvas.saveState()
+    canvas.setFont('Helvetica-Bold', 10)
+    canvas.drawCentredString(letter[0]/2, letter[1] - 25, "DURIANOSTICS: Official Analytics Report")
+    canvas.setFont('Helvetica-Oblique', 8)
+    canvas.drawCentredString(letter[0]/2, letter[1] - 35, "AI-Powered Durian Quality Assurance System")
+    canvas.drawRightString(letter[0] - 40, letter[1] - 35, f"Page {doc.page}")
+    canvas.setStrokeColor(colors.lightgrey)
+    canvas.setLineWidth(0.5)
+    canvas.line(40, letter[1] - 40, letter[0] - 40, letter[1] - 40)
+    canvas.restoreState()
+
 def generate_analytics_pdf(data):
     """Generates a professional PDF report with optimized page spacing and specific data insights"""
     buffer = io.BytesIO()
-    # Adjusted margins for better layout
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=50, bottomMargin=40)
     styles = getSampleStyleSheet()
     elements = []
 
-    # --- Custom Theme Styles ---
-    primary_color = colors.HexColor("#A0522D") # Warm Copper
+    primary_color = colors.HexColor("#A0522D") 
     text_dark = colors.HexColor("#1A1A1A")
     bg_light = colors.HexColor("#F8F9FA")
     border_color = colors.HexColor("#E2E8F0")
@@ -26,11 +37,9 @@ def generate_analytics_pdf(data):
     desc_style = ParagraphStyle('DescStyle', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#666666"), italic=True, spaceAfter=12)
     card_value_style = ParagraphStyle('CardValue', parent=styles['Normal'], fontSize=16, textColor=text_dark, alignment=1, fontName='Helvetica-Bold')
     
-    # Style for Analytical Insights
     insight_style = ParagraphStyle('InsightStyle', parent=styles['Normal'], fontSize=10, textColor=text_dark, leading=14, spaceBefore=10, spaceAfter=10)
 
-    # --- PAGE 1: HEADER & AI PERFORMANCE ---
-    elements.append(Paragraph("DURIANOSTICS ANALYTICS REPORT", title_style))
+    elements.append(Paragraph("DURIANOSTICS REPORT", title_style))
     elements.append(Paragraph(f"Generated on: {datetime.datetime.now().strftime('%B %d, %Y | %I:%M %p')}", sub_style))
     elements.append(HRFlowable(width="100%", thickness=1.5, color=primary_color, spaceAfter=20))
 
@@ -90,10 +99,8 @@ def generate_analytics_pdf(data):
     ]
     elements.append(Table(class_grid_data, colWidths=[3.6*inch, 3.6*inch]))
     
-    # AI Insight
-    elements.append(Paragraph("<b>AI Classification:</b> Distribution metrics identify harvest quality trends where 'Healthy' and 'Greenish' detections serve as the primary benchmarks for assessing export-grade durian standards.", insight_style))
+    elements.append(Paragraph("<b>AI Classification:</b> Distribution metrics identify harvest quality trends where 'Healthy' and 'Greenish' detections serve as the primary indicators for export-grade durian standards.", insight_style))
 
-    # --- PAGE 2: MARKETPLACE & COMMUNITY ENGAGEMENT ---
     elements.append(PageBreak())
     elements.append(Paragraph("Marketplace Performance", section_title))
     elements.append(Paragraph("Sales data monitoring top-performing products and most frequent buyers.", desc_style))
@@ -111,8 +118,7 @@ def generate_analytics_pdf(data):
                                 ('BACKGROUND', (4, 0), (5, 0), colors.HexColor("#DCFCE7")), ('LINEBELOW', (0, 0), (-1, -1), 0.5, border_color),
                                 ('ALIGN', (1, 0), (2, -1), 'CENTER'), ('ALIGN', (5, 0), (5, -1), 'CENTER'), ('FONTSIZE', (0, 0), (-1, -1), 9)]))
     
-    # Marketplace Insight
-    elements.append(Paragraph("<b>Marketplace Performance:</b> Sales volume and customer feedback identify high-demand products and verify market retention levels essential for platform inventory forecasting.", insight_style))
+    elements.append(Paragraph("<b>Marketplace Performance:</b> Sales volume and feedback identify high-demand variants and verify market retention levels essential for platform inventory forecasting.", insight_style))
 
     elements.append(Spacer(1, 30))
     elements.append(Paragraph("Community Engagement", section_title))
@@ -129,10 +135,8 @@ def generate_analytics_pdf(data):
                                 ('BACKGROUND', (3, 0), (4, 0), colors.HexColor("#FEF3C7")), ('LINEBELOW', (0, 0), (-1, -1), 0.5, border_color),
                                 ('ALIGN', (1, 0), (1, -1), 'CENTER'), ('ALIGN', (4, 0), (4, -1), 'CENTER')]))
     
-    # Community Insight
-    elements.append(Paragraph("<b>Community Engagement:</b> Platform activity reflects a robust knowledge-sharing ecosystem where active users contribute critical data points for continuous system improvement.", insight_style))
+    elements.append(Paragraph("<b>Community Engagement:</b> Platform activity reflects a knowledge-sharing ecosystem where active users contribute critical data points for continuous system improvement.", insight_style))
 
-    # --- PAGE 3: SYSTEM ACTIVITY ---
     elements.append(PageBreak()) 
     elements.append(Paragraph("Recent System Activity", section_title))
     elements.append(Paragraph("A chronological log of the latest classifications performed across the entire system.", desc_style))
@@ -146,9 +150,8 @@ def generate_analytics_pdf(data):
                          style=[('BACKGROUND', (0, 0), (-1, 0), text_dark), ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                                 ('GRID', (0, 0), (-1, -1), 0.2, colors.lightgrey), ('FONTSIZE', (0, 0), (-1, -1), 8), ('BOTTOMPADDING', (0, 0), (-1, -1), 8)]))
     
-    # ✅ FIXED Activity Insight (No mention of "high confidence")
-    elements.append(Paragraph("<b>Recent Scans:</b> The activity log provides a transparent audit trail used to monitor the operational consistency and field reliability of the durian classification engine.", insight_style))
+    elements.append(Paragraph("<b>Recent Scans:</b> The activity log provides an audit trail used to monitor the operational consistency and field reliability of the durian classification engine.", insight_style))
 
-    doc.build(elements)
+    doc.build(elements, onFirstPage=draw_header, onLaterPages=draw_header)
     buffer.seek(0)
     return buffer
