@@ -417,12 +417,6 @@ export default function Analytics() {
             </View>
           )}
         </View>
-
-        <TouchableOpacity style={styles.exportButton} onPress={downloadPDF}>
-          <Ionicons name="download" size={18} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.exportButtonText}>Download PDF Report</Text>
-        </TouchableOpacity>
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>

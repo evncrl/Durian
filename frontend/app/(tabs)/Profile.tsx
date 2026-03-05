@@ -182,7 +182,9 @@ export default function Profile() {
   return (
     <View style={{ flex: 1, backgroundColor: Palette.deepObsidian }}>
       <StatusBar barStyle="light-content" />
+      
       {isLargeScreen ? (
+        /* --- WEB / DESKTOP VIEW --- */
         <View style={{ flex: 1, flexDirection: 'row' }}>
           <ScrollView style={{ flex: 0.4 }} contentContainerStyle={{ padding: 24 }}>
             <ProfileContent {...commonProps} />
@@ -192,8 +194,19 @@ export default function Profile() {
           </View>
         </View>
       ) : (
-        <ScrollView style={styles.container}>
+        /* --- ✅ MOBILE VIEW (FIXED) --- */
+        <ScrollView 
+          style={styles.container} 
+          contentContainerStyle={{ paddingBottom: 40 }} // Allowance sa baba para hindi dikit
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 1. Profile Details & Logout */}
           <ProfileContent {...commonProps} />
+          
+          {/* 2. ✅ IDINAGDAG DITO ANG ANALYTICS PARA LUMITAW SA MOBILE */}
+          <View style={{ marginTop: 10 }}>
+             <Analytics />
+          </View>
         </ScrollView>
       )}
 
