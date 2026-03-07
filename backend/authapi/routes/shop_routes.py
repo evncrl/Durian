@@ -80,10 +80,17 @@ def update_product(product_id):
 
 @shop_bp.route('/products/<product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    products_col = get_products_collection()
-    result = products_col.delete_one({'_id': ObjectId(product_id)})
-    return jsonify({'success': result.deleted_count > 0})
-
+    try:
+        products_col = get_products_collection()
+        result = products_col.delete_one({'_id': ObjectId(product_id)})
+        
+        if result.deleted_count > 0:
+            return jsonify({'success': True, 'message': 'Product deleted'}), 200
+        else:
+            return jsonify({'success': False, 'error': 'Product not found'}), 404
+    except Exception as e:
+        print(f"[ERROR] Delete failed: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 @shop_bp.route('/products/<product_id>/reviews', methods=['GET'])
 def get_product_reviews(product_id):
     """Kukuha ng lahat ng reviews para sa isang specific na produkto"""

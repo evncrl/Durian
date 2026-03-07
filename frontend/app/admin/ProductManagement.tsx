@@ -125,20 +125,39 @@ export default function ProductManagement() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Confirm Delete', 'Are you sure you want to remove this product?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        setLoading(true);
-        try {
-          await fetch(`${API_URL}/shop/products/${id}`, { method: 'DELETE' });
+    const performDelete = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/shop/products/${id}`, { 
+          method: 'DELETE',
+          headers: { 
+            'ngrok-skip-browser-warning': 'true',
+            'Accept': 'application/json'
+          }
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (Platform.OS !== 'web') Alert.alert('Success', 'Product removed');
           fetchProducts();
-        } catch (err) {
-          Alert.alert('Error', 'Failed to delete');
-        } finally {
-          setLoading(false);
         }
-      }}
-    ]);
+      } catch (err) {
+        console.error("Delete Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // ✅ FIXED: Support para sa Web confirmation
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to remove this product?")) {
+        performDelete();
+      }
+    } else {
+      Alert.alert('Confirm Delete', 'Remove this product?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: performDelete }
+      ]);
+    }
   };
 
   const TableHeader = () => (
