@@ -9,7 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Footer from "@/components/Footer";
 import { shopStyles, colors } from "@/styles/Shop.styles";
-import { Fonts } from "@/constants/theme";
+import { Fonts, Palette } from "@/constants/theme";
 import Animated, { useSharedValue, useAnimatedScrollHandler, FadeInDown } from 'react-native-reanimated';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { AnimatedImage } from '@/components/ui/AnimatedImage';
@@ -100,23 +100,20 @@ export default function Shop() {
         scrollEventThrottle={16}
       >
         <View style={shopStyles.header}>
-          <ScrollReveal scrollY={scrollY}>
-            <Animated.Text
-              entering={FadeInDown.duration(800).delay(200)}
-              style={shopStyles.title}
-            >
-              Durianostics Shop
-            </Animated.Text>
-          </ScrollReveal>
-          <ScrollReveal scrollY={scrollY}>
-            <Animated.Text
-              entering={FadeInDown.duration(800).delay(300)}
-              style={shopStyles.subtitle}
-            >
-              Discover our curated collection of premium durian varieties and artisan products.
-            </Animated.Text>
-          </ScrollReveal>
-        </View>
+                    <Animated.Text
+                        entering={FadeInDown.duration(800).delay(200)}
+                        style={[shopStyles.title, { color: Palette.linenWhite }]} // Siniguro ang puting kulay
+                    >
+                        Durianostics Shop
+                    </Animated.Text>
+                    
+                    <Animated.Text
+                        entering={FadeInDown.duration(800).delay(300)}
+                        style={[shopStyles.subtitle, { color: Palette.slate }]}
+                    >
+                        Discover our curated collection of premium durian varieties and artisan products.
+                    </Animated.Text>
+                </View>
 
         <View style={shopStyles.section}>
           <View style={shopStyles.grid}>
