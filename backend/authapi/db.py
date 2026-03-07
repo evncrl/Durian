@@ -541,6 +541,14 @@ def save_scan(
     """
     Save a durian scan to the database
     
+    The new schema includes explicit classification fields so that
+    analytics queries can be trivial counts instead of regexes on a
+    nested object.  Four new top–level fields are stored:
+      - color_classification   ("Brownish"/"Greenish"/etc)
+      - size_classification    ("Large"/"Medium"/"Small")
+      - shape_classification   ("Elongated"/"Irregular"/"Round")
+      - disease_type           ("mold"/"rot"/"healthy")
+
     Args:
         user_id: User who performed the scan
         image_url: Cloudinary URL for full image
@@ -575,6 +583,22 @@ def save_scan(
         else:
             status = "Rejected"
         
+        # New explicit classification fields derived from analysis_result
+        color_cls = None
+        size_cls = None
+        shape_cls = None
+        disease_cls = None
+        if analysis_result:
+            color_cls = analysis_result.get("color", {}).get("color_class")
+            size_cls = analysis_result.get("size", {}).get("size_class")
+            shape_cls = analysis_result.get("shape", {}).get("shape_class")
+            # disease_result may be a dict with key 'disease' or a simple string
+            disease_val = analysis_result.get("disease")
+            if isinstance(disease_val, dict):
+                disease_cls = disease_val.get("disease")
+            else:
+                disease_cls = disease_val
+
         scan_data = {
             "user_id": user_oid,
             "username": user.get("name", "Anonymous"),
@@ -589,8 +613,12 @@ def save_scan(
             "detection": detection_result,
             "analysis": analysis_result,
             "created_at": datetime.utcnow(),
-        }
-        
+            # explicit columns for simpler aggregation
+            "color_classification": color_cls,
+            "size_classification": size_cls,
+            "shape_classification": shape_cls,
+            "disease_type": disease_cls,
+        }        
         result = scans_collection.insert_one(scan_data)
         
         if result.inserted_id:
@@ -845,25 +873,26 @@ def get_global_analytics():
         rating_map = {r['_id']: round(r['avg_rating'], 1) for r in avg_ratings_raw}
 
         # 3. DISTRIBUTION (Color, Size, Shape, Health)
+        # use the new explicit fields rather than digging into analysis
         distribution = {
             "color": {
-                "Greenish": scans_collection.count_documents({"status": "Export Ready"}),
-                "Brownish": scans_collection.count_documents({"status": "Local Sale"})
+                "Greenish": scans_collection.count_documents({"color_classification": {"$regex": "^greenish$", "$options": "i"}}),
+                "Brownish": scans_collection.count_documents({"color_classification": {"$regex": "^brownish$", "$options": "i"}})
             },
             "size": {
-                "Large": scans_collection.count_documents({"analysis.size": {"$regex": "^large", "$options": "i"}}),
-                "Medium": scans_collection.count_documents({"analysis.size": {"$regex": "^medium", "$options": "i"}}),
-                "Small": scans_collection.count_documents({"analysis.size": {"$regex": "^small", "$options": "i"}})
+                "Large": scans_collection.count_documents({"size_classification": {"$regex": "^large$", "$options": "i"}}),
+                "Medium": scans_collection.count_documents({"size_classification": {"$regex": "^medium$", "$options": "i"}}),
+                "Small": scans_collection.count_documents({"size_classification": {"$regex": "^small$", "$options": "i"}})
             },
             "shape": {
-                "Elongated": scans_collection.count_documents({"analysis.shape": {"$regex": "^elongated", "$options": "i"}}),
-                "Irregular": scans_collection.count_documents({"analysis.shape": {"$regex": "^irregular", "$options": "i"}}),
-                "Round": scans_collection.count_documents({"analysis.shape": {"$regex": "^round", "$options": "i"}})
+                "Elongated": scans_collection.count_documents({"shape_classification": {"$regex": "^elongated$", "$options": "i"}}),
+                "Irregular": scans_collection.count_documents({"shape_classification": {"$regex": "^irregular$", "$options": "i"}}),
+                "Round": scans_collection.count_documents({"shape_classification": {"$regex": "^round$", "$options": "i"}})
             },
             "diseases": {
-                "Mold": scans_collection.count_documents({"variety": {"$regex": "mold", "$options": "i"}}),
-                "Rot": scans_collection.count_documents({"status": "Rejected"}),
-                "Healthy": scans_collection.count_documents({"status": "Export Ready"})
+                "Mold": scans_collection.count_documents({"disease_type": {"$regex": "^mold$", "$options": "i"}}),
+                "Rot": scans_collection.count_documents({"disease_type": {"$regex": "^rot$", "$options": "i"}}),
+                "Healthy": scans_collection.count_documents({"disease_type": {"$regex": "^healthy$", "$options": "i"}})
             }
         }
 
@@ -916,12 +945,17 @@ def get_all_scans_data():
         scans = list(scans_collection.find().sort("created_at", -1))
         scans_data = []
         for s in scans:
+            # grab new explicit columns if they exist
             scans_data.append({
                 "id": str(s["_id"]),
                 "username": s.get("username", "Unknown"),
                 "variety": s.get("variety", "Durian"),
                 "status": s.get("status", "Unknown"),
                 "confidence": round(s.get("confidence", 0) * 100, 1),
+                "color": s.get("color_classification"),
+                "size": s.get("size_classification"),
+                "shape": s.get("shape_classification"),
+                "disease": s.get("disease_type"),
                 "image_url": s.get("image_url", ""),
                 "createdAt": s.get("created_at").isoformat() if s.get("created_at") else ""
             })

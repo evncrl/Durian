@@ -123,20 +123,39 @@ def detect_durians():
         
         # -- Durian Size --
         result["size"] = get_durian_size(temp_path)
-        
+
+        # -- Durian Disease (added for explicit field)
+        try:
+            disease_res = get_durian_disease(temp_path)
+            result["disease"] = disease_res
+        except Exception as e:
+            # non‑critical, continue without disease data
+            result["disease"] = {"success": False, "error": str(e)}
+
         # -- Cloudinary Save if needed --
         if result.get("success") and user_id and save_to_history:
             try:
                 scan_id = str(uuid.uuid4())[:8]
                 cloudinary_data = CloudinaryScan.upload_scan_image_sync(temp_path, user_id, scan_id)
                 if cloudinary_data.get("success"):
+                    # merge lightweight classification info into analysis_result
+                    analysis_for_db = {**result.get("analysis", {})}
+                    if result.get("color"):
+                        analysis_for_db["color"] = result.get("color")
+                    if result.get("size"):
+                        analysis_for_db["size"] = result.get("size")
+                    if result.get("shape"):
+                        analysis_for_db["shape"] = result.get("shape")
+                    if result.get("disease"):
+                        analysis_for_db["disease"] = result.get("disease")
+
                     scan_record = save_scan(
                         user_id=user_id,
                         image_url=cloudinary_data.get("image_url"),
                         thumbnail_url=cloudinary_data.get("thumbnail_url"),
                         cloudinary_public_id=cloudinary_data.get("public_id"),
                         detection_result=result.get("detection", {}),
-                        analysis_result=result.get("analysis", {})
+                        analysis_result=analysis_for_db
                     )
                     if scan_record:
                         result.update({
@@ -306,6 +325,7 @@ def get_analytics(user_id):
                 time_ago = "Just now"
         else:
             time_ago = "Unknown"
+        # include explicit columns for front‑end convenience
         formatted_scans.append({
             "id": str(scan.get("_id")),
             "variety": scan.get("variety", "Unknown"),
@@ -316,7 +336,11 @@ def get_analytics(user_id):
             "thumbnail_url": scan.get("thumbnail_url"),
             "created_at": scan.get("created_at").isoformat() if scan.get("created_at") else None,
             "durian_count": scan.get("durian_count", 0),
-            "confidence": scan.get("confidence", 0)
+            "confidence": scan.get("confidence", 0),
+            "color": scan.get("color_classification"),
+            "size": scan.get("size_classification"),
+            "shape": scan.get("shape_classification"),
+            "disease": scan.get("disease_type")
         })
     return jsonify({"success": True, "stats": stats, "weekly_data": weekly_data, "quality_distribution": quality_dist, "recent_scans": formatted_scans, "time_range": time_range})
 
