@@ -20,7 +20,7 @@ def draw_header(canvas, doc):
     canvas.restoreState()
 
 def generate_analytics_pdf(data):
-    """Generates a professional PDF report with optimized page spacing and specific data insights"""
+    """Generates a professional PDF report with date-only timestamps for consistency"""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=50, bottomMargin=40)
     styles = getSampleStyleSheet()
@@ -40,7 +40,8 @@ def generate_analytics_pdf(data):
     insight_style = ParagraphStyle('InsightStyle', parent=styles['Normal'], fontSize=10, textColor=text_dark, leading=14, spaceBefore=10, spaceAfter=10)
 
     elements.append(Paragraph("DURIANOSTICS REPORT", title_style))
-    elements.append(Paragraph(f"Generated on: {datetime.datetime.now().strftime('%B %d, %Y | %I:%M %p')}", sub_style))
+    # ✅ UPDATED: Inalis ang time sa generation date
+    elements.append(Paragraph(f"Generated on: {datetime.datetime.now().strftime('%B %d, %Y')}", sub_style))
     elements.append(HRFlowable(width="100%", thickness=1.5, color=primary_color, spaceAfter=20))
 
     elements.append(Paragraph("Executive Summary", section_title))
@@ -141,12 +142,15 @@ def generate_analytics_pdf(data):
     elements.append(Paragraph("Recent System Activity", section_title))
     elements.append(Paragraph("A chronological log of the latest classifications performed across the entire system.", desc_style))
     
-    activity_header = [["USER", "VARIETY", "STATUS", "CONF.", "DATE/TIME"]]
+    # ✅ UPDATED: Inalis ang time sa table header
+    activity_header = [["USER", "VARIETY", "STATUS", "CONF.", "DATE"]]
     activity_rows = []
     for s in data['recentScans'][:15]: 
-        activity_rows.append([s['username'], s['variety'], s['status'], f"{s['confidence']}%", datetime.datetime.fromisoformat(s['time']).strftime('%m/%d/%Y %I:%M %p')])
+        # ✅ UPDATED: Ginamit ang '%b %d, %Y' para maging 'Mar 07, 2026'
+        date_str = datetime.datetime.fromisoformat(s['time'].replace('Z', '')).strftime('%b %d, %Y')
+        activity_rows.append([s['username'], s['variety'], s['status'], f"{s['confidence']}%", date_str])
     
-    elements.append(Table(activity_header + activity_rows, colWidths=[1.6*inch, 1.2*inch, 1.2*inch, 0.8*inch, 2.4*inch],
+    elements.append(Table(activity_header + activity_rows, colWidths=[1.6*inch, 1.2*inch, 1.2*inch, 0.8*inch, 1.6*inch],
                          style=[('BACKGROUND', (0, 0), (-1, 0), text_dark), ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                                 ('GRID', (0, 0), (-1, -1), 0.2, colors.lightgrey), ('FONTSIZE', (0, 0), (-1, -1), 8), ('BOTTOMPADDING', (0, 0), (-1, -1), 8)]))
     
