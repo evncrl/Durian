@@ -388,6 +388,44 @@ export default function Forum({ embedded = false }: ForumProps) {
     return num.toString();
   };
 
+  const getRelativeTime = (dateString: string) => {
+    if (!dateString) return "Just now";
+    
+    const now = new Date();
+    const postDate = new Date(dateString);
+    
+    const diffInMs = now.getTime() - postDate.getTime();
+    const diffInSeconds = Math.floor(diffInMs / 1000);
+
+    if (diffInSeconds < 30) return 'Just now';
+
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds}s ago`;
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      if (diffInHours === 8 && diffInMinutes % 60 < 5) return 'Just now';
+      
+      return `${diffInHours}h ago`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays}d ago`;
+    }
+
+    return postDate.toLocaleDateString(undefined, { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   return (
     <View style={{ flex: 1 }}>
       {/* Header */}
@@ -510,7 +548,7 @@ export default function Forum({ embedded = false }: ForumProps) {
                   />
                   <View style={styles.postHeaderInfo}>
                     <Text style={styles.authorName}>{post.username}</Text>
-                    <Text style={styles.postTimestamp}>{post.timestamp || "Just now"}</Text>
+                    <Text style={styles.postTimestamp}>{getRelativeTime(post.created_at)}</Text>
                   </View>
                   <Animated.View
                     entering={ZoomIn.delay(index * 100 + 400).springify()}

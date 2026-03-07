@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { Fonts, Palette } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '@/contexts/UserContext'; // ✅ Import ang context
+import { useResponsive } from '@/utils/platform';
 
 const sidebarItems = [
 	{ label: 'Analytics', route: '/admin/GenAnalytics' as const, icon: 'analytics-outline' as const },
@@ -13,8 +15,6 @@ const sidebarItems = [
 	{ label: 'Reviews', route: '/admin/ReviewManage' as const, icon: 'star-outline' as const },
 ];
 
-import { useResponsive } from '@/utils/platform';
-
 interface AdminSidebarProps {
 	isVisible?: boolean;
 	onClose?: () => void;
@@ -22,9 +22,35 @@ interface AdminSidebarProps {
 
 const AdminSidebar = ({ isVisible, onClose }: AdminSidebarProps) => {
 	const pathname = usePathname();
-	const { isWeb, isSmallScreen, isMediumScreen } = useResponsive();
+	const { isSmallScreen } = useResponsive();
+	const { logout } = useUser(); 
 
-	// On desktop, it's always visible. On mobile, it depends on isVisible prop.
+	const handleLogout = () => {
+		const performLogout = async () => {
+			try {
+				console.log('[AdminSidebar] Starting logout...');
+				await logout(); 
+			} catch (err) {
+				console.error('[AdminSidebar] Logout error:', err);
+			}
+		};
+
+		if (Platform.OS === 'web') {
+			if (confirm("Are you sure you want to logout?")) {
+				performLogout();
+			}
+		} else {
+			Alert.alert(
+				"Logout",
+				"Are you sure you want to logout as Admin?",
+				[
+					{ text: "Cancel", style: "cancel" },
+					{ text: "Logout", style: "destructive", onPress: performLogout }
+				]
+			);
+		}
+	};
+
 	const showSidebar = (Platform.OS === 'web' && !isSmallScreen) || isVisible;
 
 	if (!showSidebar && Platform.OS !== 'web') return null;
@@ -49,6 +75,7 @@ const AdminSidebar = ({ isVisible, onClose }: AdminSidebarProps) => {
 					)}
 				</View>
 			</View>
+
 			<View style={styles.menu}>
 				{sidebarItems.map((item) => {
 					const isActive = pathname === item.route;
@@ -71,6 +98,18 @@ const AdminSidebar = ({ isVisible, onClose }: AdminSidebarProps) => {
 					);
 				})}
 			</View>
+
+			{/* ✅ LOGOUT BUTTON SA ILALIM */}
+			<View style={styles.footer}>
+				<TouchableOpacity 
+					style={styles.logoutButton} 
+					onPress={handleLogout}
+					activeOpacity={0.7}
+				>
+					<Ionicons name="log-out-outline" size={22} color="#ef4444" />
+					<Text style={styles.logoutText}>Logout</Text>
+				</TouchableOpacity>
+			</View>
 			
 		</View>
 	);
@@ -84,24 +123,19 @@ const styles = StyleSheet.create({
 		backgroundColor: Palette.deepObsidian,
 		paddingVertical: 40,
 		paddingHorizontal: 20,
-		minHeight: Platform.OS === 'web' ? '100%' : '100%',
+		minHeight: '100%',
 		borderRightWidth: 1,
 		borderRightColor: 'rgba(255,255,255,0.05)',
 	},
 	mobileSidebar: {
 		position: 'absolute',
-		left: 0,
-		top: 0,
-		bottom: 0,
+		left: 0, top: 0, bottom: 0,
 		zIndex: 1000,
 		width: 280,
 		transform: [{ translateX: -280 }],
 	},
 	mobileSidebarVisible: {
 		transform: [{ translateX: 0 }],
-	},
-	closeButton: {
-		padding: 4,
 	},
 	header: {
 		marginBottom: 48,
@@ -146,18 +180,28 @@ const styles = StyleSheet.create({
 		color: Palette.white,
 		fontFamily: Fonts.bold,
 	},
-	backButton: {
+	// ✅ BAGONG STYLES PARA SA LOGOUT
+	footer: {
+		borderTopWidth: 1,
+		borderTopColor: 'rgba(255,255,255,0.05)',
+		paddingTop: 20,
+		marginTop: 20,
+	},
+	logoutButton: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		paddingVertical: 12,
+		paddingVertical: 14,
 		paddingHorizontal: 15,
-		marginTop: 'auto',
+		borderRadius: 12,
+		backgroundColor: 'rgba(239, 68, 68, 0.1)', // Subtle red background
 	},
-	backText: {
-		color: Palette.slate,
-		fontSize: 14,
-		fontFamily: Fonts.medium,
-		marginLeft: 10,
+	logoutText: {
+		color: '#ef4444',
+		fontSize: 15,
+		fontFamily: Fonts.semiBold,
+		marginLeft: 14,
+	},
+	closeButton: {
+		padding: 4,
 	},
 });
-

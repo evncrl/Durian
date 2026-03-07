@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '@/config/appconf';
 
 interface User {
   id: string;
@@ -29,6 +30,36 @@ export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasNewForumPosts, setHasNewForumPosts] = useState(false);
+
+  const checkForNewPosts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/forum/posts?category=All`, {
+        headers: { 'ngrok-skip-browser-warning': 'true', 'Accept': 'application/json' }
+      });
+      const data = await response.json();
+
+      if (data.success && data.posts.length > 0) {
+        const latestPostId = data.posts[0]._id;
+        const lastSeenId = await AsyncStorage.getItem('last_seen_post_id');
+
+        if (!lastSeenId) {
+          await AsyncStorage.setItem('last_seen_post_id', latestPostId);
+        } else if (lastSeenId !== latestPostId) {
+          setHasNewForumPosts(true);
+        }
+      }
+    } catch (error) {
+      console.error('[Poller] Error checking for posts:', error);
+    }
+  };
+  
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkForNewPosts();
+    }, 30000); // 30 seconds interval
+    return () => clearInterval(interval);
+  }, []);
 
   const loadUser = async () => {
     try {
