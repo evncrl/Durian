@@ -13,6 +13,8 @@ interface User {
 interface UserContextType {
   user: User | null;
   loading: boolean;
+  hasNewForumPosts: boolean;
+  setHasNewForumPosts: (val: boolean) => void;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -26,6 +28,7 @@ interface UserProviderProps {
 export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasNewForumPosts, setHasNewForumPosts] = useState(false);
 
   const loadUser = async () => {
     try {
@@ -88,6 +91,8 @@ export function UserProvider({ children }: UserProviderProps) {
       value={{
         user,
         loading,
+        hasNewForumPosts, 
+        setHasNewForumPosts,
         refreshUser,
         logout,
       }}

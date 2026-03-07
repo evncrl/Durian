@@ -152,10 +152,11 @@ export default function AIChatbot({
       const data = await response.json();
 
       if (data.success && data.message) {
+        const filteredContent = data.message.replace(/\*/g, '').trim();
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.message.trim(),
+          content: filteredContent,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, assistantMessage]);

@@ -19,6 +19,7 @@ import Animated, { FadeInDown, FadeInUp, Layout, ZoomIn } from 'react-native-rea
 import { useResponsive } from '@/utils/platform';
 import styles from "@/styles/Forum.styles";
 import { API_URL } from "@/config/appconf";
+import { useUser } from '@/contexts/UserContext';
 
 interface ForumPost {
   _id: string;
@@ -69,6 +70,7 @@ export default function Forum({ embedded = false }: ForumProps) {
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const { hasNewForumPosts, setHasNewForumPosts } = useUser();
 
   // New Post state
   const [newPostTitle, setNewPostTitle] = useState("");
@@ -98,22 +100,22 @@ export default function Forum({ embedded = false }: ForumProps) {
           'Accept': 'application/json',
         }
       });
-      console.log('[CLIENT] fetchPosts status:', response.status, response.headers.get('content-type'));
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('[CLIENT] fetchPosts non-JSON response:', response.status, text);
-        Alert.alert('Error', `Server error: ${response.status}`);
-        return;
-      }
 
       const data = await response.json();
 
-      if (data.success) {
-        console.log('[CLIENT] fetchPosts data.posts length:', data.posts?.length, 'firstId:', data.posts?.[0]?._id);
+      if (data.success && data.posts.length > 0) {
+        const latestPostId = data.posts[0]._id;
+        const lastSeenId = await AsyncStorage.getItem('last_seen_post_id');
+
+        if (!embedded) {
+          await AsyncStorage.setItem('last_seen_post_id', latestPostId);
+          setHasNewForumPosts(false);
+        } else if (lastSeenId !== latestPostId) {
+          setHasNewForumPosts(true);
+        }
+
         setPosts(data.posts);
-      } else {
+      } else if (!data.success) {
         Alert.alert("Error", "Failed to load posts");
       }
     } catch (error) {
@@ -124,6 +126,13 @@ export default function Forum({ embedded = false }: ForumProps) {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    if (!embedded && posts.length > 0) {
+      setHasNewForumPosts(false);
+      AsyncStorage.setItem('last_seen_post_id', posts[0]._id);
+    }
+  }, [posts]);
 
   // Fetch comments for a post
   const fetchComments = async (postId: string) => {

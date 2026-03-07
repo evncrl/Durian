@@ -18,233 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts, Colors, Palette } from '@/constants/theme';
 import { useCart } from '@/contexts/CartContext';
 
-
-
-interface UniversalTopbarProps {
-    // No props needed now, uses context
-}
-
-const NAV_ITEMS = [
-    { label: 'Home', path: '/(tabs)', icon: 'home-outline', activeIcon: 'home' },
-    { label: 'Scanner', path: '/Scanner', icon: 'scan-outline', activeIcon: 'scan' },
-    { label: 'Shop', path: '/Shop', icon: 'cart-outline', activeIcon: 'cart' },
-    { label: 'Chatbot', path: '/Chatbot', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
-    // { label: 'Analytics', path: '/Analytics', icon: 'analytics-outline', activeIcon: 'analytics' },
-    { label: 'Forum', path: '/Forum', icon: 'people-outline', activeIcon: 'people' },
-    { label: 'About', path: '/About', icon: 'information-circle-outline', activeIcon: 'information-circle' },
-];
-
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
-const NavItem = ({ item, isActive, onPress, isMobile = false }: any) => {
-    const scale = useSharedValue(1);
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
-
-    return (
-        <AnimatedTouchable
-            style={[
-                isMobile ? styles.mobileItem : styles.navItem,
-                isActive && (isMobile ? styles.mobileItemActive : styles.navItemActive),
-                animatedStyle
-            ]}
-            onPress={onPress}
-            onPressIn={() => scale.value = withSpring(0.95)}
-            onPressOut={() => scale.value = withSpring(1)}
-            activeOpacity={0.8}
-        >
-            <Animated.View
-                entering={FadeInDown.duration(600).delay(200 + (item.label.length * 20))} // Subtle staggered effect
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-            >
-                <Ionicons
-                    name={(isActive ? item.activeIcon : item.icon) as any}
-                    size={isMobile ? 22 : 18}
-                    color={isActive ? Palette.warmCopper : Palette.slate}
-                    style={{ marginRight: isMobile ? 16 : 8 }}
-                />
-                <Text style={[
-                    isMobile ? styles.mobileItemLabel : styles.navLabel,
-                    isActive && (isMobile ? styles.mobileItemLabelActive : styles.navLabelActive)
-                ]}>
-                    {item.label}
-                </Text>
-            </Animated.View>
-        </AnimatedTouchable>
-    );
-};
-
-export default function UniversalTopbar({ }: UniversalTopbarProps) {
-    const insets = useSafeAreaInsets();
-    const router = useRouter();
-    const pathname = usePathname();
-    const { user } = useUser();
-    const { openAuthModal } = useAuthUI();
-    const { width } = useWindowDimensions();
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const { cart } = useCart();
-
-    const visibleNavItems = NAV_ITEMS.filter(item => {
-        const restrictedTabs = ['Scanner', 'Chatbot', 'Analytics'];
-        if (restrictedTabs.includes(item.label) && !user) {
-            return false;
-        }
-        return true;
-    });
-
-    const isCompact = width < 768;
-
-    const handleNav = (path: string) => {
-        router.push(path as any);
-        setMobileMenuOpen(false);
-    };
-
-
-    return (
-        <View style={[styles.wrapper, { paddingTop: Platform.OS === 'web' ? 0 : insets.top, backgroundColor: Palette.deepObsidian }]}>
-            <View style={styles.topbar}>
-                {/* Brand */}
-                <TouchableOpacity
-                    style={[styles.brand, isCompact && { marginRight: 0, flex: 1, justifyContent: 'center' }]}
-                    onPress={() => handleNav('Landing')}
-                >
-                    <Image source={require('../assets/images/icon.png')} style={styles.logo} />
-                    <Text style={styles.brandText}>Durianostics</Text>
-                </TouchableOpacity>
-
-                {/* Desktop nav items */}
-                {!isCompact && (
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.navItems}
-                    >
-                        {visibleNavItems.map((item) => {
-                            const isActive = pathname === item.path || (item.path === '/(tabs)' && pathname === '/');
-                            return (
-                                <NavItem
-                                    key={item.path}
-                                    isActive={isActive}
-                                    item={item}
-                                    onPress={() => handleNav(item.path)}
-                                />
-                            );
-                        })}
-                    </ScrollView>
-                )}
-
-                {/* Right side: auth / profile + hamburger */}
-                <View style={[styles.rightSection, isCompact && { marginLeft: 0 }]}>
-                    {/* Cart icon */}
-                    
-                    {user && (
-                        <>
-                            {/* ✅ BAGONG BUTTON: My Orders Icon */}
-                            <TouchableOpacity
-                                style={{ marginRight: 15 }}
-                                onPress={() => router.push('/MyOrders')}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons name="receipt-outline" size={26} color={Palette.warmCopper} />
-                            </TouchableOpacity>
-
-                            {/* Cart icon */}
-                            <TouchableOpacity
-                                style={{ marginRight: 12 }}
-                                onPress={() => router.push('/cart')}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons name="cart-outline" size={28} color={Palette.warmCopper} />
-                                {cart.length > 0 && (
-                                    <View style={styles.cartBadge}>
-                                        <Text style={styles.cartBadgeText}>{cart.length}</Text>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        </>
-                    )}
-                    {!isCompact && !user && (
-                        <TouchableOpacity style={styles.loginBtn} onPress={() => openAuthModal('login')}>
-                            <Text style={styles.loginBtnText}>Sign In</Text>
-                        </TouchableOpacity>
-                    )}
-                    {!isCompact && user && (
-                        <TouchableOpacity
-                            style={styles.profileBtn}
-                            onPress={() => handleNav('Profile')}
-                        >
-                            {user.photoProfile ? (
-                                <Image source={{ uri: user.photoProfile }} style={styles.avatar} />
-                            ) : (
-                                <View style={styles.avatarFallback}>
-                                    <Text style={styles.avatarText}>
-                                        {(user.name || 'U').charAt(0).toUpperCase()}
-                                    </Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                    )}
-                    {isCompact && (
-                        <TouchableOpacity
-                            style={styles.hamburger}
-                            onPress={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        >
-                            <Text style={styles.hamburgerIcon}>{mobileMenuOpen ? '✕' : '☰'}</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-
-            {/* Mobile dropdown menu */}
-            {isCompact && mobileMenuOpen && (
-                <View style={styles.mobileMenu}>
-                    {visibleNavItems.map((item) => {
-                        const isActive = pathname === item.path || (item.path === '/(tabs)' && pathname === '/');
-                        return (
-                            <NavItem
-                                key={item.path}
-                                isActive={isActive}
-                                item={item}
-                                onPress={() => handleNav(item.path)}
-                                isMobile
-                            />
-                        );
-                    })}
-                    {!user && (
-                        <TouchableOpacity
-                            style={styles.mobileLoginButton}
-                            onPress={() => {
-                                openAuthModal('login');
-                                setMobileMenuOpen(false);
-                            }}
-                        >
-                            <Text style={styles.mobileLoginBtnText}>Sign In</Text>
-                        </TouchableOpacity>
-                    )}
-                    {user && (
-                        <TouchableOpacity
-                            style={styles.mobileProfileRow}
-                            onPress={() => handleNav('Profile')}
-                        >
-                            {user.photoProfile ? (
-                                <Image source={{ uri: user.photoProfile }} style={styles.avatar} />
-                            ) : (
-                                <View style={styles.avatarFallback}>
-                                    <Text style={styles.avatarText}>
-                                        {(user.name || 'U').charAt(0).toUpperCase()}
-                                    </Text>
-                                </View>
-                            )}
-                            <Text style={styles.mobileProfileName}>{user.name || 'Profile'}</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
-        </View>
-    );
-}
-
+// ✅ 1. STYLES DEFINITION (Dapat mauna para kilala ng components sa baba)
 const styles = StyleSheet.create({
     wrapper: {
         zIndex: 100,
@@ -397,7 +171,7 @@ const styles = StyleSheet.create({
         color: Palette.warmCopper,
         fontFamily: Fonts.bold,
     },
-    mobileLoginButton: { // Mapping the manual find from before
+    mobileLoginButton: {
         backgroundColor: Palette.warmCopper,
         paddingVertical: 16,
         borderRadius: 16,
@@ -441,4 +215,250 @@ const styles = StyleSheet.create({
         fontSize: 10, 
         fontFamily: Fonts.bold 
     },
+    // ✅ DAGDAG: Forum Notification Badge style
+    forumBadge: {
+        position: 'absolute',
+        top: -2,
+        right: 4,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#ef4444',
+        borderWidth: 1,
+        borderColor: Palette.deepObsidian,
+    }
 });
+
+interface UniversalTopbarProps {}
+
+const NAV_ITEMS = [
+    { label: 'Home', path: '/(tabs)', icon: 'home-outline', activeIcon: 'home' },
+    { label: 'Scanner', path: '/Scanner', icon: 'scan-outline', activeIcon: 'scan' },
+    { label: 'Shop', path: '/Shop', icon: 'cart-outline', activeIcon: 'cart' },
+    { label: 'Chatbot', path: '/Chatbot', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
+    { label: 'Forum', path: '/Forum', icon: 'people-outline', activeIcon: 'people' },
+    { label: 'About', path: '/About', icon: 'information-circle-outline', activeIcon: 'information-circle' },
+];
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
+const NavItem = ({ item, isActive, onPress, isMobile = false }: any) => {
+    const scale = useSharedValue(1);
+    const { hasNewForumPosts } = useUser();
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
+    return (
+        <AnimatedTouchable
+            style={[
+                isMobile ? styles.mobileItem : styles.navItem,
+                isActive && (isMobile ? styles.mobileItemActive : styles.navItemActive),
+                animatedStyle
+            ]}
+            onPress={onPress}
+            onPressIn={() => scale.value = withSpring(0.95)}
+            onPressOut={() => scale.value = withSpring(1)}
+            activeOpacity={0.8}
+        >
+            <Animated.View
+                entering={FadeInDown.duration(600).delay(200 + (item.label.length * 20))}
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+            >
+                <View style={{ position: 'relative' }}>
+                    <Ionicons
+                        name={(isActive ? item.activeIcon : item.icon) as any}
+                        size={isMobile ? 22 : 18}
+                        color={isActive ? Palette.warmCopper : Palette.slate}
+                        style={{ marginRight: isMobile ? 16 : 8 }}
+                    />
+                    
+                    {/* ✅ Forum Notification Badge */}
+                    {item.label === 'Forum' && hasNewForumPosts && (
+                        <View 
+                            style={[
+                                styles.forumBadge, 
+                                { right: isMobile ? 12 : 4 } // Adjust based on layout
+                            ]} 
+                        />
+                    )}
+                </View>
+
+                <Text style={[
+                    isMobile ? styles.mobileItemLabel : styles.navLabel,
+                    isActive && (isMobile ? styles.mobileItemLabelActive : styles.navLabelActive)
+                ]}>
+                    {item.label}
+                </Text>
+            </Animated.View>
+        </AnimatedTouchable>
+    );
+}; // ✅ FIXED: Sinara ko na ang NavItem function dito
+
+export default function UniversalTopbar({ }: UniversalTopbarProps) {
+    const insets = useSafeAreaInsets();
+    const router = useRouter();
+    const pathname = usePathname();
+    const { user } = useUser();
+    const { openAuthModal } = useAuthUI();
+    const { width } = useWindowDimensions();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { cart } = useCart();
+
+    const visibleNavItems = NAV_ITEMS.filter(item => {
+        const restrictedTabs = ['Scanner', 'Chatbot', 'Analytics'];
+        if (restrictedTabs.includes(item.label) && !user) {
+            return false;
+        }
+        return true;
+    });
+
+    const isCompact = width < 768;
+
+    const handleNav = (path: string) => {
+        router.push(path as any);
+        setMobileMenuOpen(false);
+    };
+
+    return (
+        <View style={[styles.wrapper, { paddingTop: Platform.OS === 'web' ? 0 : insets.top, backgroundColor: Palette.deepObsidian }]}>
+            <View style={styles.topbar}>
+                {/* Brand */}
+                <TouchableOpacity
+                    style={[styles.brand, isCompact && { marginRight: 0, flex: 1, justifyContent: 'center' }]}
+                    onPress={() => handleNav('Landing')}
+                >
+                    <Image source={require('../assets/images/icon.png')} style={styles.logo} />
+                    <Text style={styles.brandText}>Durianostics</Text>
+                </TouchableOpacity>
+
+                {/* Desktop nav items */}
+                {!isCompact && (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.navItems}
+                    >
+                        {visibleNavItems.map((item) => {
+                            const isActive = pathname === item.path || (item.path === '/(tabs)' && pathname === '/');
+                            return (
+                                <NavItem
+                                    key={item.path}
+                                    isActive={isActive}
+                                    item={item}
+                                    onPress={() => handleNav(item.path)}
+                                />
+                            );
+                        })}
+                    </ScrollView>
+                )}
+
+                {/* Right side: auth / profile + hamburger */}
+                <View style={[styles.rightSection, isCompact && { marginLeft: 0 }]}>
+                    {user && (
+                        <>
+                            {/* My Orders Icon */}
+                            <TouchableOpacity
+                                style={{ marginRight: 15 }}
+                                onPress={() => router.push('/MyOrders')}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="receipt-outline" size={26} color={Palette.warmCopper} />
+                            </TouchableOpacity>
+
+                            {/* Cart icon */}
+                            <TouchableOpacity
+                                style={{ marginRight: 12 }}
+                                onPress={() => router.push('/cart')}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="cart-outline" size={28} color={Palette.warmCopper} />
+                                {cart.length > 0 && (
+                                    <View style={styles.cartBadge}>
+                                        <Text style={styles.cartBadgeText}>{cart.length}</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        </>
+                    )}
+                    {!isCompact && !user && (
+                        <TouchableOpacity style={styles.loginBtn} onPress={() => openAuthModal('login')}>
+                            <Text style={styles.loginBtnText}>Sign In</Text>
+                        </TouchableOpacity>
+                    )}
+                    {!isCompact && user && (
+                        <TouchableOpacity
+                            style={styles.profileBtn}
+                            onPress={() => handleNav('Profile')}
+                        >
+                            {user.photoProfile ? (
+                                <Image source={{ uri: user.photoProfile }} style={styles.avatar} />
+                            ) : (
+                                <View style={styles.avatarFallback}>
+                                    <Text style={styles.avatarText}>
+                                        {(user.name || 'U').charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    )}
+                    {isCompact && (
+                        <TouchableOpacity
+                            style={styles.hamburger}
+                            onPress={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            <Text style={styles.hamburgerIcon}>{mobileMenuOpen ? '✕' : '☰'}</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </View>
+
+            {/* Mobile dropdown menu */}
+            {isCompact && mobileMenuOpen && (
+                <View style={styles.mobileMenu}>
+                    {visibleNavItems.map((item) => {
+                        const isActive = pathname === item.path || (item.path === '/(tabs)' && pathname === '/');
+                        return (
+                            <NavItem
+                                key={item.path}
+                                isActive={isActive}
+                                item={item}
+                                onPress={() => handleNav(item.path)}
+                                isMobile
+                            />
+                        );
+                    })}
+                    {!user && (
+                        <TouchableOpacity
+                            style={styles.mobileLoginButton}
+                            onPress={() => {
+                                openAuthModal('login');
+                                setMobileMenuOpen(false);
+                            }}
+                        >
+                            <Text style={styles.mobileLoginBtnText}>Sign In</Text>
+                        </TouchableOpacity>
+                    )}
+                    {user && (
+                        <TouchableOpacity
+                            style={styles.mobileProfileRow}
+                            onPress={() => handleNav('Profile')}
+                        >
+                            {user.photoProfile ? (
+                                <Image source={{ uri: user.photoProfile }} style={styles.avatar} />
+                            ) : (
+                                <View style={styles.avatarFallback}>
+                                    <Text style={styles.avatarText}>
+                                        {(user.name || 'U').charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
+                            <Text style={styles.mobileProfileName}>{user.name || 'Profile'}</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
+        </View>
+    );
+}
