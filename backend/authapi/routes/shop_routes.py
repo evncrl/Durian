@@ -1,4 +1,3 @@
-
 print("[DEBUG] shop_routes.py loaded")
 from flask import Blueprint, request, jsonify
 import cloudinary.uploader
@@ -85,18 +84,48 @@ def delete_product(product_id):
     result = products_col.delete_one({'_id': ObjectId(product_id)})
     return jsonify({'success': result.deleted_count > 0})
 
+@shop_bp.route('/products/<product_id>/reviews', methods=['GET'])
+def get_product_reviews(product_id):
+    """Kukuha ng lahat ng reviews para sa isang specific na produkto"""
+    try:
+        db = get_db()
+        
+        product = db.products.find_one({"_id": ObjectId(product_id)})
+        product_name = product.get('name') if product else None
+
+        query = {
+            "$or": [
+                {"product_id": product_id},
+                {"product_name": product_name}
+            ]
+        }
+        
+        reviews_cursor = db.reviews.find(query).sort("created_at", -1)
+        reviews_list = list(reviews_cursor)
+        
+        for r in reviews_list:
+            r['_id'] = str(r['_id'])
+            if 'created_at' in r and isinstance(r['created_at'], datetime):
+                r['created_at'] = r['created_at'].isoformat()
+            r['username'] = r.get('user_name', 'Anonymous User')
+
+        print(f"[DEBUG] Found {len(reviews_list)} reviews for {product_name or product_id}")
+        return jsonify({"success": True, "reviews": reviews_list}), 200
+    except Exception as e:
+        print(f"[ERROR] Failed to fetch reviews: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @shop_bp.route('/reviews', methods=['POST'])
 def add_product_review():
     """Submit a user review for a product"""
     try:
         data = request.json
-        if not data:
-            return jsonify({"success": False, "error": "No data provided"}), 400
+        if not data: return jsonify({"success": False, "error": "No data"}), 400
             
         review_payload = {
             "user_id": data.get("user_id"),
             "user_name": data.get("user_name", "Anonymous"),
+            "product_id": data.get("product_id"), 
             "product_name": data.get("product_name"),
             "rating": int(data.get("rating", 5)),
             "comment": data.get("comment", ""),
@@ -105,8 +134,6 @@ def add_product_review():
         
         db = get_db()
         db.reviews.insert_one(review_payload)
-        
-        return jsonify({"success": True, "message": "Review submitted! Thank you."}), 200
+        return jsonify({"success": True, "message": "Review submitted!"}), 200
     except Exception as e:
-        print(f"[ERROR] Review submission failed: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500

@@ -12,19 +12,20 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Allow ALL origins for ngrok testing
-
+# ✅ PINALAKAS NA CORS SETUP
+# Tinanggal natin ang wildcard "*" sa origins at pinalitan ng supports_credentials para sa mas stable na connection
 CORS(app, resources={r"/*": {
-    "origins": "*",
+    "origins": ["http://localhost:8081", "http://localhost:8082", "*"],
     "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "ngrok-skip-browser-warning", "X-User-Id", "Accept"],
-    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "supports_credentials": True
 }})
 
 # 1. CONFIGURE MAIL FIRST
 app.config['MAIL_SERVER'] = os.getenv("MAIL_HOST")
 app.config['MAIL_PORT'] = int(os.getenv("MAIL_PORT", 2525))
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False  # Ensure this is False for port 2525
+app.config['MAIL_USE_SSL'] = False  
 app.config['MAIL_TIMEOUT'] = 10
 app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
@@ -36,7 +37,7 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 # 2. INITIALIZE MAIL
 mail = Mail(app)
 
-
+# Import Blueprints
 from routes.forum_routes import forum_bp
 from routes.profile_routes import profile_bp
 from routes.auth_routes import auth_bp
@@ -45,8 +46,8 @@ from routes.scanner_routes import scanner_bp
 from routes.chatbot_routes import chatbot_bp
 from routes.shop_routes import shop_bp
 from routes.transaction_routes import bp as transaction_bp
-# Register Blueprints
 
+# Register Blueprints
 app.register_blueprint(forum_bp, url_prefix='/forum')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -56,163 +57,76 @@ app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
 app.register_blueprint(shop_bp, url_prefix='/shop')
 app.register_blueprint(transaction_bp, url_prefix='/api')   
 
-
-
 # ---------------------------
-
 # Core App Routes
-
 # ---------------------------
-
-
 
 @app.route("/health", methods=["GET"])
-
 def health():
-
     """Simple health check"""
-
     return jsonify({
-
         "status": "healthy",
-
         "timestamp": datetime.datetime.utcnow().isoformat(),
-
         "endpoints": {
-
             "auth": "/auth/*",
-
             "profile": "/profile/*", 
-
             "forum": "/forum/*"
-
         }
-
     })
 
-
-
-# Handle CORS preflight requests
-
-@app.after_request
-def after_request(response):
-    
-    origin = request.headers.get('Origin')
-    if origin:
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        response.headers['Access-Control-Allow-Origin'] = '*'
-    
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,ngrok-skip-browser-warning,X-User-Id,Accept'
-    
-    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-    
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    
-    return response
-
-
+# ❌ TINANGGAL ANG @app.after_request DITO
+# Ang flask_cors na ang bahala sa lahat ng headers para hindi mag-duplicate at mag-error
 
 @app.route("/", methods=["GET", "OPTIONS"])
-
 def home():
-
     if request.method == "OPTIONS":
-
         return '', 200
-
     return jsonify({
-
         "message": "Durian App API",
-
         "version": "2.0.0",
-
         "endpoints": {
-
             "auth": "/auth/*",
-
             "profile": "/profile/*",
-
             "forum": "/forum/*"
-
         }
-
     })
-
-
 
 @app.route("/status", methods=["GET", "OPTIONS"])
-
 def status():
-
     return jsonify({
-
         "message": "Auth API is running!",
-
         "version": "2.0.0",
-
         "endpoints": {
-
             "auth": "/auth/* (signup, login, signup-with-pfp)",
-
             "profile": "/profile/* (get, update, update-pfp)",
-
             "forum": "/forum/* (posts, comments)"
-
         }
-
     })
 
-
-
 # ---------------------------
-
 # Error Handlers
-
 # ---------------------------
-
-
 
 @app.errorhandler(404)
-
 def not_found(error):
-
     return jsonify({"success": False, "error": "Endpoint not found"}), 404
 
-
-
 @app.errorhandler(500)
-
 def internal_error(error):
-
     return jsonify({"success": False, "error": "Internal server error"}), 500
 
-
-
 # ---------------------------
-
 # Run App
-
 # ---------------------------
-
-
 
 if __name__ == "__main__":
-
     print("🚀 Starting Durian App API v2.0.0")
-
     print("📋 Available endpoints:")
-
     print("  🔐 Auth: /auth/*")
-
     print("  👤 Profile: /profile/*")
-
     print("  💬 Forum: /forum/*")
-
     print("  ⚙️  Admin: /admin/*")
-
     print("  📷 Scanner: /scanner/*")
-
+    print("  🛍️  Shop: /shop/*")
     print("  ❤️  Health: /health")
-
     app.run(debug=True, host="0.0.0.0", port=8000)

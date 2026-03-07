@@ -12,21 +12,15 @@ export default function GenAnalytics() {
     const [loading, setLoading] = useState(true);
     const [exporting, setExporting] = useState(false);
 
-    // ✅ UPDATED HELPER: Date lang ang ibabalik (Format: Mar 7, 2026)
     const formatDate = (dateString: string) => {
         if (!dateString) return "N/A";
         let dateToParse = dateString;
-        
         if (!dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-')) {
             dateToParse = dateString.includes('T') ? `${dateString}Z` : `${dateString.replace(' ', 'T')}Z`;
         }
-        
         const date = new Date(dateToParse);
-        // Ginawang toLocaleDateString at nilagyan ng options para maganda ang display
         return isNaN(date.getTime()) ? dateString : date.toLocaleDateString(undefined, { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+            year: 'numeric', month: 'short', day: 'numeric' 
         });
     };
 
@@ -178,7 +172,7 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* Engagement Leaderboards */}
+                    {/* ✅ ENGAGEMENT LAYER */}
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="medal" size={20} color="#4caf50" /><Text style={localStyles.leaderboardTitle}>Top Scanners</Text></View>
                         <View style={{ marginTop: 15 }}>
@@ -192,6 +186,20 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
+                    {/* ✅ RESTORED: SALES LAYER */}
+                    <View style={localStyles.chartCard}>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="trophy" size={20} color="#FFD700" /><Text style={localStyles.leaderboardTitle}>Most Sold Product</Text></View>
+                        <View style={{ marginTop: 15 }}>
+                            {data?.topProducts?.map((p: any, i: number) => <LeaderboardItem key={i} index={i} name={p.name} count={p.sold} rating={p.rating} unit="Sold" iconColor={Palette.warmCopper} />)}
+                        </View>
+                    </View>
+                    <View style={localStyles.chartCard}>
+                        <View style={localStyles.leaderboardHeader}><Ionicons name="cart" size={20} color="#2196f3" /><Text style={localStyles.leaderboardTitle}>Top Buyers</Text></View>
+                        <View style={{ marginTop: 15 }}>
+                            {data?.topBuyers?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} unit="Orders" iconColor="#2196f3" />)}
+                        </View>
+                    </View>
+
                     {/* 📋 Recent Activity Table */}
                     <View style={[localStyles.chartCard, { width: '100%' }]}>
                         <View style={localStyles.leaderboardHeader}><MaterialCommunityIcons name="history" size={22} color={Palette.warmCopper} /><Text style={localStyles.leaderboardTitle}>Recent System Activity</Text></View>
@@ -201,7 +209,6 @@ export default function GenAnalytics() {
                                 <Text style={[localStyles.tableHeadText, { flex: 1.5 }]}>Variety</Text>
                                 <Text style={[localStyles.tableHeadText, { flex: 1.5 }]}>Status</Text>
                                 <Text style={[localStyles.tableHeadText, { flex: 1 }]}>Conf.</Text>
-                                {/* ✅ HEADER RENAMED TO DATE ONLY */}
                                 <Text style={[localStyles.tableHeadText, { flex: 2, textAlign: 'right' }]}>Date</Text>
                             </View>
                             {data?.recentScans?.map((scan: any, i: number) => (
@@ -214,7 +221,6 @@ export default function GenAnalytics() {
                                         </View>
                                     </View>
                                     <Text style={[localStyles.tableCellText, { flex: 1 }]}>{scan.confidence}%</Text>
-                                    {/* ✅ DATE ONLY DISPLAY */}
                                     <Text style={[localStyles.tableCellText, { flex: 2, textAlign: 'right', fontSize: 11 }]}>{formatDate(scan.time)}</Text>
                                 </View>
                             ))}
