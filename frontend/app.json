@@ -48,8 +48,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "07adb69a-bfb4-4df8-96e4-5c90d1a74429"
+        "projectId": "e30a57e2-6d54-4cfd-97af-8a5ebd092bb1"
       }
-    }
+    },
+    "owner": "evncrl07"
   }
 }
