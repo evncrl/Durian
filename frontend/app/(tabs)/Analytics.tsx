@@ -9,6 +9,8 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Modal,
+  StyleSheet as RNStyleSheet,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +32,11 @@ interface ScanItem {
   created_at?: string;
   durian_count: number;
   confidence: number;
+  color?: string;
+  size?: string;
+  shape?: string;
+  disease?: string;
+  recommendation?: string;
 }
 
 interface AnalyticsData {
@@ -61,6 +68,13 @@ export default function Analytics() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [selectedScan, setSelectedScan] = useState<ScanItem | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const openScanDetails = (scan: ScanItem) => {
+    setSelectedScan(scan);
+    setModalVisible(true);
+  };
 
   const styles = useAnalyticsStyles();
   const { user } = useUser();
@@ -359,6 +373,7 @@ export default function Analytics() {
                   key={scan.id}
                   style={[styles.scanItem, { alignItems: 'flex-start' }]}
                   activeOpacity={0.7}
+                  onPress={() => openScanDetails(scan)}
                 >
                   {scan.thumbnail_url ? (
                     <Image
@@ -397,8 +412,8 @@ export default function Analytics() {
                       {scan.quality >= 70
                         ? 'This represents high quality, suitable for export.'
                         : scan.quality >= 50
-                        ? 'This represents moderate quality, good for local sales.'
-                        : 'This represents low quality, may need improvement.'}
+                          ? 'This represents moderate quality, good for local sales.'
+                          : 'This represents low quality, may need improvement.'}
                     </Text>
                   </View>
 
@@ -419,6 +434,175 @@ export default function Analytics() {
         </View>
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={modalStyles.centeredView}>
+          <View style={modalStyles.modalView}>
+            <View style={modalStyles.modalHeader}>
+              <Text style={modalStyles.modalTitle}>Scan Details</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close-circle" size={30} color="#E74C3C" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedScan && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Image
+                  source={{ uri: selectedScan.image_url || selectedScan.thumbnail_url }}
+                  style={modalStyles.detailImage}
+                  resizeMode="cover"
+                />
+
+                {/* Basic Info */}
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Variety:</Text>
+                  <Text style={modalStyles.infoValue}>{selectedScan.variety}</Text>
+                </View>
+
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Quality Score:</Text>
+                  <Text style={[modalStyles.infoValue, { color: '#27AE60' }]}>
+                    {Math.round(selectedScan.quality)}%
+                  </Text>
+                </View>
+
+                {/* Physical Characteristics */}
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Color:</Text>
+                  <Text style={modalStyles.infoValue}>{selectedScan.color || 'N/A'}</Text>
+                </View>
+
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Size:</Text>
+                  <Text style={modalStyles.infoValue}>{selectedScan.size || 'N/A'}</Text>
+                </View>
+
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Shape:</Text>
+                  <Text style={modalStyles.infoValue}>{selectedScan.shape || 'N/A'}</Text>
+                </View>
+
+                {/* Health Status */}
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Disease Status:</Text>
+                  <Text style={[
+                    modalStyles.infoValue,
+                    { color: selectedScan.disease?.toLowerCase() === 'healthy' ? '#27AE60' : '#E74C3C' }
+                  ]}>
+                    {selectedScan.disease || 'Healthy'}
+                  </Text>
+                </View>
+
+                {/* AI Recommendation */}
+                <View style={modalStyles.recommendationBox}>
+                  <Text style={modalStyles.recommendationTitle}>
+                    <Ionicons name="bulb-outline" size={16} color="#F1C40F" /> Recommendation
+                  </Text>
+                  <Text style={modalStyles.recommendationText}>
+                    {selectedScan.recommendation || 'No recommendation available for this scan.'}
+                  </Text>
+                </View>
+
+                {/* Footer Info */}
+                <View style={modalStyles.infoRow}>
+                  <Text style={modalStyles.infoLabel}>Durian Count:</Text>
+                  <Text style={modalStyles.infoValue}>{selectedScan.durian_count}</Text>
+                </View>
+
+                <View style={[modalStyles.infoRow, { borderBottomWidth: 0 }]}>
+                  <Text style={modalStyles.infoLabel}>Date:</Text>
+                  <Text style={modalStyles.infoValue}>{formatDate(selectedScan.created_at)}</Text>
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
+
+const modalStyles = RNStyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 20,
+  },
+  modalView: {
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '85%',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 20,
+    padding: 25,
+    borderWidth: 1,
+    borderColor: '#333',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 },
+      android: { elevation: 10 },
+      web: { boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }
+    })
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: Fonts.bold,
+    color: '#fff',
+  },
+  detailImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  infoLabel: {
+    color: '#aaa',
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+  },
+  infoValue: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: Fonts.semiBold,
+  },
+  recommendationBox: {
+    backgroundColor: '#222',
+    borderRadius: 12,
+    padding: 15,
+    marginVertical: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F1C40F', // Yellow accent for tips
+  },
+  recommendationTitle: {
+    color: '#F1C40F',
+    fontFamily: Fonts.bold,
+    fontSize: 14,
+    marginBottom: 5,
+    textTransform: 'uppercase',
+  },
+  recommendationText: {
+    color: '#ddd',
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: Fonts.regular,
+  },
+});
