@@ -1,0 +1,17 @@
+# Exclude everything that is NOT the Expo frontend
+ml/
+venv/
+backend/
+.git/
+
+# Exclude heavy/unnecessary files inside TomatoGuardExpo
+frontend/node_modules/
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+
+# Exclude large file types
+*.h5
+*.mp4
+*.zip
+*.tar.gz

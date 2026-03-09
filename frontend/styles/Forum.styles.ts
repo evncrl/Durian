@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
 
   commentText: {
     fontSize: scale(14),
-    color: colors.gray700,
+    color: colors.gray900,
     lineHeight: 20,
     marginBottom: 8,
   },

@@ -366,8 +366,8 @@ function Landing({ }: any) {
       styleName: 'videoSection', // Ensure this style exists or use inline
       title: "Watch Our Story",
       subtitle: "Discover the journey behind our durian quality assurance.",
-      titleStyle: { color: Palette.deepObsidian, textAlign: 'center', marginTop: 40 },
-      subtitleStyle: { color: Palette.charcoalEspresso, textAlign: 'center', marginBottom: 20 },
+      titleStyle: { color: '#F0F0F0', textAlign: 'center', marginTop: 40 },
+      subtitleStyle: { color: '#F0F0F0', textAlign: 'center', marginBottom: 20 },
     },
     {
       id: 'mission',

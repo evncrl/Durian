@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "DURIANOSTICS",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "DURIANOSTICS",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
