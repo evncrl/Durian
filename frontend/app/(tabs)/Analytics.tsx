@@ -71,13 +71,71 @@ export default function Analytics() {
   const [selectedScan, setSelectedScan] = useState<ScanItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const styles = useAnalyticsStyles();
+  const { user } = useUser();
+
+  // --------------------------------------------------
+  // ✅ SYNCED DYNAMIC LOGIC
+  // --------------------------------------------------
+  const getDynamicMetrics = (scan: ScanItem) => {
+    const cClass = (scan.color || '').toLowerCase();
+    const sSize = (scan.size || '').toLowerCase();
+    const sShape = (scan.shape || '').toLowerCase();
+    const diseaseName = (scan.disease || 'healthy').toLowerCase();
+    const conf = scan.confidence || 0.5;
+
+    // 1. Disease Priority (Range 0-50)
+    if (diseaseName === 'rot' || diseaseName === 'mold') {
+      const calculatedScore = Math.max(5, 50 * (1 - conf));
+      return { 
+        score: calculatedScore, 
+        label: 'Rejected', 
+        color: '#E74C3C',
+        recommendation: 'Warning: Fruit is contaminated. Do not mix with healthy stocks. Dispose of rot/mold items properly.'
+      };
+    }
+
+    // 2. Export Quality (Range 90-100)
+    if (cClass === 'greenish' && sShape === 'round' && sSize === 'large') {
+      const calculatedScore = 90 + (10 * conf);
+      return { 
+        score: calculatedScore, 
+        label: 'Export Quality', 
+        color: '#27AE60',
+        recommendation: 'Recommendation: This durian is suitable for Export Quality.'
+      };
+    }
+
+    // 3. Local Market (Range 70-89)
+    if (cClass === 'brownish' && sShape === 'round' && sSize === 'medium') {
+      const calculatedScore = 70 + (19 * conf);
+      return { 
+        score: calculatedScore, 
+        label: 'Local Market', 
+        color: '#F39C12',
+        recommendation: 'Recommendation: This durian is suitable for Local Market.'
+      };
+    }
+
+    return { 
+      score: 60, 
+      label: 'Average Quality', 
+      color: '#3498DB',
+      recommendation: 'Suitable for distribution based on grade.'
+    };
+  };
+
+  const getConfColor = (conf: number) => {
+    const perc = conf * 100;
+    if (perc >= 80) return '#27AE60'; // Green
+    if (perc >= 60) return '#F39C12'; // Orange
+    return '#E74C3C'; // Red
+  };
+
   const openScanDetails = (scan: ScanItem) => {
     setSelectedScan(scan);
     setModalVisible(true);
   };
-
-  const styles = useAnalyticsStyles();
-  const { user } = useUser();
 
   const fetchAnalytics = useCallback(async () => {
     if (!user?.id) {
@@ -85,20 +143,11 @@ export default function Analytics() {
       setLoading(false);
       return;
     }
-
     try {
-      const response = await fetch(
-        `${API_URL}/scanner/analytics/${user.id}?time_range=${timeRange}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'ngrok-skip-browser-warning': 'true',
-          },
-        }
-      );
-
+      const response = await fetch(`${API_URL}/scanner/analytics/${user.id}?time_range=${timeRange}`, {
+        headers: { 'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+      });
       const data = await response.json();
-
       if (data.success) {
         setAnalyticsData(data);
         setError(null);
@@ -106,7 +155,6 @@ export default function Analytics() {
         setError(data.error || 'Failed to load analytics');
       }
     } catch (err) {
-      console.error('Error fetching analytics:', err);
       setError('Failed to connect to server');
     } finally {
       setLoading(false);
@@ -114,61 +162,35 @@ export default function Analytics() {
     }
   }, [user?.id, timeRange]);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+  useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  const downloadPDF = () => {
-    if (!user?.id) return;
-    const pdfUrl = `${API_URL}/analytics/pdf/${user.id}`;
-    window.open(pdfUrl, '_blank'); // Avoids CORS fetch issue
-  };
-
-  // Default values when no data
-  const stats = analyticsData?.stats || {
-    total_scans: 0,
-    export_ready_percent: 0,
-    rejected_percent: 0,
-    avg_quality: 0,
-    top_variety: 'N/A',
-    weekly_growth: 0,
-  };
-
+  const stats = analyticsData?.stats || { total_scans: 0, export_ready_percent: 0, rejected_percent: 0, avg_quality: 0, top_variety: 'N/A', weekly_growth: 0 };
   const weeklyData = analyticsData?.weekly_data || [];
   const recentScans = analyticsData?.recent_scans || [];
   const qualityDistribution = analyticsData?.quality_distribution || [];
-
   const maxScans = Math.max(...weeklyData.map(d => d.scans), 1);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#27AE60" />
-        <Text style={{ color: '#fff', marginTop: 16 }}>Loading analytics...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Analytics</Text>
@@ -180,71 +202,38 @@ export default function Analytics() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#27AE60"
-            colors={['#27AE60']}
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#27AE60" />}
       >
         {/* Error Message */}
-        {error && (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={{ color: '#E74C3C', textAlign: 'center' }}>{error}</Text>
-            <TouchableOpacity
-              style={{ marginTop: 12, padding: 10, backgroundColor: '#27AE60', borderRadius: 8 }}
-              onPress={fetchAnalytics}
-            >
-              <Text style={{ color: '#fff' }}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {error && <Text style={{ color: '#E74C3C', textAlign: 'center', padding: 20 }}>{error}</Text>}
 
         {/* Time Range Selector */}
         <View style={styles.timeRangeContainer}>
           {(['week', 'month', 'year'] as const).map((range) => (
             <TouchableOpacity
               key={range}
-              style={[
-                styles.timeRangeButton,
-                timeRange === range && styles.timeRangeButtonActive,
-              ]}
+              style={[styles.timeRangeButton, timeRange === range && styles.timeRangeButtonActive]}
               onPress={() => setTimeRange(range)}
             >
-              <Text
-                style={[
-                  styles.timeRangeText,
-                  timeRange === range && styles.timeRangeTextActive,
-                ]}
-              >
+              <Text style={[styles.timeRangeText, timeRange === range && styles.timeRangeTextActive]}>
                 {range.charAt(0).toUpperCase() + range.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Key Metrics Grid */}
+        {/* Key Metrics Grid - RESTORED */}
         <View style={styles.metricsGrid}>
-          {/* Total Scans */}
           <View style={[styles.metricCard, styles.metricCardLarge]}>
             <View style={styles.metricHeader}>
               <Ionicons name="analytics" size={24} color="#27AE60" />
               <View style={styles.metricBadge}>
-                <Text style={styles.metricBadgeText}>
-                  {stats.weekly_growth >= 0 ? '+' : ''}{stats.weekly_growth}%
-                </Text>
+                <Text style={styles.metricBadgeText}>{stats.weekly_growth >= 0 ? '+' : ''}{stats.weekly_growth}%</Text>
               </View>
             </View>
-            <Text style={styles.metricValue}>{stats.total_scans.toLocaleString()}</Text>
+            <Text style={styles.metricValue}>{stats.total_scans}</Text>
             <Text style={styles.metricLabel}>Total Scans</Text>
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
-              This represents total number of scans performed in this {timeRange}.
-            </Text>
           </View>
-
-          {/* Export Quality */}
           <View style={styles.metricCard}>
             <Ionicons name="checkmark-circle" size={24} color="#27AE60" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.export_ready_percent}%</Text>
@@ -252,12 +241,7 @@ export default function Analytics() {
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${stats.export_ready_percent}%` }]} />
             </View>
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
-              This represents the percentage of scans meeting export quality standards.
-            </Text>
           </View>
-
-          {/* Rejected */}
           <View style={styles.metricCard}>
             <Ionicons name="warning" size={24} color="#E74C3C" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.rejected_percent}%</Text>
@@ -265,64 +249,39 @@ export default function Analytics() {
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, styles.progressFillWarning, { width: `${stats.rejected_percent}%` }]} />
             </View>
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
-              This represents the percentage of scans rejected due to low quality.
-            </Text>
           </View>
-
-          {/* Avg Quality Score */}
           <View style={styles.metricCard}>
             <Ionicons name="star" size={24} color="#F1C40F" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.avg_quality}/100</Text>
             <Text style={styles.metricLabel}>Avg Quality Score</Text>
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
-              This represents average quality score of all scans in this period.
-            </Text>
           </View>
-
-          {/* Top Variety */}
           <View style={styles.metricCard}>
             <Ionicons name="ribbon" size={24} color="#E67E22" style={{ marginBottom: 8 }} />
             <Text style={styles.metricValue}>{stats.top_variety}</Text>
             <Text style={styles.metricLabel}>Top Variety</Text>
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
-              This represents the most scanned durian variety in this period.
-            </Text>
           </View>
         </View>
 
-        {/* Weekly Activity Chart */}
+        {/* Weekly Activity - RESTORED */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Weekly Activity</Text>
           <View style={styles.chartCard}>
             <View style={styles.chart}>
-              {weeklyData.map((data, index) => {
-                const barHeight = (data.scans / maxScans) * 100;
-                return (
-                  <View key={index} style={styles.chartBar}>
-                    <View style={styles.chartBarContainer}>
-                      <View style={[styles.chartBarFill, { height: `${barHeight}%` }]}>
-                        <Text style={styles.chartBarValue}>{data.scans}</Text>
-                      </View>
+              {weeklyData.map((data, index) => (
+                <View key={index} style={styles.chartBar}>
+                  <View style={styles.chartBarContainer}>
+                    <View style={[styles.chartBarFill, { height: `${(data.scans / maxScans) * 100}%` }]}>
+                      <Text style={styles.chartBarValue}>{data.scans}</Text>
                     </View>
-                    <Text style={styles.chartBarLabel}>{data.day}</Text>
                   </View>
-                );
-              })}
+                  <Text style={styles.chartBarLabel}>{data.day}</Text>
+                </View>
+              ))}
             </View>
-            <View style={styles.chartLegend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#27AE60' }]} />
-                <Text style={styles.legendText}>Scans per day</Text>
-              </View>
-            </View>
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
-              This represents number of scans per day over the selected period.
-            </Text>
           </View>
         </View>
 
-        {/* Quality Distribution */}
+        {/* Quality Distribution - RESTORED */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quality Distribution</Text>
           <View style={styles.distributionCard}>
@@ -338,186 +297,92 @@ export default function Analytics() {
                 <Text style={styles.distributionPercentage}>{item.percentage}%</Text>
               </View>
             ))}
-            <Text style={{ fontSize: 12, color: '#aaa', marginTop: 6 }}>
-              {qualityDistribution.length === 0
-                ? 'This represents no quality data available for this period.'
-                : `This represents distribution of scan quality; most scans fall in the ${qualityDistribution.reduce((prev, curr) => curr.count > prev.count ? curr : prev).range} range.`}
-            </Text>
           </View>
         </View>
 
-        {/* Recent Scans */}
+        {/* Recent Scans with Synced Logic */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Scans</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/Scanner')}>
-              <Text style={styles.sectionLink}>Scan New →</Text>
-            </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Recent Scans History</Text>
+          <View style={styles.recentScansCard}>
+            {recentScans.length === 0 ? (
+               <Text style={{ color: '#888', textAlign: 'center', padding: 20 }}>No scans recorded.</Text>
+            ) : (
+              recentScans.map((scan) => {
+                const dynamic = getDynamicMetrics(scan); // ✅ Logic Match
+                return (
+                  <TouchableOpacity key={scan.id} style={styles.scanItem} activeOpacity={0.7} onPress={() => openScanDetails(scan)}>
+                    <Image source={{ uri: scan.thumbnail_url }} style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: '#333' }} />
+                    <View style={[styles.scanInfo, { flex: 1, marginLeft: 12 }]}>
+                      <Text style={styles.scanVariety}>{scan.variety}</Text>
+                      <Text style={styles.scanTime}>{formatDate(scan.created_at)}</Text>
+                      <View style={styles.confidenceBar}>
+                        <View style={[styles.confidenceFill, { 
+                          width: `${scan.confidence * 100}%`, 
+                          backgroundColor: getConfColor(scan.confidence) // ✅ Updated color
+                        }]} />
+                      </View>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={[styles.scanQuality, { color: dynamic.color, fontSize: 18, fontFamily: Fonts.bold }]}>
+                        {Math.round(dynamic.score)}%
+                      </Text>
+                      <View style={[styles.scanStatusBadge, { backgroundColor: dynamic.color + '33' }]}>
+                        <Text style={[styles.scanStatusText, { color: dynamic.color }]}>
+                          {dynamic.label}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </View>
-
-          {recentScans.length === 0 ? (
-            <View style={[styles.recentScansCard, { alignItems: 'center', paddingVertical: 40 }]}>
-              <Text style={{ color: '#666', fontSize: 16, marginBottom: 8, fontFamily: Fonts.regular }}>No scans yet</Text>
-              <Text style={{ color: '#888', fontSize: 14, fontFamily: Fonts.regular }}>Start scanning durians to see your history</Text>
-              <TouchableOpacity
-                style={{ marginTop: 16, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: '#27AE60', borderRadius: 8 }}
-                onPress={() => router.push('/(tabs)/Scanner')}
-              >
-                <Text style={{ color: '#fff', fontFamily: Fonts.semiBold }}>Start Scanning</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.recentScansCard}>
-              {recentScans.map((scan) => (
-                <TouchableOpacity
-                  key={scan.id}
-                  style={[styles.scanItem, { alignItems: 'flex-start' }]}
-                  activeOpacity={0.7}
-                  onPress={() => openScanDetails(scan)}
-                >
-                  {scan.thumbnail_url ? (
-                    <Image
-                      source={{ uri: scan.thumbnail_url }}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: 8,
-                        backgroundColor: '#333',
-                      }}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.scanIcon, { width: 60, height: 60, borderRadius: 8 }]}>
-                      <Ionicons name="leaf" size={24} color="#27AE60" />
-                    </View>
-                  )}
-
-                  <View style={[styles.scanInfo, { flex: 1, marginLeft: 12 }]}>
-                    <Text style={styles.scanVariety}>{scan.variety}</Text>
-                    <Text style={styles.scanTime}>{scan.time}</Text>
-                    {scan.created_at && (
-                      <Text style={{ color: '#666', fontSize: 11, marginTop: 2 }}>
-                        {formatDate(scan.created_at)}
-                      </Text>
-                    )}
-                    <View style={{ flexDirection: 'row', marginTop: 4, gap: 8 }}>
-                      <Text style={{ color: '#888', fontSize: 12, fontFamily: Fonts.regular }}>
-                        {scan.durian_count} detected
-                      </Text>
-                      <Text style={{ color: '#888', fontSize: 12, fontFamily: Fonts.regular }}>
-                        {(scan.confidence * 100).toFixed(0)}% conf.
-                      </Text>
-                    </View>
-                    <Text style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
-                      {scan.quality >= 70
-                        ? 'This represents high quality, suitable for export.'
-                        : scan.quality >= 50
-                          ? 'This represents moderate quality, good for local sales.'
-                          : 'This represents low quality, may need improvement.'}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.scanMetrics, { alignItems: 'flex-end' }]}>
-                    <Text style={[styles.scanQuality, { color: scan.quality >= 70 ? '#27AE60' : scan.quality >= 50 ? '#F39C12' : '#E74C3C', fontSize: 18, fontFamily: Fonts.bold }]}>
-                      {Math.round(scan.quality)}%
-                    </Text>
-                    <View style={[styles.scanStatusBadge, scan.status === 'Rejected' && styles.scanStatusBadgeRejected, scan.status === 'Local Sale' && { backgroundColor: 'rgba(245, 158, 11, 0.2)' }]}>
-                      <Text style={[styles.scanStatusText, scan.status === 'Rejected' && styles.scanStatusTextRejected, scan.status === 'Local Sale' && { color: '#F39C12' }]}>
-                        {scan.status}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
         </View>
-        <View style={{ height: 40 }} />
       </ScrollView>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      {/* Detail Modal with Dynamic Recommendations */}
+      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={modalStyles.centeredView}>
           <View style={modalStyles.modalView}>
             <View style={modalStyles.modalHeader}>
               <Text style={modalStyles.modalTitle}>Scan Details</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close-circle" size={30} color="#E74C3C" />
-              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setModalVisible(false)}><Ionicons name="close-circle" size={30} color="#E74C3C" /></TouchableOpacity>
             </View>
-
             {selectedScan && (
               <ScrollView showsVerticalScrollIndicator={false}>
-                <Image
-                  source={{ uri: selectedScan.image_url || selectedScan.thumbnail_url }}
-                  style={modalStyles.detailImage}
-                  resizeMode="cover"
-                />
-
-                {/* Basic Info */}
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Variety:</Text>
-                  <Text style={modalStyles.infoValue}>{selectedScan.variety}</Text>
-                </View>
-
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Quality Score:</Text>
-                  <Text style={[modalStyles.infoValue, { color: '#27AE60' }]}>
-                    {Math.round(selectedScan.quality)}%
-                  </Text>
-                </View>
-
-                {/* Physical Characteristics */}
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Color:</Text>
-                  <Text style={modalStyles.infoValue}>{selectedScan.color || 'N/A'}</Text>
-                </View>
-
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Size:</Text>
-                  <Text style={modalStyles.infoValue}>{selectedScan.size || 'N/A'}</Text>
-                </View>
-
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Shape:</Text>
-                  <Text style={modalStyles.infoValue}>{selectedScan.shape || 'N/A'}</Text>
-                </View>
-
-                {/* Health Status */}
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Disease Status:</Text>
-                  <Text style={[
-                    modalStyles.infoValue,
-                    { color: selectedScan.disease?.toLowerCase() === 'healthy' ? '#27AE60' : '#E74C3C' }
-                  ]}>
-                    {selectedScan.disease || 'Healthy'}
-                  </Text>
-                </View>
-
-                {/* AI Recommendation */}
-                <View style={modalStyles.recommendationBox}>
-                  <Text style={modalStyles.recommendationTitle}>
-                    <Ionicons name="bulb-outline" size={16} color="#F1C40F" /> Recommendation
-                  </Text>
-                  <Text style={modalStyles.recommendationText}>
-                    {selectedScan.recommendation || 'No recommendation available for this scan.'}
-                  </Text>
-                </View>
-
-                {/* Footer Info */}
-                <View style={modalStyles.infoRow}>
-                  <Text style={modalStyles.infoLabel}>Durian Count:</Text>
-                  <Text style={modalStyles.infoValue}>{selectedScan.durian_count}</Text>
-                </View>
-
-                <View style={[modalStyles.infoRow, { borderBottomWidth: 0 }]}>
-                  <Text style={modalStyles.infoLabel}>Date:</Text>
-                  <Text style={modalStyles.infoValue}>{formatDate(selectedScan.created_at)}</Text>
-                </View>
+                <Image source={{ uri: selectedScan.image_url || selectedScan.thumbnail_url }} style={modalStyles.detailImage} resizeMode="cover" />
+                {(() => {
+                  const dynamic = getDynamicMetrics(selectedScan);
+                  return (
+                    <>
+                      <View style={modalStyles.infoRow}>
+                        <Text style={modalStyles.infoLabel}>Dynamic Score:</Text>
+                        <Text style={[modalStyles.infoValue, { color: dynamic.color }]}>{Math.round(dynamic.score)}%</Text>
+                      </View>
+                      <View style={modalStyles.infoRow}>
+                        <Text style={modalStyles.infoLabel}>Final Grade:</Text>
+                        <Text style={[modalStyles.infoValue, { color: dynamic.color }]}>{dynamic.label}</Text>
+                      </View>
+                      <View style={modalStyles.infoRow}>
+                        <Text style={modalStyles.infoLabel}>Disease:</Text>
+                        <Text style={[modalStyles.infoValue, {color: selectedScan.disease?.toLowerCase() !== 'healthy' ? '#E74C3C' : '#27AE60'}]}>{selectedScan.disease || 'Healthy'}</Text>
+                      </View>
+                      <View style={modalStyles.infoRow}><Text style={modalStyles.infoLabel}>Color:</Text><Text style={modalStyles.infoValue}>{selectedScan.color || 'N/A'}</Text></View>
+                      <View style={modalStyles.infoRow}><Text style={modalStyles.infoLabel}>Size:</Text><Text style={modalStyles.infoValue}>{selectedScan.size || 'N/A'}</Text></View>
+                      <View style={modalStyles.infoRow}><Text style={modalStyles.infoLabel}>Shape:</Text><Text style={modalStyles.infoValue}>{selectedScan.shape || 'N/A'}</Text></View>
+                      
+                      {/* ✅ Updated Recommendation Logic */}
+                      <View style={modalStyles.recommendationBox}>
+                        <Text style={modalStyles.recommendationTitle}>
+                           <Ionicons name="bulb-outline" size={16} color="#F1C40F" /> Recommendation
+                        </Text>
+                        <Text style={modalStyles.recommendationText}>
+                          {dynamic.recommendation}
+                        </Text>
+                      </View>
+                    </>
+                  );
+                })()}
               </ScrollView>
             )}
           </View>
@@ -528,81 +393,15 @@ export default function Analytics() {
 }
 
 const modalStyles = RNStyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    padding: 20,
-  },
-  modalView: {
-    width: '100%',
-    maxWidth: 500,
-    maxHeight: '85%',
-    backgroundColor: '#1A1A1A',
-    borderRadius: 20,
-    padding: 25,
-    borderWidth: 1,
-    borderColor: '#333',
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 },
-      android: { elevation: 10 },
-      web: { boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }
-    })
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontFamily: Fonts.bold,
-    color: '#fff',
-  },
-  detailImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  infoLabel: {
-    color: '#aaa',
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-  },
-  infoValue: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-  },
-  recommendationBox: {
-    backgroundColor: '#222',
-    borderRadius: 12,
-    padding: 15,
-    marginVertical: 15,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F1C40F', // Yellow accent for tips
-  },
-  recommendationTitle: {
-    color: '#F1C40F',
-    fontFamily: Fonts.bold,
-    fontSize: 14,
-    marginBottom: 5,
-    textTransform: 'uppercase',
-  },
-  recommendationText: {
-    color: '#ddd',
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: Fonts.regular,
-  },
+  centeredView: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)', padding: 20 },
+  modalView: { width: '100%', maxWidth: 500, maxHeight: '85%', backgroundColor: '#1A1A1A', borderRadius: 20, padding: 25, borderWidth: 1, borderColor: '#333' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 22, fontFamily: Fonts.bold, color: '#fff' },
+  detailImage: { width: '100%', height: 200, borderRadius: 12, marginBottom: 20 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#333' },
+  infoLabel: { color: '#aaa', fontSize: 16, fontFamily: Fonts.regular },
+  infoValue: { color: '#fff', fontSize: 16, fontFamily: Fonts.semiBold },
+  recommendationBox: { backgroundColor: '#222', borderRadius: 12, padding: 15, marginVertical: 15, borderLeftWidth: 4, borderLeftColor: '#F1C40F' },
+  recommendationTitle: { color: '#F1C40F', fontFamily: Fonts.bold, fontSize: 14, marginBottom: 5, textTransform: 'uppercase' },
+  recommendationText: { color: '#ddd', fontSize: 14, lineHeight: 20, fontFamily: Fonts.regular },
 });
