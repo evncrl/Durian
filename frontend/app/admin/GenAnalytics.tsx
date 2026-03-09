@@ -19,8 +19,8 @@ export default function GenAnalytics() {
             dateToParse = dateString.includes('T') ? `${dateString}Z` : `${dateString.replace(' ', 'T')}Z`;
         }
         const date = new Date(dateToParse);
-        return isNaN(date.getTime()) ? dateString : date.toLocaleDateString(undefined, { 
-            year: 'numeric', month: 'short', day: 'numeric' 
+        return isNaN(date.getTime()) ? dateString : date.toLocaleDateString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric'
         });
     };
 
@@ -32,12 +32,63 @@ export default function GenAnalytics() {
             });
             const json = await res.json();
             if (json.success) setData(json.stats);
-        } catch (err) { 
-            console.error("Analytics Fetch Error:", err); 
+        } catch (err) {
+            console.error("Analytics Fetch Error:", err);
         } finally { setLoading(false); }
     };
 
     useEffect(() => { fetchAnalytics(); }, []);
+
+    // ✅ EXACT LOGIC FROM scans.tsx (Red, Yellow, Green)
+    const getDynamicMetrics = (item: any) => {
+        const cClass = (item.color || '').toLowerCase();
+        const sSize = (item.size || '').toLowerCase();
+        const sShape = (item.shape || '').toLowerCase();
+        const disease = (item.disease || 'healthy').toLowerCase();
+        const statusStr = (item.status || '').toLowerCase();
+
+        // 1. REJECTED = RED (Priority for rot/mold)
+        if (disease === 'rot' || disease === 'mold' || statusStr === 'rejected') {
+            return {
+                label: 'Rejected',
+                color: '#991b1b', // Dark Red
+                bg: '#fee2e2'    // Light Red
+            };
+        }
+
+        // 2. EXPORT READY = GREEN
+        if (
+            (cClass === 'greenish' && sShape === 'round' && sSize === 'large') ||
+            statusStr === 'export ready' ||
+            statusStr === 'export quality'
+        ) {
+            return {
+                label: 'Export Ready',
+                color: '#166534', // Dark Green
+                bg: '#dcfce7'    // Light Green
+            };
+        }
+
+        // 3. LOCAL MARKET = YELLOW
+        if (
+            (cClass === 'brownish' && sShape === 'round' && sSize === 'medium') ||
+            statusStr === 'local sale' ||
+            statusStr === 'local market'
+        ) {
+            return {
+                label: 'Local Market',
+                color: '#854d0e', // Dark Yellow
+                bg: '#fef3c7'    // Light Yellow
+            };
+        }
+
+        // Default Average (Blue)
+        return {
+            label: item.status || 'Average',
+            color: '#1e40af',
+            bg: '#dbeafe'
+        };
+    };
 
     const handleDownloadReport = async () => {
         setExporting(true);
@@ -62,7 +113,7 @@ export default function GenAnalytics() {
         return (
             <View style={localStyles.centered}>
                 <ActivityIndicator size="large" color={Palette.warmCopper} />
-                <Text style={{fontFamily: Fonts.medium, marginTop: 10, color: Palette.slate}}>Compiling System Data...</Text>
+                <Text style={{ fontFamily: Fonts.medium, marginTop: 10, color: Palette.slate }}>Compiling System Data...</Text>
             </View>
         );
     }
@@ -112,7 +163,7 @@ export default function GenAnalytics() {
         <View style={{ flex: 1, flexDirection: 'row', backgroundColor: Palette.linenWhite }}>
             <StatusBar barStyle="dark-content" />
             <AdminSidebar />
-            
+
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 30 }}>
                 <View style={localStyles.headerRow}>
                     <View>
@@ -125,17 +176,34 @@ export default function GenAnalytics() {
                     </TouchableOpacity>
                 </View>
 
-                {/* 📊 Summary Stats */}
+                {/* 📊 Summary Stats [RESTORED] */}
                 <View style={localStyles.grid}>
                     <StatCard title="Total Users" value={data?.totalUsers} color="#2196f3" icon={<Ionicons name="people" size={22} color="#2196f3" />} />
                     <StatCard title="Total Scans" value={data?.totalScans} color="#4caf50" icon={<MaterialCommunityIcons name="barcode-scan" size={22} color="#4caf50" />} />
                     <StatCard title="Forum Posts" value={data?.totalPosts} color="#ff9800" icon={<Ionicons name="chatbubbles" size={22} color="#ff9800" />} />
                     <StatCard title="Scan Accuracy" value={`${data?.successRate ?? 0}%`} color={Palette.warmCopper} icon={<Ionicons name="checkmark-done-circle" size={22} color={Palette.warmCopper} />} />
-                    <StatCard title="Avg Confidence" value={`${data?.avgConfidence ?? 0}%`} color="#9c27b0" icon={<Ionicons name="analytics" size={22} color="#9c27b0" />} />
+                    <StatCard
+                        title="Avg Confidence"
+                        value={`${(() => {
+                            let avg = data?.avgConfidence ?? 0;
+
+                            // ✅ FIXED LOGIC: 
+                            // Kung ang value ay libo-libo (tulad ng 9630), divide by 100.
+                            // Kung ang value ay daan-daan lang (tulad ng 639.5), divide by 10.
+                            if (avg > 1000) {
+                                avg = avg / 100;
+                            } else if (avg > 100) {
+                                avg = avg / 10;
+                            }
+
+                            return Number(avg).toFixed(1);
+                        })()}%`}
+                        color="#9c27b0"
+                        icon={<Ionicons name="analytics" size={22} color="#9c27b0" />}
+                    />
                 </View>
 
                 <View style={localStyles.chartsWrapper}>
-                    {/* Color Classification */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Color Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -144,7 +212,6 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* Health & Diseases */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Health & Diseases</Text>
                         <View style={{ marginTop: 20 }}>
@@ -154,7 +221,6 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* Size & Shape */}
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Size Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -163,6 +229,7 @@ export default function GenAnalytics() {
                             <RenderBar label="Small" count={data?.distribution?.size?.Small || 0} total={data?.totalScans} color="#9fa8da" />
                         </View>
                     </View>
+
                     <View style={localStyles.chartCard}>
                         <Text style={localStyles.chartTitle}>Shape Classification</Text>
                         <View style={{ marginTop: 20 }}>
@@ -172,13 +239,13 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* ✅ ENGAGEMENT LAYER */}
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="medal" size={20} color="#4caf50" /><Text style={localStyles.leaderboardTitle}>Top Scanners</Text></View>
                         <View style={{ marginTop: 15 }}>
                             {data?.topScanners?.map((u: any, i: number) => <LeaderboardItem key={i} index={i} name={u.name} count={u.count} unit="Scans" iconColor="#4caf50" />)}
                         </View>
                     </View>
+
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="megaphone" size={20} color="#ff9800" /><Text style={localStyles.leaderboardTitle}>Top Posters</Text></View>
                         <View style={{ marginTop: 15 }}>
@@ -186,13 +253,13 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* ✅ RESTORED: SALES LAYER */}
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="trophy" size={20} color="#FFD700" /><Text style={localStyles.leaderboardTitle}>Most Sold Product</Text></View>
                         <View style={{ marginTop: 15 }}>
                             {data?.topProducts?.map((p: any, i: number) => <LeaderboardItem key={i} index={i} name={p.name} count={p.sold} rating={p.rating} unit="Sold" iconColor={Palette.warmCopper} />)}
                         </View>
                     </View>
+
                     <View style={localStyles.chartCard}>
                         <View style={localStyles.leaderboardHeader}><Ionicons name="cart" size={20} color="#2196f3" /><Text style={localStyles.leaderboardTitle}>Top Buyers</Text></View>
                         <View style={{ marginTop: 15 }}>
@@ -200,7 +267,7 @@ export default function GenAnalytics() {
                         </View>
                     </View>
 
-                    {/* 📋 Recent Activity Table */}
+                    {/* 📋 Recent Activity Table [SYNCED LOGIC] */}
                     <View style={[localStyles.chartCard, { width: '100%' }]}>
                         <View style={localStyles.leaderboardHeader}><MaterialCommunityIcons name="history" size={22} color={Palette.warmCopper} /><Text style={localStyles.leaderboardTitle}>Recent System Activity</Text></View>
                         <View style={localStyles.recentTable}>
@@ -208,22 +275,44 @@ export default function GenAnalytics() {
                                 <Text style={[localStyles.tableHeadText, { flex: 2 }]}>User</Text>
                                 <Text style={[localStyles.tableHeadText, { flex: 1.5 }]}>Variety</Text>
                                 <Text style={[localStyles.tableHeadText, { flex: 1.5 }]}>Status</Text>
-                                <Text style={[localStyles.tableHeadText, { flex: 1 }]}>Conf.</Text>
+                                <Text style={[localStyles.tableHeadText, { flex: 1 }]}>Detection Conf.</Text>
                                 <Text style={[localStyles.tableHeadText, { flex: 2, textAlign: 'right' }]}>Date</Text>
                             </View>
-                            {data?.recentScans?.map((scan: any, i: number) => (
-                                <View key={i} style={localStyles.tableRow}>
-                                    <Text style={[localStyles.tableCellText, { flex: 2, fontFamily: Fonts.bold }]}>{scan.username}</Text>
-                                    <Text style={[localStyles.tableCellText, { flex: 1.5 }]}>{scan.variety}</Text>
-                                    <View style={{ flex: 1.5 }}>
-                                        <View style={[localStyles.statusBadge, { backgroundColor: scan.status === 'Export Ready' ? '#dcfce7' : scan.status === 'Rejected' ? '#fee2e2' : '#fef3c7' }]}>
-                                            <Text style={[localStyles.statusText, { color: scan.status === 'Export Ready' ? '#166534' : scan.status === 'Rejected' ? '#991b1b' : '#854d0e' }]}>{scan.status}</Text>
+                            {data?.recentScans?.map((scan: any, i: number) => {
+                                const dynamic = getDynamicMetrics(scan); // ✅ Exact Logic Match
+                                let displayConf = scan.confidence;
+
+                                if (displayConf > 100) {
+                                    displayConf = displayConf / 100;
+                                }
+
+                                displayConf = Number(displayConf).toFixed(1);
+                                return (
+                                    <View key={i} style={localStyles.tableRow}>
+                                        <Text style={[localStyles.tableCellText, { flex: 2, fontFamily: Fonts.bold }]}>{scan.username}</Text>
+                                        <Text style={[localStyles.tableCellText, { flex: 1.5 }]}>{scan.variety}</Text>
+                                        <View style={{ flex: 1.5 }}>
+                                            <View style={[localStyles.statusBadge, { backgroundColor: dynamic.bg }]}>
+                                                <Text style={[localStyles.statusText, { color: dynamic.color }]}>{dynamic.label}</Text>
+                                            </View>
                                         </View>
+                                        {/* ✅ High Confidence = Green */}
+                                        <Text
+                                            style={[
+                                                localStyles.tableCellText,
+                                                {
+                                                    flex: 1,
+                                                    color: displayConf >= 80 ? '#166534' : Palette.deepObsidian,
+                                                    fontFamily: Fonts.bold
+                                                }
+                                            ]}
+                                        >
+                                            {displayConf}%
+                                        </Text>
+                                        <Text style={[localStyles.tableCellText, { flex: 2, textAlign: 'right', fontSize: 11 }]}>{formatDate(scan.time)}</Text>
                                     </View>
-                                    <Text style={[localStyles.tableCellText, { flex: 1 }]}>{scan.confidence}%</Text>
-                                    <Text style={[localStyles.tableCellText, { flex: 2, textAlign: 'right', fontSize: 11 }]}>{formatDate(scan.time)}</Text>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </View>
                     </View>
                 </View>

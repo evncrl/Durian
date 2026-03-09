@@ -962,3 +962,66 @@ def get_all_scans_data():
         return {"success": True, "scans": scans_data}
     except Exception as e:
         return {"success": False, "error": str(e)}
+    
+def save_scan(user_id, image_url, thumbnail_url, cloudinary_public_id, detection_result, analysis_result):
+    try:
+        user_oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+        user = users_collection.find_one({"_id": user_oid})
+        if not user:
+            return None
+        
+        display_name = user.get("name") or user.get("username") or user.get("email") or "Anonymous"
+
+        # 1. Kunin ang raw model outputs
+        disease_data = analysis_result.get("disease", {})
+        disease_name = disease_data.get("disease", "healthy").lower() if isinstance(disease_data, dict) else str(disease_data).lower()
+        disease_conf = disease_data.get("confidence", 0.5) if isinstance(disease_data, dict) else 0.5
+
+        color_cls = analysis_result.get("color", {}).get("color_class", "").lower()
+        size_cls = analysis_result.get("size", {}).get("size_class", "").lower()
+        shape_cls = analysis_result.get("shape", {}).get("shape_class", "").lower()
+        conf = analysis_result.get("primary_confidence", 0.5)
+
+        # 2. ✅ FIXED GRADING LOGIC (Sync with DurianScanResult)
+        if disease_name in ['rot', 'mold']:
+            status = "Rejected"
+            # ✅ FIX: 'max' instead of 'Math.max' para hindi mag-crash ang Python
+            quality_score = max(5, 50 * (1 - disease_conf))
+        elif color_cls == 'greenish' and shape_cls == 'round' and size_cls == 'large':
+            status = "Export Ready"
+            quality_score = 90 + (10 * conf)
+        elif color_cls == 'brownish' and shape_cls == 'round' and size_cls == 'medium':
+            status = "Local Market"
+            quality_score = 70 + (19 * conf)
+        else:
+            status = "Local Sale"
+            quality_score = 60
+
+        scan_data = {
+            "user_id": user_oid,
+            "username": display_name,
+            "image_url": image_url,
+            "thumbnail_url": thumbnail_url,
+            "cloudinary_public_id": cloudinary_public_id,
+            "variety": analysis_result.get("primary_class", "Durian"),
+            "quality_score": round(quality_score, 1),
+            "confidence": round(conf * 100, 1),
+            "status": status,
+            "durian_count": analysis_result.get("total_count", 0),
+            "detection": detection_result,
+            "analysis": analysis_result,
+            "created_at": datetime.utcnow(),
+            "color_classification": color_cls.capitalize(),
+            "size_classification": size_cls.capitalize(),
+            "shape_classification": shape_cls.capitalize(),
+            "disease_type": disease_name.capitalize(),
+        }        
+        
+        result = scans_collection.insert_one(scan_data)
+        if result.inserted_id:
+            scan_data["_id"] = result.inserted_id
+            return scan_data
+        return None
+    except Exception as e:
+        print(f"[DB] CRITICAL ERROR IN save_scan: {e}") # Lalabas ito sa terminal mo pag nag-error
+        return None

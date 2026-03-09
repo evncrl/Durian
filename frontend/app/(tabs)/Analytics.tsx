@@ -324,7 +324,7 @@ export default function Analytics() {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={[styles.scanQuality, { color: dynamic.color, fontSize: 18, fontFamily: Fonts.bold }]}>
-                        {Math.round(dynamic.score)}%
+                        {Math.round(dynamic.score)}/100
                       </Text>
                       <View style={[styles.scanStatusBadge, { backgroundColor: dynamic.color + '33' }]}>
                         <Text style={[styles.scanStatusText, { color: dynamic.color }]}>
@@ -357,7 +357,7 @@ export default function Analytics() {
                     <>
                       <View style={modalStyles.infoRow}>
                         <Text style={modalStyles.infoLabel}>Dynamic Score:</Text>
-                        <Text style={[modalStyles.infoValue, { color: dynamic.color }]}>{Math.round(dynamic.score)}%</Text>
+                        <Text style={[modalStyles.infoValue, { color: dynamic.color }]}>{Math.round(dynamic.score)}/100%</Text>
                       </View>
                       <View style={modalStyles.infoRow}>
                         <Text style={modalStyles.infoLabel}>Final Grade:</Text>

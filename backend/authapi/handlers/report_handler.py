@@ -54,12 +54,21 @@ def generate_analytics_pdf(data):
                             ('BOX', (0,0), (-1,-1), 1, border_color),
                             ('VALIGN', (0,0), (-1,-1), 'MIDDLE')])
 
+    avg_conf = float(data.get('avgConfidence', 0))
+    
+    if avg_conf > 1000:
+        avg_conf = avg_conf / 100
+    elif avg_conf > 100:
+        avg_conf = avg_conf / 10
+        
+    formatted_avg_conf = f"{round(avg_conf, 1)}%"
+
     summary_tiles = [
         [make_tile(data['totalUsers'], "TOTAL USERS"), 
          make_tile(data['totalScans'], "TOTAL SCANS"), 
          make_tile(data['totalPosts'], "FORUM POSTS")],
         [make_tile(f"{data['successRate']}%", "ACCURACY"), 
-         make_tile(f"{data['avgConfidence']}%", "AVG CONFIDENCE"), 
+         make_tile(formatted_avg_conf, "AVG CONFIDENCE"), 
          ""]
     ]
     
@@ -143,12 +152,33 @@ def generate_analytics_pdf(data):
     elements.append(Paragraph("A chronological log of the latest classifications performed across the entire system.", desc_style))
     
     # ✅ UPDATED: Inalis ang time sa table header
-    activity_header = [["USER", "VARIETY", "STATUS", "CONF.", "DATE"]]
+    activity_header = [["USER", "VARIETY", "STATUS", "DETECT CONF.", "DATE"]]
     activity_rows = []
-    for s in data['recentScans'][:15]: 
-        # ✅ UPDATED: Ginamit ang '%b %d, %Y' para maging 'Mar 07, 2026'
-        date_str = datetime.datetime.fromisoformat(s['time'].replace('Z', '')).strftime('%b %d, %Y')
-        activity_rows.append([s['username'], s['variety'], s['status'], f"{s['confidence']}%", date_str])
+    activity_rows = []
+
+    for s in data['recentScans'][:15]:
+
+        date_str = datetime.datetime.fromisoformat(
+            s['time'].replace('Z', '')
+        ).strftime('%b %d, %Y')
+
+        conf = float(s['confidence'])
+
+        # normalize confidence values
+        if conf <= 1:
+            conf = conf * 100
+        elif conf > 100:
+            conf = conf / 100
+
+        conf = round(conf, 1)
+
+        activity_rows.append([
+            s['username'],
+            s['variety'],
+            s['status'],
+            f"{conf}%",
+            date_str
+        ])
     
     elements.append(Table(activity_header + activity_rows, colWidths=[1.6*inch, 1.2*inch, 1.2*inch, 0.8*inch, 1.6*inch],
                          style=[('BACKGROUND', (0, 0), (-1, 0), text_dark), ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
