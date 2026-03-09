@@ -1,5 +1,9 @@
 node_modules/
-.git/
 .expo/
-android/
-ios/
+dist/
+web-build/
+.git/
+*.h5
+*.mp4
+*.zip
+*.tar.gz
