@@ -187,9 +187,6 @@ export default function GenAnalytics() {
                         value={`${(() => {
                             let avg = data?.avgConfidence ?? 0;
 
-                            // ✅ FIXED LOGIC: 
-                            // Kung ang value ay libo-libo (tulad ng 9630), divide by 100.
-                            // Kung ang value ay daan-daan lang (tulad ng 639.5), divide by 10.
                             if (avg > 1000) {
                                 avg = avg / 100;
                             } else if (avg > 100) {

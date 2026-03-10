@@ -84,10 +84,13 @@ export default function DurianScanResult() {
     }
 
     // 4. Default Case (Range: 51-69)
+    const avgConf = (colorData.confidence + shapeData.confidence + sizeData.confidence) / 3 || 0.5;
+
     return {
-      score: 60,
+      // Formula: Base 51 + (Max 18 * confidence)
+      score: 51 + (18 * avgConf),
       label: 'Average Quality',
-      color: '#3498DB'
+      color: '#3498DB' // Blue
     };
   };
 
@@ -151,18 +154,18 @@ export default function DurianScanResult() {
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Detection Details</Text>
                 <View style={styles.detailRow}>
-                   <View style={styles.detailLeft}>
-                      <Ionicons name="search-outline" size={18} color="#666" />
-                      <Text style={styles.detailLabel}>Objects Found</Text>
-                   </View>
-                   <Text style={styles.detailValue}>{analysis.total_count || 0}</Text>
+                  <View style={styles.detailLeft}>
+                    <Ionicons name="search-outline" size={18} color="#666" />
+                    <Text style={styles.detailLabel}>Objects Found</Text>
+                  </View>
+                  <Text style={styles.detailValue}>{analysis.total_count || 0}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                   <View style={styles.detailLeft}>
-                      <Ionicons name="checkmark-circle-outline" size={18} color="#666" />
-                      <Text style={styles.detailLabel}>Primary Class</Text>
-                   </View>
-                   <Text style={styles.detailValue}>{analysis.primary_class || 'N/A'}</Text>
+                  <View style={styles.detailLeft}>
+                    <Ionicons name="checkmark-circle-outline" size={18} color="#666" />
+                    <Text style={styles.detailLabel}>Primary Class</Text>
+                  </View>
+                  <Text style={styles.detailValue}>{analysis.primary_class || 'N/A'}</Text>
                 </View>
               </View>
 
@@ -198,16 +201,16 @@ export default function DurianScanResult() {
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>Classification Breakdown</Text>
                 <View style={styles.detailRow}>
-                   <Text style={styles.detailLabel}>Color</Text>
-                   <Text style={styles.detailValue}>{colorData.color_class || 'N/A'}</Text>
+                  <Text style={styles.detailLabel}>Color</Text>
+                  <Text style={styles.detailValue}>{colorData.color_class || 'N/A'}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                   <Text style={styles.detailLabel}>Size</Text>
-                   <Text style={styles.detailValue}>{sizeData.size_class || 'N/A'}</Text>
+                  <Text style={styles.detailLabel}>Size</Text>
+                  <Text style={styles.detailValue}>{sizeData.size_class || 'N/A'}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                   <Text style={styles.detailLabel}>Shape</Text>
-                   <Text style={styles.detailValue}>{shapeData.shape_class || 'N/A'}</Text>
+                  <Text style={styles.detailLabel}>Shape</Text>
+                  <Text style={styles.detailValue}>{shapeData.shape_class || 'N/A'}</Text>
                 </View>
               </View>
 
@@ -220,7 +223,7 @@ export default function DurianScanResult() {
                       <Ionicons name="warning-outline" size={18} color="#E74C3C" />
                       <Text style={styles.detailLabel}>Disease Found</Text>
                     </View>
-                    <Text style={[styles.detailValue, {color: '#E74C3C'}]}>{diseaseName.toUpperCase()}</Text>
+                    <Text style={[styles.detailValue, { color: '#E74C3C' }]}>{diseaseName.toUpperCase()}</Text>
                   </View>
                 ) : (
                   <Text style={styles.recommendationText}>Healthy. No disease detected.</Text>
@@ -233,8 +236,8 @@ export default function DurianScanResult() {
                 <View style={styles.recommendationBox}>
                   <Ionicons name="bulb-outline" size={22} color="#27AE60" />
                   <Text style={styles.recommendationText}>
-                    {diseaseName !== 'healthy' 
-                      ? 'Warning: Fruit is contaminated. Do not mix with healthy stocks.' 
+                    {diseaseName !== 'healthy'
+                      ? 'Warning: Fruit is contaminated. Do not mix with healthy stocks.'
                       : (analysis.recommendation || 'Grade is suitable for distribution.')}
                   </Text>
                 </View>
