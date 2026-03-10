@@ -36,7 +36,7 @@ export default function AddressInput() {
 
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'GCash' | 'Card'>('COD');
+  const [paymentMethod, setPaymentMethod] = useState<'COD'>('COD');
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
@@ -150,14 +150,14 @@ export default function AddressInput() {
 
       <Text style={styles.label}>Payment Method</Text>
       <View style={styles.paymentContainer}>
-        {['COD', 'GCash', 'Card'].map(method => (
+        {['COD'].map(method => (
           <TouchableOpacity
             key={method}
             style={[
               styles.paymentOption,
               paymentMethod === method && styles.paymentSelected,
             ]}
-            onPress={() => setPaymentMethod(method as 'COD' | 'GCash' | 'Card')}
+            onPress={() => setPaymentMethod(method as 'COD')}
           >
             <Text
               style={[
