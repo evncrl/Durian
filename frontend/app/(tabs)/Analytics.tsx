@@ -82,7 +82,7 @@ export default function Analytics() {
     const sSize = (scan.size || '').toLowerCase();
     const sShape = (scan.shape || '').toLowerCase();
     const diseaseName = (scan.disease || 'healthy').toLowerCase();
-    const conf = scan.confidence || 0.5;
+    const conf = scan.confidence > 1 ? scan.confidence / 100 : (scan.confidence || 0.5);
 
     // 1. Disease Priority (Range 0-50)
     if (diseaseName === 'rot' || diseaseName === 'mold') {
@@ -117,8 +117,10 @@ export default function Analytics() {
       };
     }
 
+    const dynamicScore = 51 + (18 * conf);
+
     return { 
-      score: 60, 
+      score: dynamicScore, 
       label: 'Average Quality', 
       color: '#3498DB',
       recommendation: 'Suitable for distribution based on grade.'
@@ -126,10 +128,10 @@ export default function Analytics() {
   };
 
   const getConfColor = (conf: number) => {
-    const perc = conf * 100;
-    if (perc >= 80) return '#27AE60'; // Green
-    if (perc >= 60) return '#F39C12'; // Orange
-    return '#E74C3C'; // Red
+    const perc = conf <= 1 ? conf * 100 : conf;
+    if (perc >= 80) return '#27AE60'; 
+    if (perc >= 60) return '#F39C12'; 
+    return '#E74C3C';
   };
 
   const openScanDetails = (scan: ScanItem) => {
@@ -309,6 +311,7 @@ export default function Analytics() {
             ) : (
               recentScans.map((scan) => {
                 const dynamic = getDynamicMetrics(scan); // ✅ Logic Match
+                const barWidth = scan.confidence > 1 ? scan.confidence : scan.confidence * 100;
                 return (
                   <TouchableOpacity key={scan.id} style={styles.scanItem} activeOpacity={0.7} onPress={() => openScanDetails(scan)}>
                     <Image source={{ uri: scan.thumbnail_url }} style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: '#333' }} />
@@ -324,7 +327,7 @@ export default function Analytics() {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={[styles.scanQuality, { color: dynamic.color, fontSize: 18, fontFamily: Fonts.bold }]}>
-                        {Math.round(dynamic.score)}/100
+                        {Math.round(Math.min(100, dynamic.score))}/100
                       </Text>
                       <View style={[styles.scanStatusBadge, { backgroundColor: dynamic.color + '33' }]}>
                         <Text style={[styles.scanStatusText, { color: dynamic.color }]}>

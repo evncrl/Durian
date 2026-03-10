@@ -20,7 +20,7 @@ def draw_header(canvas, doc):
     canvas.restoreState()
 
 def generate_analytics_pdf(data):
-    """Generates a professional PDF report with date-only timestamps for consistency"""
+    """Generates a professional PDF report with synced average confidence logic"""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=50, bottomMargin=40)
     styles = getSampleStyleSheet()
@@ -40,7 +40,6 @@ def generate_analytics_pdf(data):
     insight_style = ParagraphStyle('InsightStyle', parent=styles['Normal'], fontSize=10, textColor=text_dark, leading=14, spaceBefore=10, spaceAfter=10)
 
     elements.append(Paragraph("DURIANOSTICS REPORT", title_style))
-    # ✅ UPDATED: Inalis ang time sa generation date
     elements.append(Paragraph(f"Generated on: {datetime.datetime.now().strftime('%B %d, %Y')}", sub_style))
     elements.append(HRFlowable(width="100%", thickness=1.5, color=primary_color, spaceAfter=20))
 
@@ -54,12 +53,25 @@ def generate_analytics_pdf(data):
                             ('BOX', (0,0), (-1,-1), 1, border_color),
                             ('VALIGN', (0,0), (-1,-1), 'MIDDLE')])
 
-    avg_conf = float(data.get('avgConfidence', 0))
-    
-    if avg_conf > 1000:
-        avg_conf = avg_conf / 100
-    elif avg_conf > 100:
-        avg_conf = avg_conf / 10
+    # ✅ SYNCED LOGIC: Calculate average from recent scans for consistency
+    recent_scans = data.get('recentScans', [])
+    if recent_scans:
+        total_conf = 0
+        for s in recent_scans:
+            c = float(s.get('confidence', 0))
+            # Normalization logic
+            if 0 < c <= 1:
+                c = c * 100
+            elif c > 1000:
+                c = c / 100
+            elif c > 100:
+                c = c / 10
+            total_conf += c
+        avg_conf = total_conf / len(recent_scans)
+    else:
+        avg_conf = float(data.get('avgConfidence', 0))
+        if avg_conf > 1000: avg_conf /= 100
+        elif avg_conf > 100: avg_conf /= 10
         
     formatted_avg_conf = f"{round(avg_conf, 1)}%"
 
@@ -151,32 +163,28 @@ def generate_analytics_pdf(data):
     elements.append(Paragraph("Recent System Activity", section_title))
     elements.append(Paragraph("A chronological log of the latest classifications performed across the entire system.", desc_style))
     
-    # ✅ UPDATED: Inalis ang time sa table header
-    activity_header = [["USER", "VARIETY", "STATUS", "DETECT CONF.", "DATE"]]
-    activity_rows = []
+    activity_header = [["USER", "VARIETY", "STATUS", "CONF.", "DATE"]]
     activity_rows = []
 
     for s in data['recentScans'][:15]:
-
         date_str = datetime.datetime.fromisoformat(
             s['time'].replace('Z', '')
         ).strftime('%b %d, %Y')
 
         conf = float(s['confidence'])
-
-        # normalize confidence values
-        if conf <= 1:
+        # normalize confidence values for table rows
+        if 0 < conf <= 1:
             conf = conf * 100
-        elif conf > 100:
+        elif conf > 1000:
             conf = conf / 100
-
-        conf = round(conf, 1)
+        elif conf > 100:
+            conf = conf / 10
 
         activity_rows.append([
             s['username'],
             s['variety'],
             s['status'],
-            f"{conf}%",
+            f"{round(conf, 1)}%",
             date_str
         ])
     

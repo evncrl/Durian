@@ -120,7 +120,6 @@ def detect_durians():
         print("[DEBUG] Calling get_durian_shape with:", temp_path)
         result["shape"] = get_durian_shape(temp_path)
         
-        
         # -- Durian Size --
         result["size"] = get_durian_size(temp_path)
 
@@ -129,11 +128,15 @@ def detect_durians():
             disease_res = get_durian_disease(temp_path)
             result["disease"] = disease_res
         except Exception as e:
-            # non‑critical, continue without disease data
+            # non-critical, continue without disease data
             result["disease"] = {"success": False, "error": str(e)}
 
+        # ✅ GATEKEEPER LOGIC: Chinecheck natin kung may nadetect na durian
+        durian_detected = result.get("detection", {}).get("count", 0) > 0
+
         # -- Cloudinary Save if needed --
-        if result.get("success") and user_id and save_to_history:
+        # ✅ UPDATED CONDITION: Idinagdag ang 'durian_detected'
+        if result.get("success") and user_id and save_to_history and durian_detected:
             try:
                 scan_id = str(uuid.uuid4())[:8]
                 cloudinary_data = CloudinaryScan.upload_scan_image_sync(temp_path, user_id, scan_id)
@@ -170,6 +173,11 @@ def detect_durians():
                     result.update({"scan_saved": False, "cloudinary_error": cloudinary_data.get("error")})
             except Exception as e:
                 result.update({"scan_saved": False, "save_error": str(e)})
+        else:
+            # ✅ Pag walang durian, ise-set natin ang result flags para sa frontend
+            result["scan_saved"] = False
+            if not durian_detected:
+                result["message"] = "No durian detected; scan not saved to history."
         
         os.unlink(temp_path)
         if result.get("success"):
@@ -325,7 +333,7 @@ def get_analytics(user_id):
                 time_ago = "Just now"
         else:
             time_ago = "Unknown"
-        # include explicit columns for front‑end convenience
+        # include explicit columns for front-end convenience
         formatted_scans.append({
             "id": str(scan.get("_id")),
             "variety": scan.get("variety", "Unknown"),

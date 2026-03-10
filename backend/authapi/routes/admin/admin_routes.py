@@ -9,7 +9,7 @@ from handlers.report_handler import generate_analytics_pdf
 from flask import send_file
 from db import users_collection, get_global_analytics, get_all_scans_data, orders_collection, get_db
 from handlers.email_handler import send_deactivation_email, send_reactivation_email, send_order_status_email
-
+from db import db, posts_collection, comments_collection
 # Create Blueprint
 admin_bp = Blueprint('admin', __name__)
 
@@ -356,4 +356,70 @@ def delete_review(review_id):
             return jsonify({"success": True, "message": "Review deleted successfully"}), 200
         return jsonify({"success": False, "error": "Review not found"}), 404
     except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+# ---------------------------
+# Forum Management (Admin)
+# ---------------------------
+from db import posts_collection, get_all_posts_admin
+
+@admin_bp.route("/forum/posts", methods=["GET", "OPTIONS"])
+def admin_get_posts():
+    """Admin view of all forum posts"""
+    if request.method == "OPTIONS": return '', 200
+    result = get_all_posts_admin()
+    if result["success"]:
+        return jsonify(result), 200
+    return jsonify(result), 500
+
+@admin_bp.route("/forum/post/<post_id>", methods=["DELETE", "OPTIONS"])
+def admin_delete_post(post_id):
+    if request.method == "OPTIONS": return '', 200
+    try:
+        print(f"[Admin] Searching for ID: {post_id}")
+        
+        target = posts_collection.find_one({"_id": ObjectId(post_id)}) or posts_collection.find_one({"_id": post_id})
+        collection_name = "posts"
+
+        if not target:
+            target = comments_collection.find_one({"_id": ObjectId(post_id)}) or comments_collection.find_one({"_id": post_id})
+            collection_name = "comments"
+
+        if not target:
+            print(f"[Admin] ID {post_id} not found anywhere.")
+            return jsonify({"success": False, "error": "Post/Comment not found"}), 404
+
+        user_id = target.get("user_id")
+        user_email = None
+        user_name = "User"
+        
+        if user_id:
+            user = users_collection.find_one({"_id": ObjectId(user_id)})
+            if user:
+                user_email = user.get("email")
+                user_name = user.get("name") or user.get("username") or "User"
+
+        if collection_name == "posts":
+            result = posts_collection.delete_one({"_id": target["_id"]})
+        else:
+            result = comments_collection.delete_one({"_id": target["_id"]})
+
+        if result.deleted_count > 0:
+            print(f"[Admin] Successfully deleted from {collection_name}.")
+            
+            if user_email:
+                try:
+                    from handlers.email_handler import send_forum_delete_email
+                    content_snippet = target.get("title") or target.get("content")[:30]
+                    send_forum_delete_email(user_email, user_name, content_snippet)
+                    print("[Admin] Email notification sent!")
+                except Exception as mail_err:
+                    print(f"[Admin] Mail Error: {mail_err}")
+
+            return jsonify({"success": True, "message": f"Deleted from {collection_name}"}), 200
+
+    except Exception as e:
+        import traceback
+        print(f"[Admin] ERROR: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"success": False, "error": str(e)}), 500

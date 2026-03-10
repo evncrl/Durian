@@ -463,3 +463,42 @@ def send_order_status_email(user_email: str, status: str, transaction_id: str, i
     except Exception as e:
         print(f"Failed to send status email: {str(e)}")
         return False
+    
+def send_forum_delete_email(user_email: str, user_name: str, post_title: str) -> bool:
+    """Sends notification when a forum post is moderated/deleted."""
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "📢 Forum Moderation Update"
+        msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+        msg["To"] = user_email
+
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+                <div style="background-color: #A0522D; padding: 20px; text-align: center; color: white;">
+                    <h2>Forum Moderation</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Hello <b>{user_name}</b>,</p>
+                    <p>This is to inform you that your post titled <b>"{post_title}"</b> has been removed by our moderation team for violating community guidelines.</p>
+                    <div style="background-color: #fff3e0; padding: 15px; border-left: 5px solid #ff9800; margin: 20px 0;">
+                        <p style="margin: 0;"><b>Note:</b> Please ensure all posts follow our Durianostics community standards to avoid account deactivation.</p>
+                    </div>
+                    <p>If you have questions, please contact support.</p>
+                    <p>Best regards,<br>The Durianostics Team</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, "html"))
+
+        with smtplib.SMTP(MAILTRAP_HOST, MAILTRAP_PORT) as server:
+            server.starttls()
+            server.login(MAILTRAP_USERNAME, MAILTRAP_PASSWORD)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending forum email: {e}")
+        return False

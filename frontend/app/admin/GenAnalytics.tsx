@@ -159,6 +159,24 @@ export default function GenAnalytics() {
         </View>
     );
 
+    const recentScansList = data?.recentScans || [];
+    const localAvgConfidence = recentScansList.length > 0
+        ? recentScansList.reduce((sum: number, scan: any) => {
+            let conf = Number(scan.confidence) || 0;
+            
+            if (conf > 0 && conf <= 1) {
+                conf = conf * 100;
+            }
+            else if (conf > 1000) {
+                conf = conf / 100;
+            } else if (conf > 100) {
+                conf = conf / 10;
+            }
+            
+            return sum + conf;
+        }, 0) / recentScansList.length
+        : 0;
+
     return (
         <View style={{ flex: 1, flexDirection: 'row', backgroundColor: Palette.linenWhite }}>
             <StatusBar barStyle="dark-content" />
@@ -184,17 +202,7 @@ export default function GenAnalytics() {
                     <StatCard title="Scan Accuracy" value={`${data?.successRate ?? 0}%`} color={Palette.warmCopper} icon={<Ionicons name="checkmark-done-circle" size={22} color={Palette.warmCopper} />} />
                     <StatCard
                         title="Avg Confidence"
-                        value={`${(() => {
-                            let avg = data?.avgConfidence ?? 0;
-
-                            if (avg > 1000) {
-                                avg = avg / 100;
-                            } else if (avg > 100) {
-                                avg = avg / 10;
-                            }
-
-                            return Number(avg).toFixed(1);
-                        })()}%`}
+                        value={`${localAvgConfidence.toFixed(1)}%`}
                         color="#9c27b0"
                         icon={<Ionicons name="analytics" size={22} color="#9c27b0" />}
                     />
