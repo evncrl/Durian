@@ -1,0 +1,467 @@
+================================================================================
+                    APPDURIAN USER MANUAL
+                   A Complete Guide to Getting Started
+================================================================================
+
+Welcome to AppDurian! This manual will guide you through all the main features
+of our application. Whether you're new to the app or looking for help with a
+specific feature, you'll find step-by-step instructions below.
+
+TABLE OF CONTENTS
+1. Getting Started - Login & Registration
+2. Using the Shop Feature
+3. Using the AI Chatbot
+4. Using the Forum
+5. Using the Scanner
+6. Frequently Asked Questions & Troubleshooting
+
+================================================================================
+1. GETTING STARTED - LOGIN & REGISTRATION
+================================================================================
+
+CREATING A NEW ACCOUNT (Registration)
+--------------------------------------
+
+Step 1: On the main login screen, tap the "Create Account" or "Sign Up" button.
+
+Step 2: Fill in your registration information:
+        - Email Address: Enter a valid email you have access to
+        - Password: Create a strong password (mix of letters, numbers, symbols)
+        - Confirm Password: Re-enter your password to confirm
+        - Full Name: Enter your first and last name
+        - Phone Number (Optional): Add your contact number if desired
+
+Step 3: Review the Terms & Conditions and Privacy Policy.
+
+Step 4: Tap "Register" or "Create Account" to complete registration.
+
+Step 5: A verification email will be sent to your email address.
+        Open your email and click the verification link.
+
+Step 6: Your account is now active! You can log in with your email and password.
+
+
+LOGGING INTO YOUR ACCOUNT
+--------------------------
+
+Step 1: On the main screen, tap the login field.
+
+Step 2: Enter your email address and password.
+
+Step 3: Tap the "Log In" button.
+
+Step 4: You're now logged in! You'll be taken to the home screen.
+
+
+RESETTING A FORGOTTEN PASSWORD
+-------------------------------
+
+Step 1: On the login screen, tap "Forgot Password?"
+
+Step 2: Enter your registered email address.
+
+Step 3: Tap "Send Reset Link"
+
+Step 4: Check your email for a password reset link.
+
+Step 5: Click the link and set a new password.
+
+Step 6: Log in with your new password.
+
+
+LOGGING OUT
+-----------
+
+Step 1: Go to your Profile section (usually bottom menu or settings).
+
+Step 2: Scroll down and tap "Log Out"
+
+Step 3: You'll be returned to the login screen.
+
+================================================================================
+2. USING THE SHOP FEATURE
+================================================================================
+
+BROWSING PRODUCTS
+-----------------
+
+Step 1: From the home screen, tap the "Shop" tab or icon.
+
+Step 2: You'll see a list of available durian products and items.
+
+Step 3: Use the category filters at the top to narrow down products:
+        - Filter by type (Fresh Durians, Processed, Frozen, etc.)
+        - Sort by price, rating, or newest arrivals
+
+Step 4: Tap on any product to view more details:
+        - Product description
+        - Price
+        - Availability
+        - Customer ratings and reviews
+        - Product images
+
+
+ADDING ITEMS TO YOUR CART
+-------------------------
+
+Step 1: Select a product you want to purchase.
+
+Step 2: Choose your quantity using the "+" and "-" buttons.
+
+Step 3: Select any options if available (size, variant, etc.).
+
+Step 4: Tap "Add to Cart" button.
+
+Step 5: You'll see a confirmation message.
+
+
+VIEWING YOUR CART
+-----------------
+
+Step 1: Look for the shopping cart icon (usually at the top right).
+
+Step 2: Tap to view all items in your cart.
+
+Step 3: Review quantities and prices for each item.
+
+Step 4: Use "+" and "-" buttons to adjust quantities, or swipe to remove items.
+
+
+PROCEEDING TO CHECKOUT
+----------------------
+
+Step 1: From your cart, tap "Proceed to Checkout"
+
+Step 2: Verify your shipping address:
+        - Add or select an existing address
+        - Make sure all details are correct
+
+Step 3: Select your shipping method:
+        - Standard Shipping (5-7 days)
+        - Express Shipping (2-3 days)
+        - Next Day Delivery
+
+Step 4: Review your order summary:
+        - Items and quantities
+        - Shipping cost
+        - Total amount due
+
+Step 5: Select your payment method:
+        - Credit/Debit Card
+        - Mobile Wallet
+        - Bank Transfer
+        - Other available options
+
+Step 6: Complete the payment process.
+
+Step 7: You'll receive an order confirmation and tracking number.
+
+
+TRACKING YOUR ORDER
+-------------------
+
+Step 1: Go to your Profile section.
+
+Step 2: Tap "My Orders" or "Order History"
+
+Step 3: Select the order you want to track.
+
+Step 4: View real-time tracking information:
+        - Current location of your package
+        - Estimated delivery date
+        - Delivery status
+
+================================================================================
+3. USING THE AI CHATBOT
+================================================================================
+
+ACCESSING THE CHATBOT
+---------------------
+
+Step 1: Look for the chat icon or "Chatbot" option in the app menu.
+
+Step 2: Tap to open the chat interface.
+
+Step 3: You'll see a chat window with our AI assistant.
+
+
+ASKING QUESTIONS
+----------------
+
+Step 1: Type your question in the message box at the bottom.
+
+Examples of questions you can ask:
+        - "What are the health benefits of durians?"
+        - "How do I keep durians fresh?"
+        - "What's the difference between different durian varieties?"
+        - "How do I prepare durian?"
+        - "What's in stock?"
+        - General questions about durians
+
+Step 2: Tap the "Send" button or press Enter.
+
+Step 3: The AI will process your question and respond within a few seconds.
+
+
+CHATBOT FEATURES
+----------------
+
+- Quick Replies: The chatbot may offer suggested responses. Tap any of them
+  for quick answers.
+
+- Search Information: The chatbot can provide information about durian varieties,
+  nutrition, storage, recipes, and more.
+
+- Product Assistance: Ask about available products, prices, and recommendations.
+
+- Help: If you need general help, type "help" or "menu" to see available options.
+
+
+ENDING A CHAT
+-------------
+
+Step 1: Tap the "X" button to close the chat window.
+
+Step 2: Your conversation will be saved (if feature is enabled).
+
+Step 3: You can return and continue chatting anytime.
+
+================================================================================
+4. USING THE FORUM
+================================================================================
+
+ACCESSING THE FORUM
+-------------------
+
+Step 1: From the home menu, tap the "Forum" tab or option.
+
+Step 2: You'll see a list of discussion threads and topics.
+
+Step 3: Scroll through to find topics of interest.
+
+
+BROWSING FORUM POSTS
+--------------------
+
+Step 1: View the list of forum categories or recent posts.
+
+Step 2: Use search or filters to find specific topics:
+        - Search by keyword
+        - Filter by category (Growing Tips, Recipes, Health, etc.)
+        - Filter by recent/popular posts
+
+Step 3: Tap on any post title to view the full discussion.
+
+Step 4: Read the original post and all replies/comments.
+
+Step 5: View user profiles and their reputation scores.
+
+
+REPLYING TO A POST
+------------------
+
+Step 1: Open the forum post you want to reply to.
+
+Step 2: Scroll to the bottom and tap "Add Reply" or "Write Comment"
+
+Step 3: Type your response in the text box.
+
+Step 4: You can:
+        - Add images or attachments
+        - Use text formatting (bold, italic, links)
+        - Mention other users with @username
+
+Step 5: Tap "Post Reply" to submit your response.
+
+
+CREATING A NEW POST
+-------------------
+
+Step 1: In the Forum section, tap "Create New Post" or "New Discussion"
+
+Step 2: Add a post title (be descriptive and clear).
+
+Step 3: Choose a category for your post:
+        - Growing & Cultivation
+        - Recipes & Cooking
+        - Health Benefits
+        - Product Reviews
+        - General Discussion
+        - Other
+
+Step 4: Write your post content in the text box.
+
+Step 5: You can attach:
+        - Photos
+        - Files or documents
+        - Links to external resources
+
+Step 6: Review your post for accuracy and clarity.
+
+Step 7: Tap "Publish" or "Post" to submit.
+
+
+USING FORUM FEATURES
+--------------------
+
+- Liking Posts: Tap the heart icon to like helpful or interesting posts.
+
+- Bookmarks: Tap the bookmark icon to save posts for later reading.
+
+- Reputation Points: Earn points by posting quality content and helping others.
+  Points increase your forum status and credibility.
+
+- Reporting: If you see inappropriate content, tap the report icon to notify
+  moderators.
+
+- Following Users: Follow other forum members to see their activity.
+
+================================================================================
+5. USING THE SCANNER
+================================================================================
+
+ACCESSING THE SCANNER
+---------------------
+
+Step 1: From the home menu, tap the "Scanner" tab or camera icon.
+
+Step 2: Grant camera permissions if prompted (needed to use the camera).
+
+Step 3: The scanner interface will open showing your device's camera view.
+
+
+SCANNING A DURIAN
+-----------------
+
+Step 1: Hold your device steady and point the camera at a durian.
+
+Step 2: Make sure the durian is:
+        - Well-lit (good lighting is important)
+        - Clearly visible in the camera frame
+        - Fully or mostly within the frame
+
+Step 3: Tap the "Capture" or "Scan" button.
+
+Step 4: The AI will analyze the durian and process the image.
+
+
+UNDERSTANDING YOUR SCAN RESULTS
+--------------------------------
+
+After scanning, you'll receive a detailed analysis including:
+
+1. DURIAN VARIETY/TYPE
+   - The identified species and variety
+   - Confidence level of the identification
+
+2. RIPENESS LEVEL
+   - Unripe, Semi-ripe, Ripe, or Over-ripe status
+   - Visual indicators (color, texture)
+
+3. QUALITY ASSESSMENT
+   - Overall quality score
+   - Grade (Premium, Standard, Lower Grade)
+
+4. HEALTH/DISEASE DETECTION
+   - Indicators of any diseases or defects
+   - Warnings if detected
+   - Safe to eat determinations
+
+5. SHAPE & SIZE ANALYSIS
+   - Shape classification
+   - Estimated size
+   - Physical characteristics
+
+6. COLOR ANALYSIS
+   - Color profile and gradation
+   - Natural color patterns
+   - Ripeness indicators from color
+
+
+VIEWING SCAN HISTORY
+--------------------
+
+Step 1: In the Scanner section, look for "History" or "Past Scans"
+
+Step 2: You'll see a list of all previous scans with:
+        - Date and time of scan
+        - Product identified
+        - Scan results
+        - Thumbnail image
+
+Step 3: Tap any previous scan to view detailed results again.
+
+
+SCANNER TIPS FOR BEST RESULTS
+-----------------------------
+
+- LIGHTING: Use natural or bright artificial light for best accuracy.
+  Avoid shadows on the durian.
+
+- ANGLE: Take photos from multiple angles for better accuracy.
+
+- DISTANCE: Hold the camera 20-30 cm away from the durian.
+
+- FOCUS: Make sure the image is sharp and in focus before scanning.
+
+- STEADINESS: Keep your hand steady or use a stand to prevent blurring.
+
+- BACKGROUND: Use a neutral background to make the durian stand out.
+
+================================================================================
+6. FREQUENTLY ASKED QUESTIONS & TROUBLESHOOTING
+================================================================================
+
+Q: What if I forget my password?
+A: Go to the login screen and tap "Forgot Password?" Follow the instructions
+   to reset it via email.
+
+Q: How long does delivery take?
+A: Standard delivery is 5-7 business days, Express is 2-3 days, and Next Day
+   is available in select areas. Exact times vary by location.
+
+Q: Can I return an order?
+A: Yes! Go to "My Orders" in your Profile, select the order, and tap "Return
+   This Order." Follow the return process. Most returns are accepted within
+   30 days.
+
+Q: Is my personal information safe?
+A: Yes! We use encryption and follow strict privacy policies. Your data is
+   never shared with third parties without consent.
+
+Q: The scanner isn't recognizing my durian. What should I do?
+A: Ensure good lighting, clear focus, and that the entire durian is visible.
+   Try taking multiple photos from different angles. The AI works best with
+   clear, well-lit images.
+
+Q: How do I become a forum moderator?
+A: Active community members with high reputation scores may be invited to
+   become moderators. There's no direct application process.
+
+Q: Can I edit or delete my forum posts?
+A: Yes! You can edit posts within 24 hours of posting. Click the three-dot
+   menu next to your post and select "Edit" or "Delete."
+
+Q: I have a payment issue. How do I get help?
+A: Contact our support team through the Settings/Help section of the app,
+   or email our customer service team.
+
+Q: Can I chat with the chatbot about topics other than durians?
+A: The chatbot is optimized for durian-related questions. It may handle
+   general questions, but works best with product and durian-specific queries.
+
+Q: Why was my forum post removed?
+A: Posts may be removed if they violate community guidelines (spam, abuse,
+   inappropriate content). Check your email for details from the moderators.
+
+================================================================================
+
+Thank you for using AppDurian! We hope this manual helps you make the most of
+our application. If you have additional questions or need further assistance,
+please reach out to our customer support team through the app's Help section.
+
+Happy exploring!
+
+================================================================================
+Version 1.0 | Last Updated: March 2026
+================================================================================
